@@ -116,20 +116,20 @@ const PlanetColumn = ({
   const isDesign = side === 'left';
   
   return (
-    <div className="flex flex-col gap-0.5">
-      <div className={`text-xs font-semibold mb-2 pb-1 border-b text-center ${isDesign ? 'text-primary border-primary' : 'text-foreground border-muted'}`}>
+    <div className="flex flex-col gap-0.5 md:gap-1 lg:gap-1.5">
+      <div className={`text-xs md:text-sm lg:text-base font-semibold mb-2 md:mb-3 pb-1 md:pb-2 border-b text-center ${isDesign ? 'text-primary border-primary' : 'text-foreground border-muted'}`}>
         {title}
       </div>
       {planets.map((planet, index) => (
         <Popover key={index}>
           <PopoverTrigger asChild>
             <div 
-              className={`flex items-center gap-1.5 text-sm py-0.5 cursor-pointer hover:bg-muted/50 rounded px-1 transition-colors ${isDesign ? 'flex-row' : 'flex-row-reverse'}`}
+              className={`flex items-center gap-1.5 md:gap-2 lg:gap-3 text-sm md:text-base lg:text-lg py-0.5 md:py-1 cursor-pointer hover:bg-muted/50 rounded px-1 md:px-2 transition-colors ${isDesign ? 'flex-row' : 'flex-row-reverse'}`}
             >
-              <span className={`w-4 text-center text-xs ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
+              <span className={`w-4 md:w-5 lg:w-6 text-center text-xs md:text-sm lg:text-base ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
                 {planetSymbols[planet.Planet] || planet.Planet[0]}
               </span>
-              <span className="font-medium text-foreground text-xs">
+              <span className="font-medium text-foreground text-xs md:text-sm lg:text-base">
                 {planet.Gate}.{planet.Line}
               </span>
             </div>
@@ -331,7 +331,7 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
         <div className="glass-card rounded-3xl p-4 md:p-8 mb-8 animate-fade-up">
           <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
           
-          <div className="flex justify-center items-start gap-2 md:gap-4">
+          <div className="flex justify-center items-start gap-2 md:gap-6 lg:gap-8">
             {/* Design Column (Left) */}
             <div className="hidden md:block flex-shrink-0">
               <PlanetColumn 
@@ -344,9 +344,9 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
             {/* Bodygraph Image (Center) */}
             <div className="flex-shrink-0 relative">
               {bodygraphLoading ? (
-                <Skeleton className="w-64 md:w-80 lg:w-96 h-96 md:h-[500px] rounded-2xl" />
+                <Skeleton className="w-64 md:w-96 lg:w-[480px] xl:w-[540px] h-96 md:h-[550px] lg:h-[650px] xl:h-[700px] rounded-2xl" />
               ) : bodygraphError ? (
-                <div className="text-center text-muted-foreground py-12 w-64 md:w-80 lg:w-96">
+                <div className="text-center text-muted-foreground py-12 w-64 md:w-96 lg:w-[480px] xl:w-[540px]">
                   <p>{bodygraphError}</p>
                   <Button
                     variant="outline"
@@ -375,7 +375,7 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
                 <img
                   src={bodygraphImage}
                   alt="Human Design Bodygraph"
-                  className="w-64 md:w-80 lg:w-96 h-auto rounded-2xl shadow-lg"
+                  className="w-64 md:w-96 lg:w-[480px] xl:w-[540px] h-auto rounded-2xl shadow-lg"
                 />
               ) : null}
             </div>
