@@ -27,8 +27,8 @@ export const HeroSection = ({
         
 
         {/* CTA Button */}
-        <Button onClick={onScrollToCalculator} size="lg" className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 py-6 rounded-full font-semibold">✨ Sudah dipercaya lebih dari 1500+ pencari jati diri<Sparkles className="w-5 h-5 mr-2" />
-          Mulai Perhitungan Gratis
+        <Button onClick={onScrollToCalculator} size="lg" className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 py-6 rounded-full font-semibold">
+          Buat Chart Human Design Gratis
         </Button>
 
         {/* Trust indicator */}
