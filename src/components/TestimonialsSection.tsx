@@ -5,7 +5,7 @@ const testimonials = [
     name: 'Sari Wulandari',
     location: 'Jakarta',
     avatar: '👩',
-    quote: 'Setelah mengetahui saya adalah Projector, akhirnya saya mengerti mengapa saya sering kelelahan. Sekarang saya tahu cara mengelola energi dengan benar.',
+    quote: 'Dulu saya merasa bersalah karena sering lelah. Setelah tahu saya seorang Projector, saya berhenti memaksakan diri bekerja seperti robot. Sekarang saya lebih sukses dan bahagia dengan cara saya sendiri.',
     rating: 5,
   },
   {
