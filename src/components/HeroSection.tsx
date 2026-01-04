@@ -1,13 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
-
 interface HeroSectionProps {
   onScrollToCalculator: () => void;
 }
-
-export const HeroSection = ({ onScrollToCalculator }: HeroSectionProps) => {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 py-20">
+export const HeroSection = ({
+  onScrollToCalculator
+}: HeroSectionProps) => {
+  return <section className="relative min-h-screen flex items-center justify-center px-4 py-20">
       <div className="max-w-4xl mx-auto text-center animate-fade-up">
         {/* Decorative element */}
         <div className="flex justify-center mb-8">
@@ -18,26 +17,17 @@ export const HeroSection = ({ onScrollToCalculator }: HeroSectionProps) => {
         </div>
 
         {/* Main headline */}
-        <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gradient-fire leading-tight">
-          Temukan Desain Sejatimu
-        </h1>
+        <h1 className="text-5xl font-bold mb-6 text-gradient-fire leading-tight md:text-5xl my-0">Satu-satunya Peta yang Kamu Butuhkan Untuk Menjadi Dirimu Sendiri</h1>
 
         {/* Subheadline */}
         <p className="text-xl md:text-2xl text-muted-foreground mb-4 max-w-2xl mx-auto leading-relaxed">
-          Ungkap cetak biru energi unikmu yang tertulis di bintang-bintang sejak kamu lahir
+          Dunia selalu menyuruhmu menjadi orang lain. Kami membantumu pulang ke desain sejatimu, mengenali bakat bawaan, dan memahami mengapa kamu diciptakan berbeda.
         </p>
 
-        <p className="text-lg text-muted-foreground/80 mb-12 max-w-xl mx-auto">
-          Human Design menggabungkan astrologi, I'Ching, Kabbalah, dan sistem chakra untuk 
-          mengungkap siapa dirimu yang sebenarnya
-        </p>
+        
 
         {/* CTA Button */}
-        <Button
-          onClick={onScrollToCalculator}
-          size="lg"
-          className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 py-6 rounded-full font-semibold"
-        >
+        <Button onClick={onScrollToCalculator} size="lg" className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 py-6 rounded-full font-semibold">
           <Sparkles className="w-5 h-5 mr-2" />
           Mulai Perhitungan Gratis
         </Button>
@@ -47,6 +37,5 @@ export const HeroSection = ({ onScrollToCalculator }: HeroSectionProps) => {
           ✨ Sudah dipercaya lebih dari 10.000+ pencari jati diri
         </p>
       </div>
-    </section>
-  );
+    </section>;
 };
