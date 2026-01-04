@@ -5,8 +5,7 @@ import { Download, Share2, RotateCcw, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import html2pdf from "html2pdf.js";
 import type { BirthDataForChart } from "@/pages/Index";
 
 interface ChartResultProps {
@@ -331,37 +330,32 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
         (card as HTMLElement).style.background = "#1e1e3f";
       });
 
-      const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: "#0f0f1a",
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-      });
+      const options = {
+        margin: 10,
+        filename: `human-design-chart-${userName.replace(/\s+/g, "-").toLowerCase()}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#0f0f1a',
+          logging: false
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' as const
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      await html2pdf().from(chartRef.current).set(options).save();
 
       // Restore glass effects
       glassCards.forEach((card) => {
         (card as HTMLElement).style.backdropFilter = "";
         (card as HTMLElement).style.background = "";
       });
-
-      // Create PDF
-      const imgData = canvas.toDataURL("image/png", 1.0);
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-
-      // A4 dimensions in mm
-      const pdfWidth = 210;
-      const pdfHeight = (imgHeight * pdfWidth) / imgWidth;
-
-      const pdf = new jsPDF({
-        orientation: pdfHeight > pdfWidth ? "portrait" : "landscape",
-        unit: "mm",
-        format: [pdfWidth, pdfHeight],
-      });
-
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`human-design-chart-${userName.replace(/\s+/g, "-").toLowerCase()}.pdf`);
 
       toast({
         title: "Berhasil!",
