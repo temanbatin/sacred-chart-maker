@@ -67,6 +67,8 @@ const Index = () => {
       }
 
       setChartData(result);
+      // Scroll to top when chart is ready
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error('Error:', error);
       toast.error('Terjadi kesalahan. Silakan coba lagi.');
