@@ -18,29 +18,42 @@ export const ChartResult = ({ data, userName, onReset }: ChartResultProps) => {
 
   const strategyDescriptions: Record<string, string> = {
     'To Respond': 'Tunggu sesuatu di dunia luar yang memicu responsmu sebelum bertindak.',
+    'Wait to Respond': 'Tunggu sesuatu di dunia luar yang memicu responsmu sebelum bertindak.',
     'Wait for the Invitation': 'Biarkan orang lain mengenali nilaimu dan mengundangmu.',
     'To Inform': 'Sampaikan rencanamu sebelum bertindak untuk mengurangi hambatan.',
+    'Inform': 'Sampaikan rencanamu sebelum bertindak untuk mengurangi hambatan.',
     'Wait a Lunar Cycle': 'Beri dirimu 28 hari untuk merasakan kejelasan sebelum keputusan besar.',
   };
 
   const authorityDescriptions: Record<string, string> = {
-    Sacral: 'Dengarkan suara perutmu - respon guttural "uh-huh" atau "un-un".',
-    Emotional: 'Tunggu gelombang emosimu mereda. Kejelasan datang seiring waktu.',
-    Splenic: 'Percaya pada intuisi instan dan spontanmu.',
+    'Sacral': 'Dengarkan suara perutmu - respon guttural "uh-huh" atau "un-un".',
+    'Emotional': 'Tunggu gelombang emosimu mereda. Kejelasan datang seiring waktu.',
+    'Solar Plexus': 'Tunggu gelombang emosimu mereda. Kejelasan datang seiring waktu, bukan di saat emosi tinggi.',
+    'Splenic': 'Percaya pada intuisi instan dan spontanmu.',
+    'Spleen': 'Percaya pada intuisi instan dan spontanmu. Keputusan terbaik datang dalam sekejap.',
     'Ego Manifested': 'Dengarkan apa yang benar-benar kamu inginkan dari hatimu.',
     'Ego Projected': 'Bicarakan keinginanmu dan dengarkan apa yang keluar dari mulutmu.',
     'Self Projected': 'Bicarakan tentang keputusanmu dan dengarkan identitasmu.',
-    Mental: 'Diskusikan dengan orang terpercaya dan perhatikan lingkunganmu.',
-    Lunar: 'Tunggu satu siklus bulan penuh sebelum keputusan besar.',
+    'Self-Projected': 'Bicarakan tentang keputusanmu dan dengarkan identitasmu.',
+    'Mental': 'Diskusikan dengan orang terpercaya dan perhatikan lingkunganmu.',
+    'None': 'Kamu adalah Reflector - tunggu satu siklus bulan penuh sebelum keputusan besar.',
+    'Lunar': 'Tunggu satu siklus bulan penuh sebelum keputusan besar.',
   };
 
-  // Extract data from API response
-  const chartType = data?.chart?.type || data?.type || 'Unknown';
-  const strategy = data?.chart?.strategy || data?.strategy || 'Unknown';
-  const authority = data?.chart?.authority || data?.authority || 'Unknown';
-  const profile = data?.chart?.profile || data?.profile || 'Unknown';
-  const definition = data?.chart?.definition || data?.definition || 'Unknown';
-  const incarnationCross = data?.chart?.incarnation_cross || data?.incarnation_cross || 'Unknown';
+  // Extract data from API response - data is nested in "general" object
+  const general = data?.general || {};
+  const chartType = general.energy_type || 'Unknown';
+  const strategy = general.strategy || 'Unknown';
+  const authority = general.inner_authority || 'Unknown';
+  const profile = general.profile || 'Unknown';
+  const definition = general.definition || 'Unknown';
+  const incarnationCross = general.inc_cross || 'Unknown';
+  const signature = general.signature || '';
+  const notSelf = general.not_self || '';
+  const aura = general.aura || '';
+  const definedCenters = general.defined_centers || [];
+  const undefinedCenters = general.undefined_centers || [];
+  const channels = data?.channels?.Channels || [];
 
   return (
     <section className="py-20 px-4">
@@ -107,6 +120,30 @@ export const ChartResult = ({ data, userName, onReset }: ChartResultProps) => {
             </div>
           </div>
 
+          {/* Signature & Not-Self */}
+          {(signature || notSelf) && (
+            <div className="grid md:grid-cols-2 gap-6 mt-6">
+              {signature && (
+                <div className="bg-primary/10 rounded-2xl p-6 text-center">
+                  <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Signature (Tanda Keselarasan)</h4>
+                  <p className="text-xl font-semibold text-foreground">{signature}</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Perasaan yang muncul saat kamu hidup selaras dengan desainmu
+                  </p>
+                </div>
+              )}
+              {notSelf && (
+                <div className="bg-destructive/10 rounded-2xl p-6 text-center">
+                  <h4 className="text-sm uppercase tracking-wide text-destructive mb-2">Not-Self (Tanda Tidak Selaras)</h4>
+                  <p className="text-xl font-semibold text-foreground">{notSelf}</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Perasaan yang muncul saat kamu tidak mengikuti desainmu
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Incarnation Cross */}
           {incarnationCross && incarnationCross !== 'Unknown' && (
             <div className="mt-8 text-center">
@@ -120,6 +157,53 @@ export const ChartResult = ({ data, userName, onReset }: ChartResultProps) => {
             </div>
           )}
         </div>
+
+        {/* Channels Section */}
+        {channels.length > 0 && (
+          <div className="glass-card rounded-3xl p-8 mb-8 animate-fade-up">
+            <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Channel Aktif</h3>
+            <div className="space-y-3">
+              {channels.map((ch: { channel: string }, index: number) => (
+                <div key={index} className="bg-secondary/50 rounded-xl p-4">
+                  <p className="text-foreground">{ch.channel}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Centers Section */}
+        {(definedCenters.length > 0 || undefinedCenters.length > 0) && (
+          <div className="glass-card rounded-3xl p-8 mb-8 animate-fade-up">
+            <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Pusat Energi</h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              {definedCenters.length > 0 && (
+                <div>
+                  <h4 className="text-sm uppercase tracking-wide text-accent mb-3">Defined (Konsisten)</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {definedCenters.map((center: string, index: number) => (
+                      <span key={index} className="px-3 py-1 bg-primary/20 text-foreground rounded-full text-sm">
+                        {center}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {undefinedCenters.length > 0 && (
+                <div>
+                  <h4 className="text-sm uppercase tracking-wide text-muted-foreground mb-3">Undefined (Terbuka)</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {undefinedCenters.map((center: string, index: number) => (
+                      <span key={index} className="px-3 py-1 bg-secondary text-muted-foreground rounded-full text-sm">
+                        {center}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up">
