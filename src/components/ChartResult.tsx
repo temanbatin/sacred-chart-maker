@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import type { BirthDataForChart } from '@/pages/Index';
 
 interface ChartResultProps {
@@ -300,27 +301,54 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
     fetchBodygraph();
   }, [birthData]);
 
-  // Download chart as PNG
+  // Download chart as PDF
   const handleDownload = async () => {
     if (!chartRef.current) return;
     
     setIsDownloading(true);
     try {
+      // Temporarily remove glass effects for clearer capture
+      const glassCards = chartRef.current.querySelectorAll('.glass-card');
+      glassCards.forEach((card) => {
+        (card as HTMLElement).style.backdropFilter = 'none';
+        (card as HTMLElement).style.background = '#1e1e3f';
+      });
+
       const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: '#1a1a2e',
+        backgroundColor: '#0f0f1a',
         scale: 2,
         useCORS: true,
         allowTaint: true,
+        logging: false,
+      });
+
+      // Restore glass effects
+      glassCards.forEach((card) => {
+        (card as HTMLElement).style.backdropFilter = '';
+        (card as HTMLElement).style.background = '';
       });
       
-      const link = document.createElement('a');
-      link.download = `human-design-chart-${userName.replace(/\s+/g, '-').toLowerCase()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      // A4 dimensions in mm
+      const pdfWidth = 210;
+      const pdfHeight = (imgHeight * pdfWidth) / imgWidth;
+      
+      const pdf = new jsPDF({
+        orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
+        unit: 'mm',
+        format: [pdfWidth, pdfHeight],
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`human-design-chart-${userName.replace(/\s+/g, '-').toLowerCase()}.pdf`);
       
       toast({
         title: "Berhasil!",
-        description: "Chart berhasil diunduh sebagai gambar PNG.",
+        description: "Chart berhasil diunduh sebagai PDF.",
       });
     } catch (error) {
       console.error('Error downloading chart:', error);
