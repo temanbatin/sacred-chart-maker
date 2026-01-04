@@ -398,7 +398,6 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
           {/* Bodygraph with Planet Columns */}
           <div className="glass-card rounded-3xl p-4 md:p-8 mb-8 animate-fade-up">
             <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
-          <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
           
           <div className="flex justify-center items-start gap-2 md:gap-6 lg:gap-8">
             {/* Design Column (Left) */}
