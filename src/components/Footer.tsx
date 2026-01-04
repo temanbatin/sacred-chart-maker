@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -9,24 +9,28 @@ export const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-accent" />
-            <span className="text-xl font-bold text-foreground">Human Design ID</span>
+            <img 
+              src="/favicon.png" 
+              alt="Teman Batin Logo" 
+              className="w-8 h-8 rounded-lg"
+            />
+            <span className="text-xl font-bold text-foreground">Teman Batin</span>
           </div>
 
           {/* Links */}
           <nav className="flex flex-wrap justify-center gap-6 text-sm">
-            <a href="#" className="text-muted-foreground hover:text-accent transition-colors">
+            <Link to="/tentang-kami" className="text-muted-foreground hover:text-accent transition-colors">
               Tentang Kami
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-accent transition-colors">
+            </Link>
+            <Link to="/kebijakan-privasi" className="text-muted-foreground hover:text-accent transition-colors">
               Kebijakan Privasi
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-accent transition-colors">
+            </Link>
+            <Link to="/syarat-ketentuan" className="text-muted-foreground hover:text-accent transition-colors">
               Syarat & Ketentuan
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-accent transition-colors">
+            </Link>
+            <Link to="/hubungi-kami" className="text-muted-foreground hover:text-accent transition-colors">
               Hubungi Kami
-            </a>
+            </Link>
           </nav>
 
           {/* Social Icons */}
@@ -64,7 +68,7 @@ export const Footer = () => {
         {/* Copyright */}
         <div className="mt-8 pt-8 border-t border-border text-center">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} Human Design ID. Dibuat dengan ✨ untuk pencari jati diri.
+            © {currentYear} Teman Batin. Dibuat dengan ✨ untuk pencari jati diri.
           </p>
         </div>
       </div>
