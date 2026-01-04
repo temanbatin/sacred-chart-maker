@@ -37,7 +37,10 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Bodygraph received from n8n');
 
-    return new Response(JSON.stringify(data), {
+    // n8n returns array, extract first element
+    const bodygraphData = Array.isArray(data) ? data[0] : data;
+
+    return new Response(JSON.stringify(bodygraphData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

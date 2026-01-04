@@ -38,7 +38,10 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Chart data received from n8n');
 
-    return new Response(JSON.stringify(data), {
+    // n8n returns array, extract first element
+    const chartData = Array.isArray(data) ? data[0] : data;
+
+    return new Response(JSON.stringify(chartData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
