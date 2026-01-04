@@ -2,3 +2,6 @@ project_id = "angsqeuyhyyxsqhfumtx"
 
 [functions.calculate-chart]
 verify_jwt = false
+
+[functions.get-bodygraph]
+verify_jwt = false

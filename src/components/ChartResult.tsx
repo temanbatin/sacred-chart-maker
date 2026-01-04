@@ -1,13 +1,22 @@
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Share2, RotateCcw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import type { BirthDataForChart } from '@/pages/Index';
 
 interface ChartResultProps {
   data: any;
   userName: string;
+  birthData: BirthDataForChart | null;
   onReset: () => void;
 }
 
-export const ChartResult = ({ data, userName, onReset }: ChartResultProps) => {
+export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultProps) => {
+  const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
+  const [bodygraphLoading, setBodygraphLoading] = useState(false);
+  const [bodygraphError, setBodygraphError] = useState<string | null>(null);
+
   const typeDescriptions: Record<string, string> = {
     Generator: 'Kamu adalah sumber energi yang tak terbatas. Hidupmu tentang menemukan apa yang membuat semangatmu menyala.',
     'Manifesting Generator': 'Kamu adalah multi-passionate yang cepat dan dinamis. Biarkan responsmu memandu ke banyak jalur yang membuatmu hidup.',
@@ -40,6 +49,39 @@ export const ChartResult = ({ data, userName, onReset }: ChartResultProps) => {
     'Lunar': 'Tunggu satu siklus bulan penuh sebelum keputusan besar.',
   };
 
+  // Fetch bodygraph image when component mounts
+  useEffect(() => {
+    const fetchBodygraph = async () => {
+      if (!birthData) return;
+
+      setBodygraphLoading(true);
+      setBodygraphError(null);
+
+      try {
+        const { data: result, error } = await supabase.functions.invoke('get-bodygraph', {
+          body: birthData,
+        });
+
+        if (error) {
+          console.error('Error fetching bodygraph:', error);
+          setBodygraphError('Gagal memuat gambar bodygraph');
+          return;
+        }
+
+        if (result?.image) {
+          setBodygraphImage(result.image);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        setBodygraphError('Gagal memuat gambar bodygraph');
+      } finally {
+        setBodygraphLoading(false);
+      }
+    };
+
+    fetchBodygraph();
+  }, [birthData]);
+
   // Extract data from API response - data is nested in "general" object
   const general = data?.general || {};
   const chartType = general.energy_type || 'Unknown';
@@ -50,7 +92,6 @@ export const ChartResult = ({ data, userName, onReset }: ChartResultProps) => {
   const incarnationCross = general.inc_cross || 'Unknown';
   const signature = general.signature || '';
   const notSelf = general.not_self || '';
-  const aura = general.aura || '';
   const definedCenters = general.defined_centers || [];
   const undefinedCenters = general.undefined_centers || [];
   const channels = data?.channels?.Channels || [];
@@ -65,6 +106,48 @@ export const ChartResult = ({ data, userName, onReset }: ChartResultProps) => {
           <p className="text-xl text-muted-foreground">
             Inilah cetak biru energi kosmikmu
           </p>
+        </div>
+
+        {/* Bodygraph Image */}
+        <div className="glass-card rounded-3xl p-8 mb-8 animate-fade-up">
+          <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
+          <div className="flex justify-center">
+            {bodygraphLoading ? (
+              <Skeleton className="w-full max-w-md h-96 rounded-2xl" />
+            ) : bodygraphError ? (
+              <div className="text-center text-muted-foreground py-12">
+                <p>{bodygraphError}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => {
+                    if (birthData) {
+                      setBodygraphLoading(true);
+                      setBodygraphError(null);
+                      supabase.functions.invoke('get-bodygraph', { body: birthData })
+                        .then(({ data: result, error }) => {
+                          if (error) {
+                            setBodygraphError('Gagal memuat gambar bodygraph');
+                          } else if (result?.image) {
+                            setBodygraphImage(result.image);
+                          }
+                        })
+                        .finally(() => setBodygraphLoading(false));
+                    }
+                  }}
+                >
+                  Coba Lagi
+                </Button>
+              </div>
+            ) : bodygraphImage ? (
+              <img
+                src={bodygraphImage}
+                alt="Human Design Bodygraph"
+                className="max-w-full h-auto rounded-2xl shadow-lg"
+              />
+            ) : null}
+          </div>
         </div>
 
         {/* Main Type Card */}
