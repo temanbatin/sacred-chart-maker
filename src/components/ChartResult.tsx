@@ -356,17 +356,20 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
   return (
     <section className="py-20 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12 animate-fade-up">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-fire">
-            Selamat, {userName}! 🌟
-          </h2>
-          <p className="text-xl text-muted-foreground">
-            Inilah cetak biru energi kosmikmu
-          </p>
-        </div>
+        {/* Downloadable Content Area */}
+        <div ref={chartRef} className="bg-background p-4 md:p-8 rounded-3xl">
+          <div className="text-center mb-12 animate-fade-up">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-fire">
+              Selamat, {userName}! 🌟
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Inilah cetak biru energi kosmikmu
+            </p>
+          </div>
 
-        {/* Bodygraph with Planet Columns */}
-        <div ref={chartRef} className="glass-card rounded-3xl p-4 md:p-8 mb-8 animate-fade-up">
+          {/* Bodygraph with Planet Columns */}
+          <div className="glass-card rounded-3xl p-4 md:p-8 mb-8 animate-fade-up">
+            <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
           <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
           
           <div className="flex justify-center items-start gap-2 md:gap-6 lg:gap-8">
@@ -658,9 +661,11 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
             </div>
           </div>
         )}
+        </div>
+        {/* End of Downloadable Content Area */}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up mt-8">
           <Button
             onClick={onReset}
             variant="outline"
