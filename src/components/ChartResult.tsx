@@ -5,7 +5,7 @@ import { Download, Share2, RotateCcw, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
-import html2pdf from "html2pdf.js";
+import html2canvas from "html2canvas";
 import type { BirthDataForChart } from "@/pages/Index";
 
 interface ChartResultProps {
@@ -317,106 +317,39 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
     fetchBodygraph();
   }, [birthData]);
 
-  // Download chart as PDF
+  // Download chart as PNG image
   const handleDownload = async () => {
     if (!chartRef.current) return;
 
     setIsDownloading(true);
 
-    let clone: HTMLElement | null = null;
     try {
-      // Clone the element for PDF rendering to avoid affecting the UI
-      clone = chartRef.current.cloneNode(true) as HTMLElement;
-      clone.style.position = "fixed";
-      clone.style.left = "0";
-      clone.style.top = "0";
-      // Keep it effectively invisible, but not fully transparent (some browsers render 0-opacity nodes as blank)
-      clone.style.opacity = "0.01";
-      clone.style.pointerEvents = "none";
-      // Avoid negative z-index (can place it behind the document/background and render blank)
-      clone.style.zIndex = "9999";
-      // Move it out of view while still being "rendered" by the browser
-      clone.style.transform = "translateX(-200vw)";
-      clone.style.width = chartRef.current.offsetWidth + "px";
-      clone.style.background = "#1a1a2e";
-      clone.style.padding = "20px";
-      document.body.appendChild(clone);
+      const canvas = await html2canvas(chartRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#1a1a2e",
+        logging: false,
+      });
 
-      // Fix all elements with problematic styles in the clone
-      const allElements = clone.querySelectorAll("*");
-      allElements.forEach((el) => {
-        const element = el as HTMLElement;
-        const computedStyle = window.getComputedStyle(element);
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `human-design-chart-${userName.replace(/\s+/g, "-").toLowerCase()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
 
-        // Remove backdrop filters and gradients that don't render well
-        if (computedStyle.backdropFilter !== "none") {
-          element.style.backdropFilter = "none";
-          (element.style as any).webkitBackdropFilter = "none";
+          toast({
+            title: "Berhasil!",
+            description: "Chart berhasil diunduh sebagai gambar.",
+          });
         }
-
-        // Fix backgrounds with gradients or transparent colors
-        if (
-          computedStyle.background.includes("gradient") ||
-          computedStyle.background.includes("rgba") ||
-          computedStyle.background.includes("transparent")
-        ) {
-          element.style.background = "#252547";
-        }
-
-        // Ensure text is visible
-        if (computedStyle.color.includes("rgba")) {
-          element.style.color = "#ffffff";
-        }
-      });
-
-      // Specifically fix glass-card elements
-      const glassCards = clone.querySelectorAll(".glass-card");
-      glassCards.forEach((card) => {
-        const element = card as HTMLElement;
-        element.style.background = "#252547";
-        element.style.backdropFilter = "none";
-        element.style.border = "1px solid #3d3d6b";
-      });
-
-      // Fix gradient text
-      const gradientTexts = clone.querySelectorAll('[class*="text-gradient"]');
-      gradientTexts.forEach((text) => {
-        const element = text as HTMLElement;
-        element.style.background = "none";
-        element.style.backgroundClip = "unset";
-        element.style.webkitBackgroundClip = "unset";
-        element.style.webkitTextFillColor = "#d4a574";
-        element.style.color = "#d4a574";
-      });
-
-      // Wait 2 frames to ensure the clone has been laid out & painted
-      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-
-      const options = {
-        margin: 5,
-        filename: `human-design-chart-${userName.replace(/\s+/g, "-").toLowerCase()}.pdf`,
-        image: { type: "jpeg" as const, quality: 0.95 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: "#1a1a2e",
-          logging: false,
-        },
-        jsPDF: {
-          unit: "mm",
-          format: "a4",
-          orientation: "portrait" as const,
-        },
-        pagebreak: { mode: ["css", "legacy"], avoid: ["img", ".glass-card"] },
-      };
-
-      await html2pdf().from(clone).set(options).save();
-
-      toast({
-        title: "Berhasil!",
-        description: "Chart berhasil diunduh sebagai PDF.",
-      });
+      }, "image/png");
     } catch (error) {
       console.error("Error downloading chart:", error);
       toast({
@@ -425,7 +358,6 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
         variant: "destructive",
       });
     } finally {
-      if (clone?.parentElement) clone.parentElement.removeChild(clone);
       setIsDownloading(false);
     }
   };
