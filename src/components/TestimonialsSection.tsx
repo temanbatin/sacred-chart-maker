@@ -12,7 +12,7 @@ const testimonials = [
     name: 'Budi Santoso',
     location: 'Bandung',
     avatar: '👨',
-    quote: 'Human Design mengubah cara saya membuat keputusan. Sebagai Generator, saya sekarang menunggu respons dari dalam diri, bukan memaksakan diri.',
+    quote: 'Human Design mengajari saya bahwa jawaban tidak selalu ada di kepala. Mengetahui otoritas Sacral saya membuat saya berhenti ragu dalam mengambil keputusan besar.',
     rating: 5,
   },
   {
