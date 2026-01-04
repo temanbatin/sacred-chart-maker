@@ -5,8 +5,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const N8N_WEBHOOK_URL = 'https://n8n.indonetwork.or.id/webhook/hd-calculate';
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -14,44 +15,28 @@ serve(async (req) => {
   try {
     const { year, month, day, hour, minute, place, gender } = await req.json();
     
-    console.log('Calculating chart for:', { year, month, day, hour, minute, place, gender });
+    console.log('Calculating chart via n8n:', { year, month, day, hour, minute, place, gender });
 
-    const HD_API_KEY = Deno.env.get('HD_API_KEY');
-    if (!HD_API_KEY) {
-      console.error('HD_API_KEY is not configured');
-      throw new Error('HD_API_KEY is not configured');
-    }
-
-    // Build the API URL with query parameters
-    const apiUrl = new URL('http://192.250.228.53:9021/calculate');
-    apiUrl.searchParams.set('year', year.toString());
-    apiUrl.searchParams.set('month', month.toString());
-    apiUrl.searchParams.set('day', day.toString());
-    apiUrl.searchParams.set('hour', hour.toString());
-    apiUrl.searchParams.set('minute', minute.toString());
-    apiUrl.searchParams.set('second', '0');
-    apiUrl.searchParams.set('place', place);
-    apiUrl.searchParams.set('gender', gender);
-    apiUrl.searchParams.set('islive', 'true'); // Always send islive=true as default
-
-    console.log('Calling Human Design API:', apiUrl.toString());
-
-    const response = await fetch(apiUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'accept': 'application/json',
-        'Authorization': `Bearer ${HD_API_KEY}`,
-      },
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        year, month, day, hour, minute, 
+        second: 0,
+        place, 
+        gender,
+        islive: true 
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Human Design API error:', response.status, errorText);
-      throw new Error(`API error: ${response.status} - ${errorText}`);
+      console.error('n8n webhook error:', response.status, errorText);
+      throw new Error(`n8n error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Human Design API response:', JSON.stringify(data));
+    console.log('Chart data received from n8n');
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -60,10 +45,7 @@ serve(async (req) => {
     console.error('Error in calculate-chart function:', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
