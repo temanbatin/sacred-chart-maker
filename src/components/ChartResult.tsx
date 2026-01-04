@@ -48,7 +48,63 @@ const formatPlanetName = (name: string): string => {
   return name.replace('_', ' ');
 };
 
-// Planet column component - simplified
+// Planet descriptions for tooltips
+const planetDescriptions: Record<string, { title: string; description: string }> = {
+  Sun: {
+    title: 'Matahari ☉',
+    description: 'Inti dari identitasmu. Mewakili 70% dari energi dan tema hidup utamamu.',
+  },
+  Earth: {
+    title: 'Bumi ⊕',
+    description: 'Grounding dan stabilitas. Bagaimana kamu membumi dan menyeimbangkan energi Matahari.',
+  },
+  Moon: {
+    title: 'Bulan ☾',
+    description: 'Dorongan dan motivasi. Apa yang mendorongmu maju dalam hidup.',
+  },
+  North_Node: {
+    title: 'North Node Ω',
+    description: 'Arah masa depan. Lingkungan dan orang yang membawa pertumbuhan.',
+  },
+  South_Node: {
+    title: 'South Node ☋',
+    description: 'Pengalaman masa lalu. Apa yang sudah kamu kuasai dan bawa dari kehidupan sebelumnya.',
+  },
+  Mercury: {
+    title: 'Merkurius ☿',
+    description: 'Komunikasi dan pikiran. Bagaimana kamu berpikir dan menyampaikan ide.',
+  },
+  Venus: {
+    title: 'Venus ♀',
+    description: 'Nilai dan moral. Apa yang kamu hargai dan bagaimana kamu berhubungan dengan orang lain.',
+  },
+  Mars: {
+    title: 'Mars ♂',
+    description: 'Energi dan ketidakdewasaan. Dimana kamu perlu tumbuh dan berkembang.',
+  },
+  Jupiter: {
+    title: 'Jupiter ♃',
+    description: 'Hukum dan keberuntungan. Dimana kamu menemukan ekspansi dan peluang.',
+  },
+  Saturn: {
+    title: 'Saturnus ♄',
+    description: 'Disiplin dan batasan. Dimana kamu perlu struktur dan tanggung jawab.',
+  },
+  Uranus: {
+    title: 'Uranus ♅',
+    description: 'Keunikan dan inovasi. Tema yang tidak biasa dalam hidupmu.',
+  },
+  Neptune: {
+    title: 'Neptunus ♆',
+    description: 'Ilusi dan spiritualitas. Dimana kamu perlu kejelasan dan kesadaran.',
+  },
+  Pluto: {
+    title: 'Pluto ♇',
+    description: 'Transformasi dan kebenaran. Dimana kamu mengalami perubahan mendalam.',
+  },
+};
+
+// Planet column component with tooltips
 const PlanetColumn = ({ 
   planets, 
   title, 
@@ -61,24 +117,33 @@ const PlanetColumn = ({
   const isDesign = side === 'left';
   
   return (
-    <div className="flex flex-col gap-0.5">
-      <div className={`text-xs font-semibold mb-2 pb-1 border-b text-center ${isDesign ? 'text-primary border-primary' : 'text-foreground border-muted'}`}>
-        {title}
-      </div>
-      {planets.map((planet, index) => (
-        <div 
-          key={index} 
-          className={`flex items-center gap-1.5 text-sm py-0.5 ${isDesign ? 'flex-row' : 'flex-row-reverse'}`}
-        >
-          <span className={`w-4 text-center text-xs ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
-            {planetSymbols[planet.Planet] || planet.Planet[0]}
-          </span>
-          <span className="font-medium text-foreground text-xs">
-            {planet.Gate}.{planet.Line}
-          </span>
+    <TooltipProvider>
+      <div className="flex flex-col gap-0.5">
+        <div className={`text-xs font-semibold mb-2 pb-1 border-b text-center ${isDesign ? 'text-primary border-primary' : 'text-foreground border-muted'}`}>
+          {title}
         </div>
-      ))}
-    </div>
+        {planets.map((planet, index) => (
+          <Tooltip key={index}>
+            <TooltipTrigger asChild>
+              <div 
+                className={`flex items-center gap-1.5 text-sm py-0.5 cursor-help ${isDesign ? 'flex-row' : 'flex-row-reverse'}`}
+              >
+                <span className={`w-4 text-center text-xs ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
+                  {planetSymbols[planet.Planet] || planet.Planet[0]}
+                </span>
+                <span className="font-medium text-foreground text-xs">
+                  {planet.Gate}.{planet.Line}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side={isDesign ? 'left' : 'right'} className="max-w-xs">
+              <p className="font-semibold">{planetDescriptions[planet.Planet]?.title || formatPlanetName(planet.Planet)}</p>
+              <p className="text-sm text-muted-foreground mt-1">{planetDescriptions[planet.Planet]?.description || `Gate ${planet.Gate}, Line ${planet.Line}`}</p>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    </TooltipProvider>
   );
 };
 
