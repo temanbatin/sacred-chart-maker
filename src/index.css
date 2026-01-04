@@ -209,3 +209,21 @@
   backdrop-filter: blur(10px);
   border: 1px solid hsl(160 40% 20% / 0.5);
 }
+
+/* Date and Time input icon color - match text color */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(93%) sepia(15%) saturate(500%) hue-rotate(10deg) brightness(105%);
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit {
+  color: hsl(43 87% 94%);
+}
+
+/* Firefox */
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark;
+}
