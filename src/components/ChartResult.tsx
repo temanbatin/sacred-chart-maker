@@ -322,86 +322,92 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
     if (!chartRef.current) return;
 
     setIsDownloading(true);
+
+    let clone: HTMLElement | null = null;
     try {
       // Clone the element for PDF rendering to avoid affecting the UI
-      const clone = chartRef.current.cloneNode(true) as HTMLElement;
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      clone.style.top = '0';
-      clone.style.width = chartRef.current.offsetWidth + 'px';
-      clone.style.background = '#1a1a2e';
-      clone.style.padding = '20px';
+      clone = chartRef.current.cloneNode(true) as HTMLElement;
+      clone.style.position = "fixed";
+      clone.style.left = "0";
+      clone.style.top = "0";
+      clone.style.opacity = "0";
+      clone.style.pointerEvents = "none";
+      clone.style.zIndex = "-1";
+      clone.style.width = chartRef.current.offsetWidth + "px";
+      clone.style.background = "#1a1a2e";
+      clone.style.padding = "20px";
       document.body.appendChild(clone);
 
       // Fix all elements with problematic styles in the clone
-      const allElements = clone.querySelectorAll('*');
+      const allElements = clone.querySelectorAll("*");
       allElements.forEach((el) => {
         const element = el as HTMLElement;
         const computedStyle = window.getComputedStyle(element);
-        
+
         // Remove backdrop filters and gradients that don't render well
-        if (computedStyle.backdropFilter !== 'none') {
-          element.style.backdropFilter = 'none';
-          (element.style as any).webkitBackdropFilter = 'none';
+        if (computedStyle.backdropFilter !== "none") {
+          element.style.backdropFilter = "none";
+          (element.style as any).webkitBackdropFilter = "none";
         }
-        
+
         // Fix backgrounds with gradients or transparent colors
-        if (computedStyle.background.includes('gradient') || 
-            computedStyle.background.includes('rgba') ||
-            computedStyle.background.includes('transparent')) {
-          element.style.background = '#252547';
+        if (
+          computedStyle.background.includes("gradient") ||
+          computedStyle.background.includes("rgba") ||
+          computedStyle.background.includes("transparent")
+        ) {
+          element.style.background = "#252547";
         }
-        
+
         // Ensure text is visible
-        if (computedStyle.color.includes('rgba')) {
-          element.style.color = '#ffffff';
+        if (computedStyle.color.includes("rgba")) {
+          element.style.color = "#ffffff";
         }
       });
 
       // Specifically fix glass-card elements
-      const glassCards = clone.querySelectorAll('.glass-card');
+      const glassCards = clone.querySelectorAll(".glass-card");
       glassCards.forEach((card) => {
         const element = card as HTMLElement;
-        element.style.background = '#252547';
-        element.style.backdropFilter = 'none';
-        element.style.border = '1px solid #3d3d6b';
+        element.style.background = "#252547";
+        element.style.backdropFilter = "none";
+        element.style.border = "1px solid #3d3d6b";
       });
 
       // Fix gradient text
       const gradientTexts = clone.querySelectorAll('[class*="text-gradient"]');
       gradientTexts.forEach((text) => {
         const element = text as HTMLElement;
-        element.style.background = 'none';
-        element.style.backgroundClip = 'unset';
-        element.style.webkitBackgroundClip = 'unset';
-        element.style.webkitTextFillColor = '#d4a574';
-        element.style.color = '#d4a574';
+        element.style.background = "none";
+        element.style.backgroundClip = "unset";
+        element.style.webkitBackgroundClip = "unset";
+        element.style.webkitTextFillColor = "#d4a574";
+        element.style.color = "#d4a574";
       });
+
+      // Wait 2 frames to ensure the clone has been laid out & painted
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 
       const options = {
         margin: 5,
         filename: `human-design-chart-${userName.replace(/\s+/g, "-").toLowerCase()}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.95 },
-        html2canvas: { 
+        image: { type: "jpeg" as const, quality: 0.95 },
+        html2canvas: {
           scale: 2,
           useCORS: true,
           allowTaint: true,
-          backgroundColor: '#1a1a2e',
+          backgroundColor: "#1a1a2e",
           logging: false,
-          removeContainer: true
         },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait' as const
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait" as const,
         },
-        pagebreak: { mode: ['css', 'legacy'], avoid: ['img', '.glass-card'] }
+        pagebreak: { mode: ["css", "legacy"], avoid: ["img", ".glass-card"] },
       };
 
       await html2pdf().from(clone).set(options).save();
-
-      // Remove the clone
-      document.body.removeChild(clone);
 
       toast({
         title: "Berhasil!",
@@ -415,6 +421,7 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
         variant: "destructive",
       });
     } finally {
+      if (clone?.parentElement) clone.parentElement.removeChild(clone);
       setIsDownloading(false);
     }
   };
