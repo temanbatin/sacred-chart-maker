@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Download, Share2, RotateCcw } from 'lucide-react';
+import { Download, Share2, RotateCcw, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { toast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
 import type { BirthDataForChart } from '@/pages/Index';
 
 interface ChartResultProps {
@@ -230,6 +232,8 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
   const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
   const [bodygraphLoading, setBodygraphLoading] = useState(false);
   const [bodygraphError, setBodygraphError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   const typeDescriptions: Record<string, string> = {
     Generator: 'Kamu adalah sumber energi yang tak terbatas. Hidupmu tentang menemukan apa yang membuat semangatmu menyala.',
@@ -296,6 +300,40 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
     fetchBodygraph();
   }, [birthData]);
 
+  // Download chart as PNG
+  const handleDownload = async () => {
+    if (!chartRef.current) return;
+    
+    setIsDownloading(true);
+    try {
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: '#1a1a2e',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `human-design-chart-${userName.replace(/\s+/g, '-').toLowerCase()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast({
+        title: "Berhasil!",
+        description: "Chart berhasil diunduh sebagai gambar PNG.",
+      });
+    } catch (error) {
+      console.error('Error downloading chart:', error);
+      toast({
+        title: "Gagal mengunduh",
+        description: "Terjadi kesalahan saat mengunduh chart.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   // Extract data from API response - data is nested in "general" object
   const general = data?.general || {};
   const chartType = general.energy_type || 'Unknown';
@@ -328,7 +366,7 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
         </div>
 
         {/* Bodygraph with Planet Columns */}
-        <div className="glass-card rounded-3xl p-4 md:p-8 mb-8 animate-fade-up">
+        <div ref={chartRef} className="glass-card rounded-3xl p-4 md:p-8 mb-8 animate-fade-up">
           <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
           
           <div className="flex justify-center items-start gap-2 md:gap-6 lg:gap-8">
@@ -633,11 +671,22 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
             Hitung Ulang
           </Button>
           <Button
+            onClick={handleDownload}
+            disabled={isDownloading}
             size="lg"
             className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl"
           >
-            <Download className="w-4 h-4 mr-2" />
-            Unduh Hasil
+            {isDownloading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Mengunduh...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Unduh Hasil
+              </>
+            )}
           </Button>
           <Button
             variant="outline"
