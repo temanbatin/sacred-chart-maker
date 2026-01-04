@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Share2, RotateCcw, Loader2 } from "lucide-react";
+import { Download, Share2, RotateCcw, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
@@ -684,6 +684,58 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
           )}
         </div>
         {/* End of Downloadable Content Area */}
+
+        {/* Upsell CTA Section */}
+        <div className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
+          <div className="text-center mb-6">
+            <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
+              Siap Menyelami Potensi Terbesarmu?
+            </h3>
+            <p className="text-white/90 text-lg">
+              Apa yang kamu lihat di sini hanyalah 10% dari desain aslimu. Buka Full Foundation Analysis (30+ Halaman) untuk mengungkap misi hidup dan bakat terpendammu.
+            </p>
+          </div>
+
+          <div className="space-y-3 mb-8 max-w-2xl mx-auto">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-white/90">
+                <span className="font-semibold">Analisis Mendalam</span> tentang Tipe, strategi, otoritas, profil, dan semua detail yang kamu lihat diatas{" "}
+                <span className="text-amber-300">(senilai 300K)</span>
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-white/90">
+                <span className="font-semibold">Penjelasan Detail Incarnation Cross</span> (Misi Hidup){" "}
+                <span className="text-amber-300">(senilai 300K)</span>
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-white/90">
+                <span className="font-semibold">Penjelasan detail gate dan center</span> kamu{" "}
+                <span className="text-amber-300">(senilai 500K)</span>
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-white/90">
+                <span className="font-semibold">Panduan Strategi Karir & Relasi</span> berdasarkan human designmu{" "}
+                <span className="text-amber-300">(senilai 450K)</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Button
+              size="lg"
+              className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg px-8 py-6"
+            >
+              Dapatkan Laporan Lengkap — Rp 149.000
+            </Button>
+          </div>
+        </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up mt-8">
