@@ -727,13 +727,17 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
             </div>
           </div>
 
-          <div className="text-center">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               size="lg"
               className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg px-8 py-6"
             >
-              Dapatkan Laporan Lengkap — Rp 149.000
+              Dapatkan Laporan Lengkap
             </Button>
+            <div className="flex items-center gap-3">
+              <span className="text-white/60 line-through text-lg">Rp 1.550.000</span>
+              <span className="text-amber-300 font-bold text-2xl">Rp 149.000</span>
+            </div>
           </div>
         </div>
 
