@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Sparkles, MapPin, Loader2 } from 'lucide-react';
+import { Sparkles, MapPin, Loader2, Calendar, Clock } from 'lucide-react';
 
 interface City {
   display_name: string;
@@ -141,14 +141,17 @@ export const CalculatorForm = forwardRef<HTMLDivElement, CalculatorFormProps>(
               <Label htmlFor="birthDate" className="text-foreground text-lg">
                 Tanggal Lahir
               </Label>
-              <Input
-                id="birthDate"
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="bg-input border-border text-foreground h-12 rounded-xl"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="birthDate"
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  className="hd-date relative bg-input border-border text-foreground h-12 rounded-xl pr-10"
+                  required
+                />
+                <Calendar className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground" />
+              </div>
             </div>
 
             {/* Birth Time */}
@@ -156,14 +159,17 @@ export const CalculatorForm = forwardRef<HTMLDivElement, CalculatorFormProps>(
               <Label htmlFor="birthTime" className="text-foreground text-lg">
                 Waktu Lahir
               </Label>
-              <Input
-                id="birthTime"
-                type="time"
-                value={birthTime}
-                onChange={(e) => setBirthTime(e.target.value)}
-                className="bg-input border-border text-foreground h-12 rounded-xl"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="birthTime"
+                  type="time"
+                  value={birthTime}
+                  onChange={(e) => setBirthTime(e.target.value)}
+                  className="hd-time relative bg-input border-border text-foreground h-12 rounded-xl pr-10"
+                  required
+                />
+                <Clock className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground" />
+              </div>
               <p className="text-sm text-muted-foreground">
                 Jika tidak tahu waktu pasti, gunakan perkiraan terdekat
               </p>
