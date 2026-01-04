@@ -42,49 +42,82 @@ const formatPlanetName = (name: string): string => {
   return name.replace('_', ' ');
 };
 
-// Planet column component
+// Planet column component - simplified
 const PlanetColumn = ({ 
   planets, 
-  oppositePlanets,
   title, 
   side 
 }: { 
   planets: PlanetData[]; 
-  oppositePlanets: PlanetData[];
   title: string; 
   side: 'left' | 'right';
 }) => {
   const isDesign = side === 'left';
   
-  // Get all gates from the opposite side to check for channel matches
-  const oppositeGates = oppositePlanets.map(p => p.Gate);
-  
   return (
-    <div className="flex flex-col gap-1">
-      <div className={`text-sm font-semibold mb-2 pb-1 border-b ${isDesign ? 'text-primary border-primary' : 'text-foreground border-muted'}`}>
+    <div className="flex flex-col gap-0.5">
+      <div className={`text-xs font-semibold mb-2 pb-1 border-b text-center ${isDesign ? 'text-primary border-primary' : 'text-foreground border-muted'}`}>
         {title}
       </div>
-      {planets.map((planet, index) => {
-        // Arrow shows if this planet's Ch_Gate exists in the opposite column
-        const hasChannelMatch = planet.Ch_Gate && planet.Ch_Gate > 0 && oppositeGates.includes(planet.Ch_Gate);
-        
-        return (
-          <div 
-            key={index} 
-            className={`flex items-center gap-2 text-sm py-0.5 ${isDesign ? 'flex-row' : 'flex-row-reverse'}`}
-          >
-            <span className={`w-5 text-center ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
-              {planetSymbols[planet.Planet] || planet.Planet[0]}
-            </span>
-            <span className="font-medium text-foreground">
-              {planet.Gate}.{planet.Line}
-            </span>
-            {hasChannelMatch && (
-              <span className="text-primary text-xs">←</span>
-            )}
-          </div>
-        );
-      })}
+      {planets.map((planet, index) => (
+        <div 
+          key={index} 
+          className={`flex items-center gap-1.5 text-sm py-0.5 ${isDesign ? 'flex-row' : 'flex-row-reverse'}`}
+        >
+          <span className={`w-4 text-center text-xs ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
+            {planetSymbols[planet.Planet] || planet.Planet[0]}
+          </span>
+          <span className="font-medium text-foreground text-xs">
+            {planet.Gate}.{planet.Line}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Variables/Four Arrows component
+interface VariableArrow {
+  value: string;
+  name: string;
+  aspect: string;
+  def_type: string;
+}
+
+const VariableArrows = ({ 
+  variables, 
+  side 
+}: { 
+  variables: Record<string, VariableArrow>; 
+  side: 'left' | 'right';
+}) => {
+  const isLeft = side === 'left';
+  const topKey = isLeft ? 'top_left' : 'top_right';
+  const bottomKey = isLeft ? 'bottom_left' : 'bottom_right';
+  
+  const topVar = variables[topKey];
+  const bottomVar = variables[bottomKey];
+  
+  if (!topVar && !bottomVar) return null;
+  
+  const getArrow = (value: string) => {
+    return value === 'left' ? '←' : '→';
+  };
+  
+  return (
+    <div className="flex flex-col justify-center h-full gap-24">
+      {topVar && (
+        <div className={`flex flex-col items-center ${isLeft ? 'text-primary' : 'text-foreground'}`}>
+          <span className="text-2xl font-bold">{getArrow(topVar.value)}</span>
+          <span className="text-[10px] text-muted-foreground text-center max-w-16">{topVar.name}</span>
+        </div>
+      )}
+      {bottomVar && (
+        <div className={`flex flex-col items-center ${isLeft ? 'text-primary' : 'text-foreground'}`}>
+          <span className="text-2xl font-bold">{getArrow(bottomVar.value)}</span>
+          <span className="text-[10px] text-muted-foreground text-center max-w-16">{bottomVar.name}</span>
+        </div>
+      )}
     </div>
   );
 };
@@ -190,18 +223,25 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
           </p>
         </div>
 
-        {/* Bodygraph with Planet Columns */}
+        {/* Bodygraph with Planet Columns and Variable Arrows */}
         <div className="glass-card rounded-3xl p-4 md:p-8 mb-8 animate-fade-up">
           <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
           
-          <div className="flex justify-center items-start gap-4 md:gap-8">
+          <div className="flex justify-center items-start gap-2 md:gap-4">
             {/* Design Column (Left) */}
             <div className="hidden md:block flex-shrink-0">
               <PlanetColumn 
                 planets={designPlanets}
-                oppositePlanets={personalityPlanets}
                 title="Design" 
                 side="left" 
+              />
+            </div>
+
+            {/* Left Variable Arrows */}
+            <div className="hidden md:flex flex-shrink-0">
+              <VariableArrows 
+                variables={general.variables || {}}
+                side="left"
               />
             </div>
 
@@ -244,31 +284,63 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
               ) : null}
             </div>
 
+            {/* Right Variable Arrows */}
+            <div className="hidden md:flex flex-shrink-0">
+              <VariableArrows 
+                variables={general.variables || {}}
+                side="right"
+              />
+            </div>
+
             {/* Personality Column (Right) */}
             <div className="hidden md:block flex-shrink-0">
               <PlanetColumn 
                 planets={personalityPlanets}
-                oppositePlanets={designPlanets}
                 title="Personality" 
                 side="right" 
               />
             </div>
           </div>
 
-          {/* Mobile: Show planets below chart */}
-          <div className="md:hidden mt-6 grid grid-cols-2 gap-4">
-            <PlanetColumn 
-              planets={designPlanets}
-              oppositePlanets={personalityPlanets}
-              title="Design" 
-              side="left" 
-            />
-            <PlanetColumn 
-              planets={personalityPlanets}
-              oppositePlanets={designPlanets}
-              title="Personality" 
-              side="right" 
-            />
+          {/* Mobile: Show planets and arrows below chart */}
+          <div className="md:hidden mt-6">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <PlanetColumn 
+                planets={designPlanets}
+                title="Design" 
+                side="left" 
+              />
+              <PlanetColumn 
+                planets={personalityPlanets}
+                title="Personality" 
+                side="right" 
+              />
+            </div>
+            {/* Mobile Variables */}
+            {general.variables && (
+              <div className="flex justify-center gap-8 mt-4 pt-4 border-t border-muted">
+                <div className="flex gap-4">
+                  <div className="text-center">
+                    <span className="text-xl font-bold text-primary">{general.variables.top_left?.value === 'left' ? '←' : '→'}</span>
+                    <p className="text-[10px] text-muted-foreground">{general.variables.top_left?.name}</p>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-xl font-bold text-primary">{general.variables.bottom_left?.value === 'left' ? '←' : '→'}</span>
+                    <p className="text-[10px] text-muted-foreground">{general.variables.bottom_left?.name}</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="text-center">
+                    <span className="text-xl font-bold text-foreground">{general.variables.top_right?.value === 'left' ? '←' : '→'}</span>
+                    <p className="text-[10px] text-muted-foreground">{general.variables.top_right?.name}</p>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-xl font-bold text-foreground">{general.variables.bottom_right?.value === 'left' ? '←' : '→'}</span>
+                    <p className="text-[10px] text-muted-foreground">{general.variables.bottom_right?.name}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
