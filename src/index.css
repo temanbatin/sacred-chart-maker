@@ -210,17 +210,11 @@
   border: 1px solid hsl(160 40% 20% / 0.5);
 }
 
-/* Date and Time input icon color - match muted text color */
+/* Date and Time input icon color - match foreground text color */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: invert(70%) sepia(10%) saturate(300%) hue-rotate(15deg) brightness(90%);
+  filter: invert(95%) sepia(20%) saturate(400%) hue-rotate(10deg) brightness(110%);
   cursor: pointer;
-  opacity: 0.7;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator:hover,
-input[type="time"]::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
 }
 
 /* Firefox */
