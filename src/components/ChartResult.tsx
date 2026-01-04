@@ -167,6 +167,7 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
   const profile = general.profile || 'Unknown';
   const definition = general.definition || 'Unknown';
   const incarnationCross = general.inc_cross || 'Unknown';
+  const aura = general.aura || '';
   const signature = general.signature || '';
   const notSelf = general.not_self || '';
   const definedCenters = general.defined_centers || [];
@@ -348,18 +349,29 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
             </div>
           )}
 
-          {/* Incarnation Cross */}
-          {incarnationCross && incarnationCross !== 'Unknown' && (
-            <div className="mt-8 text-center">
-              <div className="bg-primary/10 rounded-2xl p-6 inline-block">
-                <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Incarnation Cross</h4>
-                <p className="text-lg font-semibold text-foreground">{incarnationCross}</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Misi hidupmu yang lebih besar
-                </p>
-              </div>
+          {/* Incarnation Cross & Aura */}
+          {(incarnationCross && incarnationCross !== 'Unknown') || aura ? (
+            <div className="mt-8 grid md:grid-cols-2 gap-6">
+              {incarnationCross && incarnationCross !== 'Unknown' && (
+                <div className="bg-primary/10 rounded-2xl p-6 text-center">
+                  <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Incarnation Cross</h4>
+                  <p className="text-lg font-semibold text-foreground">{incarnationCross}</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Misi hidupmu yang lebih besar
+                  </p>
+                </div>
+              )}
+              {aura && (
+                <div className="bg-secondary/50 rounded-2xl p-6 text-center">
+                  <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Aura</h4>
+                  <p className="text-lg font-semibold text-foreground">{aura}</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Bagaimana energimu dirasakan oleh orang lain
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Channels Section */}
