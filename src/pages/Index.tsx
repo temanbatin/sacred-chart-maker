@@ -58,7 +58,26 @@ const Index = () => {
       place: pendingBirthData.place,
     });
 
+    // Create birth date string for database
+    const birthDateStr = `${pendingBirthData.year}-${String(pendingBirthData.month).padStart(2, '0')}-${String(pendingBirthData.day).padStart(2, '0')}`;
+
     try {
+      // Save lead to database
+      const { error: leadError } = await supabase
+        .from('leads')
+        .insert({
+          name: pendingBirthData.name,
+          email: leadData.email,
+          whatsapp: leadData.whatsapp,
+          birth_date: birthDateStr,
+          birth_place: pendingBirthData.place,
+        });
+
+      if (leadError) {
+        console.error('Error saving lead:', leadError);
+        // Continue anyway - don't block user from seeing chart
+      }
+
       const { data: result, error } = await supabase.functions.invoke('calculate-chart', {
         body: {
           year: pendingBirthData.year,
@@ -68,9 +87,6 @@ const Index = () => {
           minute: pendingBirthData.minute,
           place: pendingBirthData.place,
           gender: pendingBirthData.gender,
-          // Include lead data for potential future use
-          leadWhatsapp: leadData.whatsapp,
-          leadEmail: leadData.email,
         },
       });
 
