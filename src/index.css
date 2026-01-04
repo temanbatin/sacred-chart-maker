@@ -213,12 +213,21 @@
 /* Date and Time input icon color - white to match text */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(1);
+  filter: invert(1) brightness(2);
   cursor: pointer;
+  opacity: 0.9;
 }
 
-/* Firefox */
+/* Firefox and general dark theme support */
 input[type="date"],
 input[type="time"] {
   color-scheme: dark;
+}
+
+/* Webkit date/time styling for better icon visibility */
+input[type="date"]::-webkit-inner-spin-button,
+input[type="time"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button,
+input[type="time"]::-webkit-clear-button {
+  filter: invert(1) brightness(2);
 }
