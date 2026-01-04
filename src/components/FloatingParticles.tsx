@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 
 interface Particle {
   id: number;
@@ -16,7 +16,7 @@ interface GlowOrb {
   delay: number;
 }
 
-export const FloatingParticles = () => {
+export const FloatingParticles = memo(() => {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [glowOrbs, setGlowOrbs] = useState<GlowOrb[]>([]);
 
@@ -76,4 +76,6 @@ export const FloatingParticles = () => {
       ))}
     </div>
   );
-};
+});
+
+FloatingParticles.displayName = 'FloatingParticles';
