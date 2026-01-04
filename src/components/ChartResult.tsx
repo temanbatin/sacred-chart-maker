@@ -237,39 +237,52 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
 
   const typeDescriptions: Record<string, string> = {
     Generator:
-      "Kamu adalah sumber energi yang tak terbatas. Hidupmu tentang menemukan apa yang membuat semangatmu menyala.",
+      "Kamu adalah sumber energi kehidupan dunia. Kamu memiliki daya tahan yang luar biasa, dan dirancang untuk membangun sesuatu yang besar dan bermakna. Kuncinya adalah menggunakan energimu hanya untuk hal-hal yang benar-benar memicu antusiasme di dalam dirimu.",
     "Manifesting Generator":
       "Kamu adalah tipe energi yang paling cepat dan efisien. Dirancang untuk menangani banyak hal sekaligus, kamu memiliki kemampuan unik untuk menemukan jalan pintas dan mewujudkan berbagai ide menjadi kenyataan dalam waktu singkat.",
     Projector:
-      "Kamu adalah pemandu yang bijaksana. Tunggu undangan dan bimbinglah orang lain dengan kedalaman pemahamanmu.",
+      "Kamu tidak lahir untuk bekerja keras secara fisik, melainkan untuk melihat pola dan potensi yang tidak dilihat orang lain. Kamu adalah kompas bagi orang di sekitarmu, yang hadir untuk membimbing dan mengarahkan orang lain menuju kesuksesan.",
     Manifestor:
-      "Kamu adalah inisiator yang kuat. Informasikan orang di sekitarmu dan ciptakan dampak yang kamu inginkan.",
+      "Kamu adalah pemantik perubahan. Kamu memiliki kekuatan alami untuk memulai sesuatu secara mandiri, kamu tidak perlu menunggu izin atau bantuan orang lain untuk bergerak. Kehadiranmu berfungsi untuk membuka pintu baru dan menginspirasi pergerakan besar.",
     Reflector:
-      "Kamu adalah cermin lingkungan. Tunggu siklus bulan dan evaluasi dengan bijaksana sebelum membuat keputusan besar.",
+      "Kamu adalah tipe yang paling langka, berfungsi sebagai cermin objektif bagi lingkungan sekitarmu. Kamu memiliki kemampuan luar biasa untuk merasakan kesehatan dan keharmonisan suatu tempat, memberikan perspektif yang sangat dalam tentang kondisi dunia di sekelilingmu.",
   };
 
   const strategyDescriptions: Record<string, string> = {
-    "To Respond": "Tunggu sesuatu di dunia luar yang memicu responsmu sebelum bertindak.",
-    "Wait to Respond": "Tunggu sesuatu di dunia luar yang memicu responsmu sebelum bertindak.",
-    "Wait for the Invitation": "Biarkan orang lain mengenali nilaimu dan mengundangmu.",
-    "To Inform": "Sampaikan rencanamu sebelum bertindak untuk mengurangi hambatan.",
-    Inform: "Sampaikan rencanamu sebelum bertindak untuk mengurangi hambatan.",
+    "To Respond":
+      "Jangan memaksakan aksi. Biarkan dunia memberikan sinyal atau peluang, lalu bertindaklah hanya saat energimu merespon tanda tersebut secara alami.",
+    "Wait to Respond":
+      "Jangan memaksakan aksi. Biarkan dunia memberikan sinyal atau peluang, lalu bertindaklah hanya saat energimu merespon tanda tersebut secara alami.",
+    "Wait for the Invitation":
+      "Efektivitasmu muncul saat kamu diakui. Tunggu undangan atau apresiasi tulus dari orang lain sebelum kamu membagikan bimbingan dan arahanmu.",
+    "To Inform":
+      "Amankan langkahmu dengan berkomunikasi. Beritahu orang-orang di sekitarmu tentang rencana besarmu agar jalanmu bebas dari hambatan dan resistensi.",
+    Inform:
+      "Amankan langkahmu dengan berkomunikasi. Beritahu orang-orang di sekitarmu tentang rencana besarmu agar jalanmu bebas dari hambatan dan resistensi.",
     "Wait a Lunar Cycle": "Beri dirimu 28 hari untuk merasakan kejelasan sebelum keputusan besar.",
   };
 
   const authorityDescriptions: Record<string, string> = {
-    Sacral: 'Dengarkan suara perutmu - respon guttural "uh-huh" atau "un-un".',
-    Emotional: "Tunggu gelombang emosimu mereda. Kejelasan datang seiring waktu.",
-    "Solar Plexus": "Tunggu gelombang emosimu mereda. Kejelasan datang seiring waktu, bukan di saat emosi tinggi.",
-    Splenic: "Percaya pada intuisi instan dan spontanmu.",
-    Spleen: "Percaya pada intuisi instan dan spontanmu. Keputusan terbaik datang dalam sekejap.",
+    Sacral:
+      'Gunakan gut feeling atau respon fisik spontan dari perutmu. Percayai jawaban instan seperti "uh-huh" (ya) atau "un-un" (tidak) saat ini juga.',
+    Emotional:
+      "Hindari keputusan impulsif. Kejelasan sejati datang saat gelombang emosimu sudah tenang. Jangan memutuskan sesuatu di puncak rasa senang maupun sedih.",
+    "Solar Plexus":
+      "Hindari keputusan impulsif. Kejelasan sejati datang saat gelombang emosimu sudah tenang. Jangan memutuskan sesuatu di puncak rasa senang maupun sedih.",
+    Splenic:
+      "Percayai insting instan demi keamanan dan kesehatanmu. Jawaban terbaik muncul dalam sekejap—perhatikan peringatan halus dari tubuhmu tanpa perlu berpikir lama.",
+    Spleen:
+      "Percayai insting instan demi keamanan dan kesehatanmu. Jawaban terbaik muncul dalam sekejap—perhatikan peringatan halus dari tubuhmu tanpa perlu berpikir lama.",
     "Ego Manifested": "Dengarkan apa yang benar-benar kamu inginkan dari hatimu.",
     "Ego Projected": "Bicarakan keinginanmu dan dengarkan apa yang keluar dari mulutmu.",
-    "Self Projected": "Bicarakan tentang keputusanmu dan dengarkan identitasmu.",
-    "Self-Projected": "Bicarakan tentang keputusanmu dan dengarkan identitasmu.",
+    "Self Projected":
+      "Suarakan pilihanmu kepada orang lain. Kamu akan menemukan kebenaran melalui apa yang keluar dari mulutmu, bukan melalui apa yang kamu pikirkan di kepala.",
+    "Self-Projected":
+      "Suarakan pilihanmu kepada orang lain. Kamu akan menemukan kebenaran melalui apa yang keluar dari mulutmu, bukan melalui apa yang kamu pikirkan di kepala.",
     Mental: "Diskusikan dengan orang terpercaya dan perhatikan lingkunganmu.",
     None: "Kamu adalah Reflector - tunggu satu siklus bulan penuh sebelum keputusan besar.",
-    Lunar: "Tunggu satu siklus bulan penuh sebelum keputusan besar.",
+    Lunar:
+      "Biarkan waktu yang memberikan jawaban. Berikan dirimu jeda satu siklus bulan penuh (28 hari) untuk mendapatkan kejernihan total sebelum mengambil komitmen besar.",
   };
 
   // Fetch bodygraph image when component mounts
