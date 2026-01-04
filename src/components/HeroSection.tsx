@@ -33,7 +33,7 @@ export const HeroSection = ({
 
         {/* Trust indicator */}
         <p className="mt-8 text-sm text-muted-foreground/60">
-          ✨ Sudah dipercaya lebih dari 10.000+ pencari jati diri
+          Bergabunglah dengan 1500+ pencari jati diri lainnya hari ini.
         </p>
       </div>
     </section>;
