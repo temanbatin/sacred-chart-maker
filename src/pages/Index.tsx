@@ -12,11 +12,21 @@ import { Footer } from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface BirthDataForChart {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  place: string;
+}
+
 const Index = () => {
   const calculatorRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [chartData, setChartData] = useState<any>(null);
   const [userName, setUserName] = useState('');
+  const [birthData, setBirthData] = useState<BirthDataForChart | null>(null);
 
   const scrollToCalculator = () => {
     calculatorRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -25,6 +35,16 @@ const Index = () => {
   const handleSubmit = async (data: BirthData) => {
     setIsLoading(true);
     setUserName(data.name);
+
+    // Store birth data for bodygraph
+    setBirthData({
+      year: data.year,
+      month: data.month,
+      day: data.day,
+      hour: data.hour,
+      minute: data.minute,
+      place: data.place,
+    });
 
     try {
       const { data: result, error } = await supabase.functions.invoke('calculate-chart', {
@@ -58,6 +78,7 @@ const Index = () => {
   const handleReset = () => {
     setChartData(null);
     setUserName('');
+    setBirthData(null);
     scrollToCalculator();
   };
 
@@ -88,6 +109,7 @@ const Index = () => {
           <ChartResult
             data={chartData}
             userName={userName}
+            birthData={birthData}
             onReset={handleReset}
           />
         )}
