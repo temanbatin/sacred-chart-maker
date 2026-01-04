@@ -4,11 +4,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Share2, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import type { BirthDataForChart } from '@/pages/Index';
 
 interface ChartResultProps {
@@ -117,33 +116,31 @@ const PlanetColumn = ({
   const isDesign = side === 'left';
   
   return (
-    <TooltipProvider>
-      <div className="flex flex-col gap-0.5">
-        <div className={`text-xs font-semibold mb-2 pb-1 border-b text-center ${isDesign ? 'text-primary border-primary' : 'text-foreground border-muted'}`}>
-          {title}
-        </div>
-        {planets.map((planet, index) => (
-          <Tooltip key={index}>
-            <TooltipTrigger asChild>
-              <div 
-                className={`flex items-center gap-1.5 text-sm py-0.5 cursor-help ${isDesign ? 'flex-row' : 'flex-row-reverse'}`}
-              >
-                <span className={`w-4 text-center text-xs ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
-                  {planetSymbols[planet.Planet] || planet.Planet[0]}
-                </span>
-                <span className="font-medium text-foreground text-xs">
-                  {planet.Gate}.{planet.Line}
-                </span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side={isDesign ? 'left' : 'right'} className="max-w-xs">
-              <p className="font-semibold">{planetDescriptions[planet.Planet]?.title || formatPlanetName(planet.Planet)}</p>
-              <p className="text-sm text-muted-foreground mt-1">{planetDescriptions[planet.Planet]?.description || `Gate ${planet.Gate}, Line ${planet.Line}`}</p>
-            </TooltipContent>
-          </Tooltip>
-        ))}
+    <div className="flex flex-col gap-0.5">
+      <div className={`text-xs font-semibold mb-2 pb-1 border-b text-center ${isDesign ? 'text-primary border-primary' : 'text-foreground border-muted'}`}>
+        {title}
       </div>
-    </TooltipProvider>
+      {planets.map((planet, index) => (
+        <Popover key={index}>
+          <PopoverTrigger asChild>
+            <div 
+              className={`flex items-center gap-1.5 text-sm py-0.5 cursor-pointer hover:bg-muted/50 rounded px-1 transition-colors ${isDesign ? 'flex-row' : 'flex-row-reverse'}`}
+            >
+              <span className={`w-4 text-center text-xs ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
+                {planetSymbols[planet.Planet] || planet.Planet[0]}
+              </span>
+              <span className="font-medium text-foreground text-xs">
+                {planet.Gate}.{planet.Line}
+              </span>
+            </div>
+          </PopoverTrigger>
+          <PopoverContent side={isDesign ? 'left' : 'right'} className="max-w-xs p-3">
+            <p className="font-semibold">{planetDescriptions[planet.Planet]?.title || formatPlanetName(planet.Planet)}</p>
+            <p className="text-sm text-muted-foreground mt-1">{planetDescriptions[planet.Planet]?.description || `Gate ${planet.Gate}, Line ${planet.Line}`}</p>
+          </PopoverContent>
+        </Popover>
+      ))}
+    </div>
   );
 };
 
@@ -198,32 +195,32 @@ const VariableArrows = ({
   return (
     <div className="flex flex-col justify-center h-full gap-24">
       {topVar && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={`flex flex-col items-center cursor-help ${isLeft ? 'text-primary' : 'text-foreground'}`}>
+        <Popover>
+          <PopoverTrigger asChild>
+            <div className={`flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity ${isLeft ? 'text-primary' : 'text-foreground'}`}>
               <span className="text-2xl font-bold">{getArrow(topVar.value)}</span>
               <span className="text-[10px] text-muted-foreground text-center max-w-16">{topVar.name}</span>
             </div>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-xs">
+          </PopoverTrigger>
+          <PopoverContent side="top" className="max-w-xs p-3">
             <p className="font-semibold">{variableDescriptions[topVar.name]?.title || topVar.name}</p>
             <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[topVar.name]?.description || `${topVar.aspect} - ${topVar.def_type}`}</p>
-          </TooltipContent>
-        </Tooltip>
+          </PopoverContent>
+        </Popover>
       )}
       {bottomVar && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={`flex flex-col items-center cursor-help ${isLeft ? 'text-primary' : 'text-foreground'}`}>
+        <Popover>
+          <PopoverTrigger asChild>
+            <div className={`flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity ${isLeft ? 'text-primary' : 'text-foreground'}`}>
               <span className="text-2xl font-bold">{getArrow(bottomVar.value)}</span>
               <span className="text-[10px] text-muted-foreground text-center max-w-16">{bottomVar.name}</span>
             </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-xs">
+          </PopoverTrigger>
+          <PopoverContent side="bottom" className="max-w-xs p-3">
             <p className="font-semibold">{variableDescriptions[bottomVar.name]?.title || bottomVar.name}</p>
             <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[bottomVar.name]?.description || `${bottomVar.aspect} - ${bottomVar.def_type}`}</p>
-          </TooltipContent>
-        </Tooltip>
+          </PopoverContent>
+        </Popover>
       )}
     </div>
   );
@@ -395,70 +392,68 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
 
           {/* Variables/Four Arrows - shown below chart for all screens */}
           {general.variables && (
-            <TooltipProvider>
-              <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-muted">
-                <div className="flex gap-4">
-                  {general.variables.top_left && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="text-center cursor-help">
-                          <span className="text-xl font-bold text-primary">{general.variables.top_left.value === 'left' ? '←' : '→'}</span>
-                          <p className="text-[10px] text-muted-foreground">{general.variables.top_left.name}</p>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p className="font-semibold">{variableDescriptions[general.variables.top_left.name]?.title}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.top_left.name]?.description}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  {general.variables.bottom_left && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="text-center cursor-help">
-                          <span className="text-xl font-bold text-primary">{general.variables.bottom_left.value === 'left' ? '←' : '→'}</span>
-                          <p className="text-[10px] text-muted-foreground">{general.variables.bottom_left.name}</p>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p className="font-semibold">{variableDescriptions[general.variables.bottom_left.name]?.title}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.bottom_left.name]?.description}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
-                <div className="flex gap-4">
-                  {general.variables.top_right && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="text-center cursor-help">
-                          <span className="text-xl font-bold text-foreground">{general.variables.top_right.value === 'left' ? '←' : '→'}</span>
-                          <p className="text-[10px] text-muted-foreground">{general.variables.top_right.name}</p>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p className="font-semibold">{variableDescriptions[general.variables.top_right.name]?.title}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.top_right.name]?.description}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  {general.variables.bottom_right && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="text-center cursor-help">
-                          <span className="text-xl font-bold text-foreground">{general.variables.bottom_right.value === 'left' ? '←' : '→'}</span>
-                          <p className="text-[10px] text-muted-foreground">{general.variables.bottom_right.name}</p>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p className="font-semibold">{variableDescriptions[general.variables.bottom_right.name]?.title}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.bottom_right.name]?.description}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
+            <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-muted">
+              <div className="flex gap-4">
+                {general.variables.top_left && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="text-center cursor-pointer hover:opacity-80 transition-opacity">
+                        <span className="text-xl font-bold text-primary">{general.variables.top_left.value === 'left' ? '←' : '→'}</span>
+                        <p className="text-[10px] text-muted-foreground">{general.variables.top_left.name}</p>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="max-w-xs p-3">
+                      <p className="font-semibold">{variableDescriptions[general.variables.top_left.name]?.title}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.top_left.name]?.description}</p>
+                    </PopoverContent>
+                  </Popover>
+                )}
+                {general.variables.bottom_left && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="text-center cursor-pointer hover:opacity-80 transition-opacity">
+                        <span className="text-xl font-bold text-primary">{general.variables.bottom_left.value === 'left' ? '←' : '→'}</span>
+                        <p className="text-[10px] text-muted-foreground">{general.variables.bottom_left.name}</p>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="max-w-xs p-3">
+                      <p className="font-semibold">{variableDescriptions[general.variables.bottom_left.name]?.title}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.bottom_left.name]?.description}</p>
+                    </PopoverContent>
+                  </Popover>
+                )}
               </div>
-            </TooltipProvider>
+              <div className="flex gap-4">
+                {general.variables.top_right && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="text-center cursor-pointer hover:opacity-80 transition-opacity">
+                        <span className="text-xl font-bold text-foreground">{general.variables.top_right.value === 'left' ? '←' : '→'}</span>
+                        <p className="text-[10px] text-muted-foreground">{general.variables.top_right.name}</p>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="max-w-xs p-3">
+                      <p className="font-semibold">{variableDescriptions[general.variables.top_right.name]?.title}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.top_right.name]?.description}</p>
+                    </PopoverContent>
+                  </Popover>
+                )}
+                {general.variables.bottom_right && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="text-center cursor-pointer hover:opacity-80 transition-opacity">
+                        <span className="text-xl font-bold text-foreground">{general.variables.bottom_right.value === 'left' ? '←' : '→'}</span>
+                        <p className="text-[10px] text-muted-foreground">{general.variables.bottom_right.name}</p>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="max-w-xs p-3">
+                      <p className="font-semibold">{variableDescriptions[general.variables.bottom_right.name]?.title}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.bottom_right.name]?.description}</p>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Mobile: Show planets below chart */}
