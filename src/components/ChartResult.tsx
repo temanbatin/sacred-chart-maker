@@ -12,6 +12,78 @@ interface ChartResultProps {
   onReset: () => void;
 }
 
+interface PlanetData {
+  Planet: string;
+  Gate: number;
+  Line: number;
+  Lon: number;
+  Ch_Gate?: number;
+}
+
+// Planet symbols mapping
+const planetSymbols: Record<string, string> = {
+  Sun: '☉',
+  Earth: '⊕',
+  Moon: '☾',
+  North_Node: 'Ω',
+  South_Node: '☋',
+  Mercury: '☿',
+  Venus: '♀',
+  Mars: '♂',
+  Jupiter: '♃',
+  Saturn: '♄',
+  Uranus: '♅',
+  Neptune: '♆',
+  Pluto: '♇',
+};
+
+// Format planet name for display
+const formatPlanetName = (name: string): string => {
+  return name.replace('_', ' ');
+};
+
+// Planet column component
+const PlanetColumn = ({ 
+  planets, 
+  title, 
+  side 
+}: { 
+  planets: PlanetData[]; 
+  title: string; 
+  side: 'left' | 'right';
+}) => {
+  const isDesign = side === 'left';
+  
+  return (
+    <div className="flex flex-col gap-1">
+      <div className={`text-sm font-semibold mb-2 pb-1 border-b ${isDesign ? 'text-primary border-primary' : 'text-foreground border-muted'}`}>
+        {title}
+      </div>
+      {planets.map((planet, index) => {
+        const hasChannel = planet.Ch_Gate && planet.Ch_Gate > 0;
+        return (
+          <div 
+            key={index} 
+            className={`flex items-center gap-2 text-sm py-0.5 ${isDesign ? 'flex-row' : 'flex-row-reverse'}`}
+          >
+            <span className={`w-5 text-center ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
+              {planetSymbols[planet.Planet] || planet.Planet[0]}
+            </span>
+            <span className="font-medium text-foreground">
+              {planet.Gate}.{planet.Line}
+            </span>
+            {hasChannel && (
+              <span className={`text-xs ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
+                ←
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultProps) => {
   const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
   const [bodygraphLoading, setBodygraphLoading] = useState(false);
@@ -95,10 +167,14 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
   const definedCenters = general.defined_centers || [];
   const undefinedCenters = general.undefined_centers || [];
   const channels = data?.channels?.Channels || [];
+  
+  // Extract gates/planets data
+  const designPlanets: PlanetData[] = data?.gates?.des?.Planets || [];
+  const personalityPlanets: PlanetData[] = data?.gates?.prs?.Planets || [];
 
   return (
     <section className="py-20 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12 animate-fade-up">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-fire">
             Selamat, {userName}! 🌟
@@ -108,45 +184,81 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
           </p>
         </div>
 
-        {/* Bodygraph Image */}
-        <div className="glass-card rounded-3xl p-8 mb-8 animate-fade-up">
+        {/* Bodygraph with Planet Columns */}
+        <div className="glass-card rounded-3xl p-4 md:p-8 mb-8 animate-fade-up">
           <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
-          <div className="flex justify-center">
-            {bodygraphLoading ? (
-              <Skeleton className="w-full max-w-md h-96 rounded-2xl" />
-            ) : bodygraphError ? (
-              <div className="text-center text-muted-foreground py-12">
-                <p>{bodygraphError}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4"
-                  onClick={() => {
-                    if (birthData) {
-                      setBodygraphLoading(true);
-                      setBodygraphError(null);
-                      supabase.functions.invoke('get-bodygraph', { body: birthData })
-                        .then(({ data: result, error }) => {
-                          if (error) {
-                            setBodygraphError('Gagal memuat gambar bodygraph');
-                          } else if (result?.image) {
-                            setBodygraphImage(result.image);
-                          }
-                        })
-                        .finally(() => setBodygraphLoading(false));
-                    }
-                  }}
-                >
-                  Coba Lagi
-                </Button>
-              </div>
-            ) : bodygraphImage ? (
-              <img
-                src={bodygraphImage}
-                alt="Human Design Bodygraph"
-                className="max-w-full h-auto rounded-2xl shadow-lg"
+          
+          <div className="flex justify-center items-start gap-4 md:gap-8">
+            {/* Design Column (Left) */}
+            <div className="hidden md:block flex-shrink-0">
+              <PlanetColumn 
+                planets={designPlanets} 
+                title="Design" 
+                side="left" 
               />
-            ) : null}
+            </div>
+
+            {/* Bodygraph Image (Center) */}
+            <div className="flex-shrink-0 relative">
+              {bodygraphLoading ? (
+                <Skeleton className="w-64 md:w-80 lg:w-96 h-96 md:h-[500px] rounded-2xl" />
+              ) : bodygraphError ? (
+                <div className="text-center text-muted-foreground py-12 w-64 md:w-80 lg:w-96">
+                  <p>{bodygraphError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => {
+                      if (birthData) {
+                        setBodygraphLoading(true);
+                        setBodygraphError(null);
+                        supabase.functions.invoke('get-bodygraph', { body: birthData })
+                          .then(({ data: result, error }) => {
+                            if (error) {
+                              setBodygraphError('Gagal memuat gambar bodygraph');
+                            } else if (result?.image) {
+                              setBodygraphImage(result.image);
+                            }
+                          })
+                          .finally(() => setBodygraphLoading(false));
+                      }
+                    }}
+                  >
+                    Coba Lagi
+                  </Button>
+                </div>
+              ) : bodygraphImage ? (
+                <img
+                  src={bodygraphImage}
+                  alt="Human Design Bodygraph"
+                  className="w-64 md:w-80 lg:w-96 h-auto rounded-2xl shadow-lg"
+                />
+              ) : null}
+            </div>
+
+            {/* Personality Column (Right) */}
+            <div className="hidden md:block flex-shrink-0">
+              <PlanetColumn 
+                planets={personalityPlanets} 
+                title="Personality" 
+                side="right" 
+              />
+            </div>
+          </div>
+
+          {/* Mobile: Show planets below chart */}
+          <div className="md:hidden mt-6 grid grid-cols-2 gap-4">
+            <PlanetColumn 
+              planets={designPlanets} 
+              title="Design" 
+              side="left" 
+            />
+            <PlanetColumn 
+              planets={personalityPlanets} 
+              title="Personality" 
+              side="right" 
+            />
           </div>
         </div>
 
