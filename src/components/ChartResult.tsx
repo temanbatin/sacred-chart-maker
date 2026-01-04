@@ -223,7 +223,7 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
           </p>
         </div>
 
-        {/* Bodygraph with Planet Columns and Variable Arrows */}
+        {/* Bodygraph with Planet Columns */}
         <div className="glass-card rounded-3xl p-4 md:p-8 mb-8 animate-fade-up">
           <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
           
@@ -234,14 +234,6 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
                 planets={designPlanets}
                 title="Design" 
                 side="left" 
-              />
-            </div>
-
-            {/* Left Variable Arrows */}
-            <div className="hidden md:flex flex-shrink-0">
-              <VariableArrows 
-                variables={general.variables || {}}
-                side="left"
               />
             </div>
 
@@ -284,14 +276,6 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
               ) : null}
             </div>
 
-            {/* Right Variable Arrows */}
-            <div className="hidden md:flex flex-shrink-0">
-              <VariableArrows 
-                variables={general.variables || {}}
-                side="right"
-              />
-            </div>
-
             {/* Personality Column (Right) */}
             <div className="hidden md:block flex-shrink-0">
               <PlanetColumn 
@@ -302,47 +286,47 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
             </div>
           </div>
 
-          {/* Mobile: Show planets and arrows below chart */}
-          <div className="md:hidden mt-6">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <PlanetColumn 
-                planets={designPlanets}
-                title="Design" 
-                side="left" 
-              />
-              <PlanetColumn 
-                planets={personalityPlanets}
-                title="Personality" 
-                side="right" 
-              />
-            </div>
-            {/* Mobile Variables */}
-            {general.variables && (
-              <div className="flex justify-center gap-8 mt-4 pt-4 border-t border-muted">
-                <div className="flex gap-4">
-                  <div className="text-center">
-                    <span className="text-xl font-bold text-primary">{general.variables.top_left?.value === 'left' ? '←' : '→'}</span>
-                    <p className="text-[10px] text-muted-foreground">{general.variables.top_left?.name}</p>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-xl font-bold text-primary">{general.variables.bottom_left?.value === 'left' ? '←' : '→'}</span>
-                    <p className="text-[10px] text-muted-foreground">{general.variables.bottom_left?.name}</p>
-                  </div>
+          {/* Variables/Four Arrows - shown below chart for all screens */}
+          {general.variables && (
+            <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-muted">
+              <div className="flex gap-4">
+                <div className="text-center">
+                  <span className="text-xl font-bold text-primary">{general.variables.top_left?.value === 'left' ? '←' : '→'}</span>
+                  <p className="text-[10px] text-muted-foreground">{general.variables.top_left?.name}</p>
                 </div>
-                <div className="flex gap-4">
-                  <div className="text-center">
-                    <span className="text-xl font-bold text-foreground">{general.variables.top_right?.value === 'left' ? '←' : '→'}</span>
-                    <p className="text-[10px] text-muted-foreground">{general.variables.top_right?.name}</p>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-xl font-bold text-foreground">{general.variables.bottom_right?.value === 'left' ? '←' : '→'}</span>
-                    <p className="text-[10px] text-muted-foreground">{general.variables.bottom_right?.name}</p>
-                  </div>
+                <div className="text-center">
+                  <span className="text-xl font-bold text-primary">{general.variables.bottom_left?.value === 'left' ? '←' : '→'}</span>
+                  <p className="text-[10px] text-muted-foreground">{general.variables.bottom_left?.name}</p>
                 </div>
               </div>
-            )}
+              <div className="flex gap-4">
+                <div className="text-center">
+                  <span className="text-xl font-bold text-foreground">{general.variables.top_right?.value === 'left' ? '←' : '→'}</span>
+                  <p className="text-[10px] text-muted-foreground">{general.variables.top_right?.name}</p>
+                </div>
+                <div className="text-center">
+                  <span className="text-xl font-bold text-foreground">{general.variables.bottom_right?.value === 'left' ? '←' : '→'}</span>
+                  <p className="text-[10px] text-muted-foreground">{general.variables.bottom_right?.name}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Mobile: Show planets below chart */}
+          <div className="md:hidden mt-6 grid grid-cols-2 gap-4">
+            <PlanetColumn 
+              planets={designPlanets}
+              title="Design" 
+              side="left" 
+            />
+            <PlanetColumn 
+              planets={personalityPlanets}
+              title="Personality" 
+              side="right" 
+            />
           </div>
         </div>
+
 
         {/* Main Type Card */}
         <div className="glass-card rounded-3xl p-8 md:p-12 mb-8 animate-fade-up">
