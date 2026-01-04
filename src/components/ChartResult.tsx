@@ -3,6 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Share2, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { BirthDataForChart } from '@/pages/Index';
 
 interface ChartResultProps {
@@ -84,6 +90,26 @@ interface VariableArrow {
   def_type: string;
 }
 
+// Variable descriptions for tooltips
+const variableDescriptions: Record<string, { title: string; description: string }> = {
+  Digestion: {
+    title: 'Digestion (Design - Otak)',
+    description: 'Cara terbaik bagi tubuhmu untuk mencerna makanan dan informasi. Arrow kiri = Aktif/Spesifik, Arrow kanan = Pasif/Umum.',
+  },
+  Environment: {
+    title: 'Environment (Design - Tubuh)',
+    description: 'Lingkungan fisik yang mendukung kesejahteraanmu. Arrow kiri = Selektif, Arrow kanan = Variabel.',
+  },
+  Motivation: {
+    title: 'Motivation (Personality - Pikiran)',
+    description: 'Motivasi sejatimu dalam berpikir. Arrow kiri = Strategis/Fokus, Arrow kanan = Reseptif/Terbuka.',
+  },
+  Perspective: {
+    title: 'Perspective (Personality - Pandangan)',
+    description: 'Cara unikmu melihat dan memahami dunia. Arrow kiri = Fokus, Arrow kanan = Periferal.',
+  },
+};
+
 const VariableArrows = ({ 
   variables, 
   side 
@@ -107,16 +133,32 @@ const VariableArrows = ({
   return (
     <div className="flex flex-col justify-center h-full gap-24">
       {topVar && (
-        <div className={`flex flex-col items-center ${isLeft ? 'text-primary' : 'text-foreground'}`}>
-          <span className="text-2xl font-bold">{getArrow(topVar.value)}</span>
-          <span className="text-[10px] text-muted-foreground text-center max-w-16">{topVar.name}</span>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`flex flex-col items-center cursor-help ${isLeft ? 'text-primary' : 'text-foreground'}`}>
+              <span className="text-2xl font-bold">{getArrow(topVar.value)}</span>
+              <span className="text-[10px] text-muted-foreground text-center max-w-16">{topVar.name}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            <p className="font-semibold">{variableDescriptions[topVar.name]?.title || topVar.name}</p>
+            <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[topVar.name]?.description || `${topVar.aspect} - ${topVar.def_type}`}</p>
+          </TooltipContent>
+        </Tooltip>
       )}
       {bottomVar && (
-        <div className={`flex flex-col items-center ${isLeft ? 'text-primary' : 'text-foreground'}`}>
-          <span className="text-2xl font-bold">{getArrow(bottomVar.value)}</span>
-          <span className="text-[10px] text-muted-foreground text-center max-w-16">{bottomVar.name}</span>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`flex flex-col items-center cursor-help ${isLeft ? 'text-primary' : 'text-foreground'}`}>
+              <span className="text-2xl font-bold">{getArrow(bottomVar.value)}</span>
+              <span className="text-[10px] text-muted-foreground text-center max-w-16">{bottomVar.name}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            <p className="font-semibold">{variableDescriptions[bottomVar.name]?.title || bottomVar.name}</p>
+            <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[bottomVar.name]?.description || `${bottomVar.aspect} - ${bottomVar.def_type}`}</p>
+          </TooltipContent>
+        </Tooltip>
       )}
     </div>
   );
@@ -288,28 +330,70 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
 
           {/* Variables/Four Arrows - shown below chart for all screens */}
           {general.variables && (
-            <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-muted">
-              <div className="flex gap-4">
-                <div className="text-center">
-                  <span className="text-xl font-bold text-primary">{general.variables.top_left?.value === 'left' ? '←' : '→'}</span>
-                  <p className="text-[10px] text-muted-foreground">{general.variables.top_left?.name}</p>
+            <TooltipProvider>
+              <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-muted">
+                <div className="flex gap-4">
+                  {general.variables.top_left && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="text-center cursor-help">
+                          <span className="text-xl font-bold text-primary">{general.variables.top_left.value === 'left' ? '←' : '→'}</span>
+                          <p className="text-[10px] text-muted-foreground">{general.variables.top_left.name}</p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="font-semibold">{variableDescriptions[general.variables.top_left.name]?.title}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.top_left.name]?.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {general.variables.bottom_left && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="text-center cursor-help">
+                          <span className="text-xl font-bold text-primary">{general.variables.bottom_left.value === 'left' ? '←' : '→'}</span>
+                          <p className="text-[10px] text-muted-foreground">{general.variables.bottom_left.name}</p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="font-semibold">{variableDescriptions[general.variables.bottom_left.name]?.title}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.bottom_left.name]?.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
-                <div className="text-center">
-                  <span className="text-xl font-bold text-primary">{general.variables.bottom_left?.value === 'left' ? '←' : '→'}</span>
-                  <p className="text-[10px] text-muted-foreground">{general.variables.bottom_left?.name}</p>
+                <div className="flex gap-4">
+                  {general.variables.top_right && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="text-center cursor-help">
+                          <span className="text-xl font-bold text-foreground">{general.variables.top_right.value === 'left' ? '←' : '→'}</span>
+                          <p className="text-[10px] text-muted-foreground">{general.variables.top_right.name}</p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="font-semibold">{variableDescriptions[general.variables.top_right.name]?.title}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.top_right.name]?.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {general.variables.bottom_right && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="text-center cursor-help">
+                          <span className="text-xl font-bold text-foreground">{general.variables.bottom_right.value === 'left' ? '←' : '→'}</span>
+                          <p className="text-[10px] text-muted-foreground">{general.variables.bottom_right.name}</p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="font-semibold">{variableDescriptions[general.variables.bottom_right.name]?.title}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{variableDescriptions[general.variables.bottom_right.name]?.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
               </div>
-              <div className="flex gap-4">
-                <div className="text-center">
-                  <span className="text-xl font-bold text-foreground">{general.variables.top_right?.value === 'left' ? '←' : '→'}</span>
-                  <p className="text-[10px] text-muted-foreground">{general.variables.top_right?.name}</p>
-                </div>
-                <div className="text-center">
-                  <span className="text-xl font-bold text-foreground">{general.variables.bottom_right?.value === 'left' ? '←' : '→'}</span>
-                  <p className="text-[10px] text-muted-foreground">{general.variables.bottom_right?.name}</p>
-                </div>
-              </div>
-            </div>
+            </TooltipProvider>
           )}
 
           {/* Mobile: Show planets below chart */}
