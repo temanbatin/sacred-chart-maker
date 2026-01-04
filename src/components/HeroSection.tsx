@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Star } from 'lucide-react';
 interface HeroSectionProps {
   onScrollToCalculator: () => void;
 }
@@ -32,7 +32,8 @@ export const HeroSection = ({
         </Button>
 
         {/* Trust indicator */}
-        <p className="mt-8 text-sm text-muted-foreground/60">
+        <p className="mt-8 text-sm text-muted-foreground/60 flex items-center justify-center gap-2">
+          <Star className="w-4 h-4 fill-accent text-accent" />
           Bergabunglah dengan 1500+ pencari jati diri lainnya hari ini.
         </p>
       </div>
