@@ -1,1 +1,4 @@
 project_id = "angsqeuyhyyxsqhfumtx"
+
+[functions.calculate-chart]
+verify_jwt = false
