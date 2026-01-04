@@ -45,14 +45,19 @@ const formatPlanetName = (name: string): string => {
 // Planet column component
 const PlanetColumn = ({ 
   planets, 
+  oppositePlanets,
   title, 
   side 
 }: { 
   planets: PlanetData[]; 
+  oppositePlanets: PlanetData[];
   title: string; 
   side: 'left' | 'right';
 }) => {
   const isDesign = side === 'left';
+  
+  // Get all gates from the opposite side to check for channel matches
+  const oppositeGates = oppositePlanets.map(p => p.Gate);
   
   return (
     <div className="flex flex-col gap-1">
@@ -60,7 +65,9 @@ const PlanetColumn = ({
         {title}
       </div>
       {planets.map((planet, index) => {
-        const hasChannel = planet.Ch_Gate && planet.Ch_Gate > 0;
+        // Arrow shows if this planet's Ch_Gate exists in the opposite column
+        const hasChannelMatch = planet.Ch_Gate && planet.Ch_Gate > 0 && oppositeGates.includes(planet.Ch_Gate);
+        
         return (
           <div 
             key={index} 
@@ -72,10 +79,8 @@ const PlanetColumn = ({
             <span className="font-medium text-foreground">
               {planet.Gate}.{planet.Line}
             </span>
-            {hasChannel && (
-              <span className={`text-xs ${isDesign ? 'text-primary' : 'text-muted-foreground'}`}>
-                ←
-              </span>
+            {hasChannelMatch && (
+              <span className="text-primary text-xs">←</span>
             )}
           </div>
         );
@@ -192,7 +197,8 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
             {/* Design Column (Left) */}
             <div className="hidden md:block flex-shrink-0">
               <PlanetColumn 
-                planets={designPlanets} 
+                planets={designPlanets}
+                oppositePlanets={personalityPlanets}
                 title="Design" 
                 side="left" 
               />
@@ -240,7 +246,8 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
             {/* Personality Column (Right) */}
             <div className="hidden md:block flex-shrink-0">
               <PlanetColumn 
-                planets={personalityPlanets} 
+                planets={personalityPlanets}
+                oppositePlanets={designPlanets}
                 title="Personality" 
                 side="right" 
               />
@@ -250,12 +257,14 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
           {/* Mobile: Show planets below chart */}
           <div className="md:hidden mt-6 grid grid-cols-2 gap-4">
             <PlanetColumn 
-              planets={designPlanets} 
+              planets={designPlanets}
+              oppositePlanets={personalityPlanets}
               title="Design" 
               side="left" 
             />
             <PlanetColumn 
-              planets={personalityPlanets} 
+              planets={personalityPlanets}
+              oppositePlanets={designPlanets}
               title="Personality" 
               side="right" 
             />
