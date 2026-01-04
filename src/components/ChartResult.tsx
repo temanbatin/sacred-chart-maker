@@ -330,9 +330,13 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
       clone.style.position = "fixed";
       clone.style.left = "0";
       clone.style.top = "0";
-      clone.style.opacity = "0";
+      // Keep it effectively invisible, but not fully transparent (some browsers render 0-opacity nodes as blank)
+      clone.style.opacity = "0.01";
       clone.style.pointerEvents = "none";
-      clone.style.zIndex = "-1";
+      // Avoid negative z-index (can place it behind the document/background and render blank)
+      clone.style.zIndex = "9999";
+      // Move it out of view while still being "rendered" by the browser
+      clone.style.transform = "translateX(-200vw)";
       clone.style.width = chartRef.current.offsetWidth + "px";
       clone.style.background = "#1a1a2e";
       clone.style.padding = "20px";
