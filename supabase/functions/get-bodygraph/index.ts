@@ -31,7 +31,7 @@ serve(async (req) => {
     apiUrl.searchParams.set('minute', minute.toString());
     apiUrl.searchParams.set('second', '0');
     apiUrl.searchParams.set('place', place);
-    apiUrl.searchParams.set('fmt', 'png');
+    apiUrl.searchParams.set('fmt', 'svg');
 
     console.log('Calling Bodygraph API:', apiUrl.toString());
 
@@ -49,16 +49,16 @@ serve(async (req) => {
       throw new Error(`API error: ${response.status} - ${errorText}`);
     }
 
-    // Get the image as array buffer and convert to base64
-    const imageBuffer = await response.arrayBuffer();
-    const base64Image = btoa(
-      new Uint8Array(imageBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
+    // Get the SVG as text
+    const svgText = await response.text();
 
-    console.log('Bodygraph image fetched successfully, size:', imageBuffer.byteLength);
+    console.log('Bodygraph SVG fetched successfully, size:', svgText.length);
+
+    // Encode SVG to base64 for data URL
+    const base64Svg = btoa(unescape(encodeURIComponent(svgText)));
 
     return new Response(JSON.stringify({ 
-      image: `data:image/png;base64,${base64Image}` 
+      image: `data:image/svg+xml;base64,${base64Svg}` 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
