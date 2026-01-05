@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -5,19 +6,73 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ShoppingCart } from "lucide-react";
+import { CheckCircle2, ShoppingCart, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import ebookCover from "@/assets/cover_ebook_sample.png";
 
 interface ProductPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   userName: string;
+  userEmail?: string;
+  userPhone?: string;
 }
 
-export const ProductPreviewModal = ({ isOpen, onClose, userName }: ProductPreviewModalProps) => {
-  const handleBuy = () => {
-    // Redirect to DOKU payment page
-    window.open("https://dfrfrw.dfrfrw.dfrfrwrf.drf", "_blank");
+// Declare DOKU checkout function
+declare global {
+  interface Window {
+    loadJokulCheckout?: (url: string) => void;
+  }
+}
+
+export const ProductPreviewModal = ({ 
+  isOpen, 
+  onClose, 
+  userName,
+  userEmail = '',
+  userPhone = ''
+}: ProductPreviewModalProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleBuy = async () => {
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('doku-checkout', {
+        body: {
+          customerName: userName,
+          customerEmail: userEmail,
+          customerPhone: userPhone,
+          amount: 149000,
+          productName: 'Laporan Analisis Mendalam Human Design'
+        }
+      });
+
+      if (error) {
+        console.error('Checkout error:', error);
+        toast.error('Gagal memproses pembayaran. Silakan coba lagi.');
+        return;
+      }
+
+      if (data?.success && data?.paymentUrl) {
+        // Try to use DOKU modal if script is loaded
+        if (window.loadJokulCheckout) {
+          window.loadJokulCheckout(data.paymentUrl);
+        } else {
+          // Fallback to redirect
+          window.location.href = data.paymentUrl;
+        }
+        onClose();
+      } else {
+        toast.error(data?.error || 'Gagal mendapatkan link pembayaran');
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast.error('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -97,11 +152,21 @@ export const ProductPreviewModal = ({ isOpen, onClose, userName }: ProductPrevie
             {/* CTA Button */}
             <Button
               onClick={handleBuy}
+              disabled={isLoading}
               size="lg"
               className="w-full fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg py-6"
             >
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              Beli Sekarang
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Beli Sekarang
+                </>
+              )}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
