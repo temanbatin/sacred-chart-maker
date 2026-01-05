@@ -81,7 +81,17 @@ const testimonials = [
 ];
 
 const REPORT_PRICE = 149000;
-const ORIGINAL_PRICE = 155000;
+const ORIGINAL_PRICE = 1550000;
+
+const reportFeatures = [
+  'Analisis mendalam 40+ halaman',
+  'Profil lengkap: Tipe, Strategi & Otoritas',
+  'Analisis 9 Energy Center',
+  'Panduan karir & hubungan',
+  'Peta potensi tersembunyi',
+  'Tips kesehatan & vitalitas',
+  'Panduan pengambilan keputusan',
+];
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -92,6 +102,7 @@ const Reports = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showCheckoutPreview, setShowCheckoutPreview] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToTnc, setAgreedToTnc] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -194,11 +205,12 @@ const Reports = () => {
     }
     setShowCheckoutPreview(true);
     setAgreedToTerms(false);
+    setAgreedToTnc(false);
   };
 
   const handleConfirmPayment = () => {
-    if (!agreedToTerms) {
-      toast.error('Anda harus menyetujui ketentuan sebelum melanjutkan');
+    if (!agreedToTerms || !agreedToTnc) {
+      toast.error('Anda harus menyetujui semua ketentuan sebelum melanjutkan');
       return;
     }
     // TODO: Implement payment flow
@@ -555,6 +567,32 @@ const Reports = () => {
               ))}
             </div>
 
+            {/* Features included */}
+            <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+              <h4 className="font-semibold text-foreground mb-3">Yang Anda dapatkan:</h4>
+              <div className="grid grid-cols-1 gap-2">
+                {reportFeatures.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-2 text-sm text-foreground">
+                    <Check className="w-4 h-4 text-accent shrink-0" />
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Processing time info */}
+            <div className="bg-secondary/50 border border-border rounded-lg p-4">
+              <div className="flex gap-3">
+                <Clock className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold text-foreground mb-1">Waktu Pemrosesan</p>
+                  <p className="text-muted-foreground">
+                    Full Report akan dikirim ke email Anda dalam waktu <strong className="text-foreground">maksimal 24 jam</strong> setelah pembayaran dikonfirmasi.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Warning */}
             <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
               <div className="flex gap-3">
@@ -568,30 +606,53 @@ const Reports = () => {
               </div>
             </div>
 
-            {/* Terms Checkbox */}
-            <div 
-              className="flex items-start gap-3 cursor-pointer"
-              onClick={() => setAgreedToTerms(!agreedToTerms)}
-            >
-              <Checkbox
-                checked={agreedToTerms}
-                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
-                className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
-              />
-              <label className="text-sm text-muted-foreground cursor-pointer">
-                Saya sudah memastikan data kelahiran di atas benar dan memahami bahwa kesalahan data tidak dapat di-refund.
-              </label>
+            {/* Checkboxes */}
+            <div className="space-y-3">
+              <div 
+                className="flex items-start gap-3 cursor-pointer"
+                onClick={() => setAgreedToTerms(!agreedToTerms)}
+              >
+                <Checkbox
+                  checked={agreedToTerms}
+                  onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                  className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                />
+                <label className="text-sm text-muted-foreground cursor-pointer">
+                  Saya sudah memastikan data kelahiran di atas benar dan memahami bahwa kesalahan data tidak dapat di-refund.
+                </label>
+              </div>
+
+              <div 
+                className="flex items-start gap-3 cursor-pointer"
+                onClick={() => setAgreedToTnc(!agreedToTnc)}
+              >
+                <Checkbox
+                  checked={agreedToTnc}
+                  onCheckedChange={(checked) => setAgreedToTnc(checked as boolean)}
+                  className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                />
+                <label className="text-sm text-muted-foreground cursor-pointer">
+                  Saya sudah membaca dan menyetujui{' '}
+                  <Link to="/syarat-ketentuan" className="text-accent hover:underline" onClick={(e) => e.stopPropagation()}>
+                    Syarat dan Ketentuan
+                  </Link>{' '}
+                  website.
+                </label>
+              </div>
             </div>
 
             {/* Total */}
             <div className="bg-secondary/50 rounded-lg p-4">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mb-2">
                 <span className="text-muted-foreground">Total ({selectedCharts.length} report)</span>
                 <div>
-                  <span className="text-2xl font-bold text-foreground">{formatPrice(getTotalPrice())}</span>
-                  <span className="text-sm text-muted-foreground line-through ml-2">{formatPrice(getOriginalTotalPrice())}</span>
+                  <span className="text-sm text-muted-foreground line-through mr-2">{formatPrice(getOriginalTotalPrice())}</span>
+                  <span className="text-2xl font-bold text-accent">{formatPrice(getTotalPrice())}</span>
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground text-right">
+                Hemat {formatPrice(getOriginalTotalPrice() - getTotalPrice())}!
+              </p>
             </div>
 
             {/* Actions */}
@@ -606,7 +667,7 @@ const Reports = () => {
               <Button
                 className="flex-1 fire-glow"
                 onClick={handleConfirmPayment}
-                disabled={!agreedToTerms}
+                disabled={!agreedToTerms || !agreedToTnc}
               >
                 <CreditCard className="w-4 h-4 mr-2" />
                 Bayar Sekarang
