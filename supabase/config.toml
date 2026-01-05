@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.doku-checkout]
 verify_jwt = false
+
+[functions.submit-lead]
+verify_jwt = false

@@ -21,7 +21,9 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          ip_address: string | null
           name: string
+          user_agent: string | null
           whatsapp: string
         }
         Insert: {
@@ -30,7 +32,9 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          ip_address?: string | null
           name: string
+          user_agent?: string | null
           whatsapp: string
         }
         Update: {
@@ -39,7 +43,9 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          ip_address?: string | null
           name?: string
+          user_agent?: string | null
           whatsapp?: string
         }
         Relationships: []
