@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { FloatingParticles } from '@/components/FloatingParticles';
-import { Navbar } from '@/components/Navbar';
+import { MainNavbar } from '@/components/MainNavbar';
 import { HeroSection } from '@/components/HeroSection';
 import { HowItWorksSection } from '@/components/HowItWorksSection';
 import { CalculatorForm, BirthData } from '@/components/CalculatorForm';
@@ -132,7 +132,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
       {/* Navbar */}
-      <Navbar />
+      <MainNavbar />
       
       {/* Floating particles background */}
       <FloatingParticles />
