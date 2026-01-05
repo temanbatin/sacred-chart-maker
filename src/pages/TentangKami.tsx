@@ -1,11 +1,24 @@
-import { Navbar } from '@/components/Navbar';
+import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
 import { Heart, Sparkles, Users, Target } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const TentangKami = () => {
+  const navigate = useNavigate();
+
+  const handleGetChart = () => {
+    navigate('/');
+    setTimeout(() => {
+      const element = document.getElementById('calculator');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <MainNavbar />
       
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
@@ -62,13 +75,13 @@ const TentangKami = () => {
             <p className="text-muted-foreground mb-6">
               Temukan chart Human Design Anda secara gratis dan mulai pahami siapa diri Anda sebenarnya.
             </p>
-            <a 
-              href="/" 
+            <button 
+              onClick={handleGetChart}
               className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-6 py-3 rounded-full font-semibold hover:bg-accent/90 transition-colors"
             >
               <Sparkles className="w-5 h-5" />
               Hitung Chart Gratis
-            </a>
+            </button>
           </div>
         </div>
       </main>
