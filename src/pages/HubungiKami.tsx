@@ -115,35 +115,23 @@ const HubungiKami = () => {
               <div className="bg-secondary/30 rounded-2xl p-6 border border-border">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-1">PT Karia Nata Group</h3>
+                    <p className="text-muted-foreground">Dukuh Runting, Pati, Jawa Tengah</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-secondary/30 rounded-2xl p-6 border border-border">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
                     <Mail className="w-6 h-6 text-accent" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-foreground mb-1">Email</h3>
-                    <p className="text-muted-foreground">hello@temanbatin.com</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-secondary/30 rounded-2xl p-6 border border-border">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
-                    <MessageCircle className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-1">WhatsApp</h3>
-                    <p className="text-muted-foreground">+62 812 3456 7890</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-secondary/30 rounded-2xl p-6 border border-border">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-1">Lokasi</h3>
-                    <p className="text-muted-foreground">Jakarta, Indonesia</p>
+                    <p className="text-muted-foreground">Hei@temanbatin.com</p>
                   </div>
                 </div>
               </div>
