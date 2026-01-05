@@ -12,6 +12,8 @@ import { ProductPreviewModal } from "./ProductPreviewModal";
 interface ChartResultProps {
   data: any;
   userName: string;
+  userEmail?: string;
+  userPhone?: string;
   birthData: BirthDataForChart | null;
   onReset: () => void;
 }
@@ -228,7 +230,7 @@ const VariableArrows = ({ variables, side }: { variables: Record<string, Variabl
   );
 };
 
-export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultProps) => {
+export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, onReset }: ChartResultProps) => {
   const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
   const [bodygraphLoading, setBodygraphLoading] = useState(false);
   const [bodygraphError, setBodygraphError] = useState<string | null>(null);
@@ -749,6 +751,8 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
           isOpen={isProductModalOpen}
           onClose={() => setIsProductModalOpen(false)}
           userName={userName}
+          userEmail={userEmail}
+          userPhone={userPhone}
         />
 
         {/* Action Buttons */}

@@ -28,6 +28,8 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [chartData, setChartData] = useState<any>(null);
   const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userPhone, setUserPhone] = useState('');
   const [birthData, setBirthData] = useState<BirthDataForChart | null>(null);
   const [showLeadCapture, setShowLeadCapture] = useState(false);
   const [pendingBirthData, setPendingBirthData] = useState<BirthData | null>(null);
@@ -48,6 +50,8 @@ const Index = () => {
     setShowLeadCapture(false);
     setIsLoading(true);
     setUserName(pendingBirthData.name);
+    setUserEmail(leadData.email);
+    setUserPhone(leadData.whatsapp);
 
     // Store birth data for bodygraph
     setBirthData({
@@ -113,6 +117,8 @@ const Index = () => {
   const handleReset = () => {
     setChartData(null);
     setUserName('');
+    setUserEmail('');
+    setUserPhone('');
     setBirthData(null);
     setPendingBirthData(null);
     scrollToCalculator();
@@ -161,6 +167,8 @@ const Index = () => {
           <ChartResult
             data={chartData}
             userName={userName}
+            userEmail={userEmail}
+            userPhone={userPhone}
             birthData={birthData}
             onReset={handleReset}
           />
