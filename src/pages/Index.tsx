@@ -127,6 +127,15 @@ const Index = () => {
         }
 
         currentUser = authData.user;
+
+        // Update profile with name and whatsapp
+        if (currentUser) {
+          await supabase
+            .from('profiles')
+            .update({ name: birthDataInput.name, whatsapp: whatsapp })
+            .eq('user_id', currentUser.id);
+        }
+
         toast.success('Akun berhasil dibuat!');
       }
 
