@@ -69,6 +69,28 @@ function generateInvoiceNumber(): string {
   return `INV-${timestamp}-${random}`;
 }
 
+// Format phone number for DOKU (5-16 digits only)
+function formatPhoneNumber(phone: string | undefined): string {
+  if (!phone) return '628000000000'; // Default fallback
+  
+  // Remove all non-digit characters
+  let digits = phone.replace(/\D/g, '');
+  
+  // If starts with 0, replace with 62
+  if (digits.startsWith('0')) {
+    digits = '62' + digits.substring(1);
+  }
+  
+  // Ensure it's 5-16 digits
+  if (digits.length < 5) {
+    digits = digits.padEnd(5, '0');
+  } else if (digits.length > 16) {
+    digits = digits.substring(0, 16);
+  }
+  
+  return digits;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -130,7 +152,7 @@ serve(async (req) => {
         id: `CUST-${Date.now()}`,
         name: requestData.customerName,
         email: requestData.customerEmail,
-        phone: requestData.customerPhone?.replace(/^\+/, '') || '',
+        phone: formatPhoneNumber(requestData.customerPhone),
         country: 'ID'
       }
     };

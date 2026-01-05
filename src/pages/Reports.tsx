@@ -104,6 +104,8 @@ const Reports = () => {
   const [showTncModal, setShowTncModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToTnc, setAgreedToTnc] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ whatsapp: string | null } | null>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -146,6 +148,17 @@ const Reports = () => {
     } else {
       setSavedCharts(data || []);
     }
+
+    // Fetch user profile for phone number
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('whatsapp')
+      .single();
+    
+    if (profileData) {
+      setUserProfile(profileData);
+    }
+
     setIsLoading(false);
   };
 
@@ -209,14 +222,53 @@ const Reports = () => {
     setAgreedToTnc(false);
   };
 
-  const handleConfirmPayment = () => {
+  const handleConfirmPayment = async () => {
     if (!agreedToTerms || !agreedToTnc) {
       toast.error('Anda harus menyetujui semua ketentuan sebelum melanjutkan');
       return;
     }
-    // TODO: Implement payment flow
-    toast.success('Mengarahkan ke halaman pembayaran...');
-    setShowCheckoutPreview(false);
+
+    if (!user) {
+      toast.error('Silakan login terlebih dahulu');
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
+    try {
+      const selectedChartDetails = getSelectedChartDetails();
+      const productNames = selectedChartDetails.map(c => `Full Report: ${c.name}`).join(', ');
+
+      const { data, error } = await supabase.functions.invoke('doku-checkout', {
+        body: {
+          customerName: selectedChartDetails[0]?.name || 'Customer',
+          customerEmail: user.email,
+          customerPhone: userProfile?.whatsapp || '',
+          amount: getTotalPrice(),
+          productName: productNames,
+          chartIds: selectedCharts,
+        },
+      });
+
+      if (error) {
+        console.error('Payment error:', error);
+        toast.error('Gagal memproses pembayaran. Silakan coba lagi.');
+        return;
+      }
+
+      if (data?.success && data?.paymentUrl) {
+        toast.success('Mengarahkan ke halaman pembayaran...');
+        // Redirect to DOKU payment page
+        window.location.href = data.paymentUrl;
+      } else {
+        toast.error(data?.error || 'Gagal mendapatkan link pembayaran');
+      }
+    } catch (err) {
+      console.error('Payment error:', err);
+      toast.error('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   const handleAddNewChart = () => {
@@ -675,10 +727,19 @@ const Reports = () => {
               <Button
                 className="flex-1 fire-glow"
                 onClick={handleConfirmPayment}
-                disabled={!agreedToTerms || !agreedToTnc}
+                disabled={!agreedToTerms || !agreedToTnc || isProcessingPayment}
               >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Bayar Sekarang
+                {isProcessingPayment ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Memproses...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Bayar Sekarang
+                  </>
+                )}
               </Button>
             </div>
           </div>
