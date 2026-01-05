@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import type { BirthDataForChart } from "@/pages/Index";
+import { ProductPreviewModal } from "./ProductPreviewModal";
 
 interface ChartResultProps {
   data: any;
@@ -232,6 +233,7 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
   const [bodygraphLoading, setBodygraphLoading] = useState(false);
   const [bodygraphError, setBodygraphError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
 
   const typeDescriptions: Record<string, string> = {
@@ -731,6 +733,7 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
             <Button
               size="lg"
               className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg px-8 py-6"
+              onClick={() => setIsProductModalOpen(true)}
             >
               Dapatkan Laporan Lengkap
             </Button>
@@ -740,6 +743,13 @@ export const ChartResult = ({ data, userName, birthData, onReset }: ChartResultP
             </div>
           </div>
         </div>
+
+        {/* Product Preview Modal */}
+        <ProductPreviewModal
+          isOpen={isProductModalOpen}
+          onClose={() => setIsProductModalOpen(false)}
+          userName={userName}
+        />
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up mt-8">
