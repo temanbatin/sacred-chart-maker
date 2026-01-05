@@ -8,14 +8,14 @@ export const Footer = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <img 
               src="/favicon.png" 
               alt="Teman Batin Logo" 
               className="w-8 h-8 rounded-lg"
             />
             <span className="text-xl font-bold text-foreground">Teman Batin</span>
-          </div>
+          </Link>
 
           {/* Links */}
           <nav className="flex flex-wrap justify-center gap-6 text-sm">
