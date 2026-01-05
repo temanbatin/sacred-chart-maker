@@ -1,8 +1,22 @@
+import { useState, useEffect } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { Check, X, ArrowRight, Star, Shield, Clock, FileText } from 'lucide-react';
+import { Check, X, ArrowRight, Star, Shield, Clock, FileText, Plus, ShoppingCart, Trash2, Calendar, MapPin, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
+import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
+
+interface SavedChart {
+  id: string;
+  name: string;
+  birth_date: string;
+  birth_time: string | null;
+  birth_place: string | null;
+  created_at: string;
+}
 
 const painPoints = [
   'Merasa hidup tidak sesuai dengan diri sejati Anda',
@@ -59,7 +73,104 @@ const testimonials = [
   },
 ];
 
+const REPORT_PRICE = 299000; // Rp 299.000
+
 const Reports = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [savedCharts, setSavedCharts] = useState<SavedChart[]>([]);
+  const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setTimeout(() => {
+            fetchSavedCharts();
+          }, 0);
+        } else {
+          setIsLoading(false);
+        }
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchSavedCharts();
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchSavedCharts = async () => {
+    const { data, error } = await supabase
+      .from('saved_charts')
+      .select('id, name, birth_date, birth_time, birth_place, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching charts:', error);
+    } else {
+      setSavedCharts(data || []);
+    }
+    setIsLoading(false);
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const toggleChartSelection = (chartId: string) => {
+    setSelectedCharts(prev => 
+      prev.includes(chartId) 
+        ? prev.filter(id => id !== chartId)
+        : [...prev, chartId]
+    );
+  };
+
+  const selectAllCharts = () => {
+    if (selectedCharts.length === savedCharts.length) {
+      setSelectedCharts([]);
+    } else {
+      setSelectedCharts(savedCharts.map(c => c.id));
+    }
+  };
+
+  const getTotalPrice = () => {
+    return selectedCharts.length * REPORT_PRICE;
+  };
+
+  const handleCheckout = () => {
+    if (selectedCharts.length === 0) {
+      toast.error('Pilih minimal 1 chart untuk melanjutkan');
+      return;
+    }
+    // TODO: Implement checkout flow
+    toast.success(`${selectedCharts.length} chart ditambahkan ke keranjang!`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <MainNavbar />
@@ -178,42 +289,170 @@ const Reports = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* CTA Section - Dynamic based on user state */}
         <section className="px-4 py-16">
-          <div className="max-w-3xl mx-auto glass-card rounded-2xl p-8 md:p-12 text-center">
-            <FileText className="w-12 h-12 text-accent mx-auto mb-6" />
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Dapatkan Full Report Anda
-            </h2>
-            <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Laporan 40+ halaman yang dipersonalisasi berdasarkan data kelahiran Anda. Pahami diri Anda lebih dalam dan hidup sesuai desain sejati Anda.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Shield className="w-4 h-4 text-accent" />
-                Jaminan uang kembali 30 hari
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4 text-accent" />
-                Dikirim dalam 24 jam
-              </div>
+          <div className="max-w-4xl mx-auto glass-card rounded-2xl p-8 md:p-12">
+            <div className="text-center mb-8">
+              <FileText className="w-12 h-12 text-accent mx-auto mb-6" />
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                Dapatkan Full Report Anda
+              </h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Laporan 40+ halaman yang dipersonalisasi berdasarkan data kelahiran Anda. Pahami diri Anda lebih dalam dan hidup sesuai desain sejati Anda.
+              </p>
             </div>
 
-            <Button 
-              size="lg" 
-              className="fire-glow text-lg px-8 py-6" 
-              asChild
-            >
-              <Link to="/">
-                Buat Chart Gratis Dulu
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-            </Button>
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
+              </div>
+            ) : user && savedCharts.length > 0 ? (
+              /* User has charts - show selection */
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Pilih Chart untuk Full Report
+                  </h3>
+                  <button
+                    onClick={selectAllCharts}
+                    className="text-sm text-accent hover:underline"
+                  >
+                    {selectedCharts.length === savedCharts.length ? 'Batal Pilih Semua' : 'Pilih Semua'}
+                  </button>
+                </div>
 
-            <p className="text-xs text-muted-foreground mt-4">
-              *Untuk membeli Full Report, Anda perlu membuat chart gratis terlebih dahulu
-            </p>
+                <div className="space-y-3">
+                  {savedCharts.map((chart) => (
+                    <div
+                      key={chart.id}
+                      onClick={() => toggleChartSelection(chart.id)}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        selectedCharts.includes(chart.id)
+                          ? 'border-accent bg-accent/10'
+                          : 'border-border hover:border-accent/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <Checkbox
+                          checked={selectedCharts.includes(chart.id)}
+                          onCheckedChange={() => toggleChartSelection(chart.id)}
+                          className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-foreground">{chart.name}</h4>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {formatDate(chart.birth_date)}
+                            </span>
+                            {chart.birth_place && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {chart.birth_place.split(',')[0]}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-accent font-semibold">{formatPrice(REPORT_PRICE)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add new chart option */}
+                <Button
+                  variant="outline"
+                  className="w-full border-dashed border-2 py-6"
+                  asChild
+                >
+                  <Link to="/">
+                    <Plus className="w-5 h-5 mr-2" />
+                    Tambah Chart Baru
+                  </Link>
+                </Button>
+
+                {/* Summary and checkout */}
+                {selectedCharts.length > 0 && (
+                  <div className="bg-secondary/50 rounded-xl p-6 space-y-4">
+                    <div className="flex items-center justify-between text-lg">
+                      <span className="text-muted-foreground">
+                        {selectedCharts.length} Full Report
+                      </span>
+                      <span className="font-bold text-foreground">
+                        {formatPrice(getTotalPrice())}
+                      </span>
+                    </div>
+                    <Button
+                      size="lg"
+                      className="w-full fire-glow text-lg py-6"
+                      onClick={handleCheckout}
+                    >
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      Lanjut ke Pembayaran
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Shield className="w-4 h-4 text-accent" />
+                    Jaminan uang kembali 30 hari
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4 text-accent" />
+                    Dikirim dalam 24 jam
+                  </div>
+                </div>
+              </div>
+            ) : user ? (
+              /* User logged in but no charts */
+              <div className="text-center">
+                <p className="text-muted-foreground mb-6">
+                  Anda belum memiliki chart. Buat chart gratis terlebih dahulu untuk memesan Full Report.
+                </p>
+                <Button 
+                  size="lg" 
+                  className="fire-glow text-lg px-8 py-6" 
+                  asChild
+                >
+                  <Link to="/">
+                    Buat Chart Gratis
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              /* Not logged in */
+              <div className="text-center">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Shield className="w-4 h-4 text-accent" />
+                    Jaminan uang kembali 30 hari
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4 text-accent" />
+                    Dikirim dalam 24 jam
+                  </div>
+                </div>
+
+                <Button 
+                  size="lg" 
+                  className="fire-glow text-lg px-8 py-6" 
+                  asChild
+                >
+                  <Link to="/">
+                    Buat Chart Gratis Dulu
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Link>
+                </Button>
+
+                <p className="text-xs text-muted-foreground mt-4">
+                  *Untuk membeli Full Report, Anda perlu membuat chart gratis terlebih dahulu
+                </p>
+              </div>
+            )}
           </div>
         </section>
 
