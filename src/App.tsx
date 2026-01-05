@@ -8,6 +8,8 @@ import TentangKami from "./pages/TentangKami";
 import KebijakanPrivasi from "./pages/KebijakanPrivasi";
 import SyaratKetentuan from "./pages/SyaratKetentuan";
 import HubungiKami from "./pages/HubungiKami";
+import KebijakanPengembalianDana from "./pages/KebijakanPengembalianDana";
+import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/kebijakan-privasi" element={<KebijakanPrivasi />} />
           <Route path="/syarat-ketentuan" element={<SyaratKetentuan />} />
           <Route path="/hubungi-kami" element={<HubungiKami />} />
+          <Route path="/kebijakan-pengembalian-dana" element={<KebijakanPengembalianDana />} />
+          <Route path="/faq" element={<FAQ />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
