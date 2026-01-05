@@ -1,7 +1,8 @@
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
 import { BookOpen, Users, Heart, Compass, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const learnCategories = [
   {
@@ -35,6 +36,18 @@ const learnCategories = [
 ];
 
 const Learn = () => {
+  const navigate = useNavigate();
+
+  const handleGetChart = () => {
+    navigate('/');
+    setTimeout(() => {
+      const element = document.getElementById('calculator');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <MainNavbar />
@@ -95,13 +108,13 @@ const Learn = () => {
             <p className="text-muted-foreground mb-6">
               Dapatkan chart Human Design gratis Anda sekarang dan mulai perjalanan penemuan diri.
             </p>
-            <Link 
-              to="/" 
+            <button 
+              onClick={handleGetChart}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors fire-glow"
             >
               Get Your Free Chart
               <ArrowRight className="w-5 h-5" />
-            </Link>
+            </button>
           </div>
         </div>
       </main>
