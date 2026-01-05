@@ -28,6 +28,12 @@ export const Footer = () => {
             <Link to="/syarat-ketentuan" className="text-muted-foreground hover:text-accent transition-colors">
               Syarat & Ketentuan
             </Link>
+            <Link to="/kebijakan-pengembalian-dana" className="text-muted-foreground hover:text-accent transition-colors">
+              Kebijakan Pengembalian Dana
+            </Link>
+            <Link to="/faq" className="text-muted-foreground hover:text-accent transition-colors">
+              FAQ
+            </Link>
             <Link to="/hubungi-kami" className="text-muted-foreground hover:text-accent transition-colors">
               Hubungi Kami
             </Link>
