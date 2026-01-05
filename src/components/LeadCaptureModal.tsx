@@ -9,12 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Phone, Mail, Loader2, CheckCircle } from 'lucide-react';
+import { Phone, Mail, Loader2, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
 
 interface LeadCaptureModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { whatsapp: string; email: string }) => void;
+  onSubmit: (data: { whatsapp: string; email: string; password: string }) => void;
   isLoading?: boolean;
 }
 
@@ -26,7 +26,9 @@ export const LeadCaptureModal = ({
 }: LeadCaptureModalProps) => {
   const [whatsapp, setWhatsapp] = useState('+62');
   const [email, setEmail] = useState('');
-  const [errors, setErrors] = useState<{ whatsapp?: string; email?: string }>({});
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<{ whatsapp?: string; email?: string; password?: string }>({});
 
   const validateWhatsapp = (value: string): boolean => {
     // Must start with +62 and have 10-13 digits after country code
@@ -37,6 +39,11 @@ export const LeadCaptureModal = ({
   const validateEmail = (value: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(value);
+  };
+
+  const validatePassword = (value: string): boolean => {
+    // Minimum 6 characters
+    return value.length >= 6;
   };
 
   const handleWhatsappChange = (value: string) => {
@@ -60,10 +67,17 @@ export const LeadCaptureModal = ({
     }
   };
 
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    if (errors.password) {
+      setErrors(prev => ({ ...prev, password: undefined }));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newErrors: { whatsapp?: string; email?: string } = {};
+    const newErrors: { whatsapp?: string; email?: string; password?: string } = {};
     
     if (!validateWhatsapp(whatsapp)) {
       newErrors.whatsapp = 'Masukkan nomor WhatsApp yang valid (contoh: +628123456789)';
@@ -72,13 +86,17 @@ export const LeadCaptureModal = ({
     if (!validateEmail(email)) {
       newErrors.email = 'Masukkan alamat email yang valid';
     }
+
+    if (!validatePassword(password)) {
+      newErrors.password = 'Password minimal 6 karakter';
+    }
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
     
-    onSubmit({ whatsapp, email });
+    onSubmit({ whatsapp, email, password });
   };
 
   return (
@@ -86,14 +104,14 @@ export const LeadCaptureModal = ({
       <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-2xl text-gradient-fire text-center">
-            Satu Langkah Lagi! 🌟
+            Buat Akun & Lihat Chart 🌟
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground pt-2">
-            Sebelum lanjut, silahkan masukkan WhatsApp dan email yang valid untuk menerima hasil chart Human Design kamu.
+            Daftar untuk menyimpan chart Human Design kamu dan akses kapan saja.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-4">
           {/* WhatsApp */}
           <div className="space-y-2">
             <Label htmlFor="whatsapp" className="text-foreground">
@@ -141,6 +159,35 @@ export const LeadCaptureModal = ({
             )}
           </div>
 
+          {/* Password */}
+          <div className="space-y-2">
+            <Label htmlFor="lead-password" className="text-foreground">
+              Password
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                id="lead-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Minimal 6 karakter"
+                value={password}
+                onChange={(e) => handlePasswordChange(e.target.value)}
+                className="bg-input border-border text-foreground placeholder:text-muted-foreground h-12 rounded-xl pl-10 pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="text-sm text-destructive">{errors.password}</p>
+            )}
+          </div>
+
           {/* Submit Button */}
           <Button
             type="submit"
@@ -151,18 +198,18 @@ export const LeadCaptureModal = ({
             {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Memproses...
+                Membuat Akun...
               </>
             ) : (
               <>
                 <CheckCircle className="w-5 h-5 mr-2" />
-                Lihat Chart Saya
+                Daftar & Lihat Chart
               </>
             )}
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
-            Kami menghormati privasimu. Data kamu aman bersama kami.
+            Dengan mendaftar, kamu menyetujui Syarat & Ketentuan kami. Data kamu aman bersama kami.
           </p>
         </form>
       </DialogContent>

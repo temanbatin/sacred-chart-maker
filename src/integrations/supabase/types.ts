@@ -50,6 +50,69 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      saved_charts: {
+        Row: {
+          birth_date: string
+          birth_place: string | null
+          birth_time: string | null
+          chart_data: Json
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          birth_date: string
+          birth_place?: string | null
+          birth_time?: string | null
+          chart_data: Json
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          birth_date?: string
+          birth_place?: string | null
+          birth_time?: string | null
+          chart_data?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
