@@ -154,11 +154,13 @@ const Index = () => {
           <>
             <HeroSection onScrollToCalculator={scrollToCalculator} />
             <HowItWorksSection />
-            <CalculatorForm
-              ref={calculatorRef}
-              onSubmit={handleSubmit}
-              isLoading={isLoading}
-            />
+            <div id="calculator">
+              <CalculatorForm
+                ref={calculatorRef}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+              />
+            </div>
             <TestimonialsSection />
             <FAQSection />
             <NewsletterSection />
