@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { Check, X, ArrowRight, Star, Shield, Clock, FileText, Plus, ShoppingCart, Trash2, Calendar, MapPin, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Check, X, ArrowRight, Star, Shield, Clock, FileText, Plus, Calendar, MapPin, Loader2, AlertTriangle, CreditCard } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface SavedChart {
   id: string;
@@ -73,14 +80,18 @@ const testimonials = [
   },
 ];
 
-const REPORT_PRICE = 299000; // Rp 299.000
+const REPORT_PRICE = 149000;
+const ORIGINAL_PRICE = 155000;
 
 const Reports = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [savedCharts, setSavedCharts] = useState<SavedChart[]>([]);
   const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCheckoutPreview, setShowCheckoutPreview] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -134,6 +145,12 @@ const Reports = () => {
     });
   };
 
+  const formatTime = (timeStr: string | null) => {
+    if (!timeStr) return '-';
+    const [hour, minute] = timeStr.split(':');
+    return `${hour}:${minute}`;
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -162,13 +179,35 @@ const Reports = () => {
     return selectedCharts.length * REPORT_PRICE;
   };
 
-  const handleCheckout = () => {
+  const getOriginalTotalPrice = () => {
+    return selectedCharts.length * ORIGINAL_PRICE;
+  };
+
+  const getSelectedChartDetails = () => {
+    return savedCharts.filter(chart => selectedCharts.includes(chart.id));
+  };
+
+  const handleCheckoutClick = () => {
     if (selectedCharts.length === 0) {
       toast.error('Pilih minimal 1 chart untuk melanjutkan');
       return;
     }
-    // TODO: Implement checkout flow
-    toast.success(`${selectedCharts.length} chart ditambahkan ke keranjang!`);
+    setShowCheckoutPreview(true);
+    setAgreedToTerms(false);
+  };
+
+  const handleConfirmPayment = () => {
+    if (!agreedToTerms) {
+      toast.error('Anda harus menyetujui ketentuan sebelum melanjutkan');
+      return;
+    }
+    // TODO: Implement payment flow
+    toast.success('Mengarahkan ke halaman pembayaran...');
+    setShowCheckoutPreview(false);
+  };
+
+  const handleAddNewChart = () => {
+    navigate('/#calculator');
   };
 
   return (
@@ -297,9 +336,14 @@ const Reports = () => {
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
                 Dapatkan Full Report Anda
               </h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">
-                Laporan 40+ halaman yang dipersonalisasi berdasarkan data kelahiran Anda. Pahami diri Anda lebih dalam dan hidup sesuai desain sejati Anda.
+              <p className="text-muted-foreground max-w-xl mx-auto mb-4">
+                Laporan 40+ halaman yang dipersonalisasi berdasarkan data kelahiran Anda.
               </p>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-2xl font-bold text-accent">{formatPrice(REPORT_PRICE)}</span>
+                <span className="text-lg text-muted-foreground line-through">{formatPrice(ORIGINAL_PRICE)}</span>
+                <span className="bg-accent/20 text-accent text-xs font-semibold px-2 py-1 rounded">HEMAT 4%</span>
+              </div>
             </div>
 
             {isLoading ? (
@@ -355,6 +399,7 @@ const Reports = () => {
                         </div>
                         <div className="text-right">
                           <span className="text-accent font-semibold">{formatPrice(REPORT_PRICE)}</span>
+                          <span className="text-xs text-muted-foreground line-through ml-2">{formatPrice(ORIGINAL_PRICE)}</span>
                         </div>
                       </div>
                     </div>
@@ -365,31 +410,34 @@ const Reports = () => {
                 <Button
                   variant="outline"
                   className="w-full border-dashed border-2 py-6"
-                  asChild
+                  onClick={handleAddNewChart}
                 >
-                  <Link to="/">
-                    <Plus className="w-5 h-5 mr-2" />
-                    Tambah Chart Baru
-                  </Link>
+                  <Plus className="w-5 h-5 mr-2" />
+                  Tambah Chart Baru
                 </Button>
 
                 {/* Summary and checkout */}
                 {selectedCharts.length > 0 && (
                   <div className="bg-secondary/50 rounded-xl p-6 space-y-4">
-                    <div className="flex items-center justify-between text-lg">
+                    <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">
                         {selectedCharts.length} Full Report
                       </span>
-                      <span className="font-bold text-foreground">
-                        {formatPrice(getTotalPrice())}
-                      </span>
+                      <div className="text-right">
+                        <span className="text-xl font-bold text-foreground">
+                          {formatPrice(getTotalPrice())}
+                        </span>
+                        <span className="text-sm text-muted-foreground line-through ml-2">
+                          {formatPrice(getOriginalTotalPrice())}
+                        </span>
+                      </div>
                     </div>
                     <Button
                       size="lg"
                       className="w-full fire-glow text-lg py-6"
-                      onClick={handleCheckout}
+                      onClick={handleCheckoutClick}
                     >
-                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      <CreditCard className="w-5 h-5 mr-2" />
                       Lanjut ke Pembayaran
                     </Button>
                   </div>
@@ -415,12 +463,10 @@ const Reports = () => {
                 <Button 
                   size="lg" 
                   className="fire-glow text-lg px-8 py-6" 
-                  asChild
+                  onClick={handleAddNewChart}
                 >
-                  <Link to="/">
-                    Buat Chart Gratis
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Link>
+                  Buat Chart Gratis
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </div>
             ) : (
@@ -440,12 +486,10 @@ const Reports = () => {
                 <Button 
                   size="lg" 
                   className="fire-glow text-lg px-8 py-6" 
-                  asChild
+                  onClick={handleAddNewChart}
                 >
-                  <Link to="/">
-                    Buat Chart Gratis Dulu
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Link>
+                  Buat Chart Gratis Dulu
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
 
                 <p className="text-xs text-muted-foreground mt-4">
@@ -464,6 +508,113 @@ const Reports = () => {
           </Link>
         </section>
       </main>
+
+      {/* Checkout Preview Modal */}
+      <Dialog open={showCheckoutPreview} onOpenChange={setShowCheckoutPreview}>
+        <DialogContent className="sm:max-w-lg bg-card border-border max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-gradient-fire">
+              Konfirmasi Pesanan
+            </DialogTitle>
+            <DialogDescription>
+              Pastikan data di bawah sudah benar sebelum melanjutkan pembayaran.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Order Items */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-foreground">Detail Pesanan</h3>
+              {getSelectedChartDetails().map((chart) => (
+                <div key={chart.id} className="bg-secondary/30 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="font-semibold text-foreground">{chart.name}</p>
+                      <p className="text-sm text-accent">Full Foundation Report</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-semibold text-foreground">{formatPrice(REPORT_PRICE)}</span>
+                      <span className="text-xs text-muted-foreground line-through ml-1">{formatPrice(ORIGINAL_PRICE)}</span>
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground space-y-1 mt-3 pt-3 border-t border-border">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>Tanggal Lahir: <strong className="text-foreground">{formatDate(chart.birth_date)}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span>Jam Lahir: <strong className="text-foreground">{formatTime(chart.birth_time)}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      <span>Tempat Lahir: <strong className="text-foreground">{chart.birth_place || '-'}</strong></span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Warning */}
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
+              <div className="flex gap-3">
+                <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold text-destructive mb-1">Penting!</p>
+                  <p className="text-foreground">
+                    Pastikan tanggal, jam, dan tempat lahir sudah benar. Laporan yang dibuat berdasarkan data kelahiran yang salah <strong>tidak dapat di-refund</strong> karena chart sudah dihitung berdasarkan data yang Anda berikan.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Terms Checkbox */}
+            <div 
+              className="flex items-start gap-3 cursor-pointer"
+              onClick={() => setAgreedToTerms(!agreedToTerms)}
+            >
+              <Checkbox
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+              />
+              <label className="text-sm text-muted-foreground cursor-pointer">
+                Saya sudah memastikan data kelahiran di atas benar dan memahami bahwa kesalahan data tidak dapat di-refund.
+              </label>
+            </div>
+
+            {/* Total */}
+            <div className="bg-secondary/50 rounded-lg p-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Total ({selectedCharts.length} report)</span>
+                <div>
+                  <span className="text-2xl font-bold text-foreground">{formatPrice(getTotalPrice())}</span>
+                  <span className="text-sm text-muted-foreground line-through ml-2">{formatPrice(getOriginalTotalPrice())}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowCheckoutPreview(false)}
+              >
+                Kembali
+              </Button>
+              <Button
+                className="flex-1 fire-glow"
+                onClick={handleConfirmPayment}
+                disabled={!agreedToTerms}
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Bayar Sekarang
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
