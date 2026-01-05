@@ -130,26 +130,26 @@ const Index = () => {
         toast.success('Akun berhasil dibuat!');
       }
 
-      // Save lead via edge function with rate limiting and validation
-      const { error: leadError } = await supabase.functions.invoke('submit-lead', {
-        body: {
-          name: birthDataInput.name,
-          email: email,
-          whatsapp: whatsapp,
-          birth_date: birthDateStr,
-          birth_place: birthDataInput.place,
-        },
-      });
+      // Only save lead for new signups (not for existing logged-in users)
+      if (password && whatsapp) {
+        const { error: leadError } = await supabase.functions.invoke('submit-lead', {
+          body: {
+            name: birthDataInput.name,
+            email: email,
+            whatsapp: whatsapp,
+            birth_date: birthDateStr,
+            birth_place: birthDataInput.place,
+          },
+        });
 
-      if (leadError) {
-        console.error('Error saving lead:', leadError);
-        // Check if it's a rate limit error
-        if (leadError.message?.includes('429') || leadError.message?.includes('Terlalu banyak')) {
-          toast.error('Terlalu banyak permintaan. Silakan coba lagi nanti.');
-          setIsLoading(false);
-          return;
+        if (leadError) {
+          console.error('Error saving lead:', leadError);
+          if (leadError.message?.includes('429') || leadError.message?.includes('Terlalu banyak')) {
+            toast.error('Terlalu banyak permintaan. Silakan coba lagi nanti.');
+            setIsLoading(false);
+            return;
+          }
         }
-        // Continue anyway for other errors - don't block user from seeing chart
       }
 
       // Calculate chart
