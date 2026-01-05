@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { User, FileText, Clock, ArrowRight, LogIn, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { User, FileText, Clock, ArrowRight, LogIn, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, Calendar, MapPin } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { ChartResult } from '@/components/ChartResult';
+import { BirthDataForChart } from '@/pages/Index';
 
 interface SavedChart {
   id: string;
@@ -16,6 +18,7 @@ interface SavedChart {
   birth_date: string;
   birth_time: string | null;
   birth_place: string | null;
+  chart_data: any;
   created_at: string;
 }
 
@@ -26,6 +29,7 @@ const Account = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [savedCharts, setSavedCharts] = useState<SavedChart[]>([]);
+  const [selectedChart, setSelectedChart] = useState<SavedChart | null>(null);
   
   // Auth form state
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -67,7 +71,7 @@ const Account = () => {
   const fetchSavedCharts = async () => {
     const { data, error } = await supabase
       .from('saved_charts')
-      .select('id, name, birth_date, birth_time, birth_place, created_at')
+      .select('id, name, birth_date, birth_time, birth_place, chart_data, created_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -136,6 +140,7 @@ const Account = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setSavedCharts([]);
+    setSelectedChart(null);
     toast.success('Berhasil keluar');
   };
 
@@ -145,6 +150,37 @@ const Account = () => {
       month: 'long',
       year: 'numeric',
     });
+  };
+
+  const handleViewChart = (chart: SavedChart) => {
+    setSelectedChart(chart);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackToList = () => {
+    setSelectedChart(null);
+  };
+
+  const getBirthDataFromChart = (chart: SavedChart): BirthDataForChart | null => {
+    if (!chart.birth_date) return null;
+    
+    const [year, month, day] = chart.birth_date.split('-').map(Number);
+    let hour = 12, minute = 0;
+    
+    if (chart.birth_time) {
+      const timeParts = chart.birth_time.split(':');
+      hour = parseInt(timeParts[0], 10);
+      minute = parseInt(timeParts[1], 10);
+    }
+    
+    return {
+      year,
+      month,
+      day,
+      hour,
+      minute,
+      place: chart.birth_place || '',
+    };
   };
 
   if (isLoading) {
@@ -267,6 +303,37 @@ const Account = () => {
     );
   }
 
+  // Show selected chart
+  if (selectedChart) {
+    const birthData = getBirthDataFromChart(selectedChart);
+    
+    return (
+      <div className="min-h-screen bg-background">
+        <MainNavbar />
+        
+        <main className="pt-24 pb-16 px-4">
+          <div className="max-w-4xl mx-auto mb-6">
+            <Button variant="ghost" onClick={handleBackToList} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Kembali ke Daftar Chart
+            </Button>
+          </div>
+          
+          <ChartResult
+            data={selectedChart.chart_data}
+            userName={selectedChart.name}
+            userEmail={user.email || ''}
+            userPhone=""
+            birthData={birthData}
+            onReset={handleBackToList}
+          />
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <MainNavbar />
@@ -312,19 +379,27 @@ const Account = () => {
             ) : (
               <div className="grid gap-4">
                 {savedCharts.map((chart) => (
-                  <div key={chart.id} className="glass-card rounded-xl p-6">
+                  <div key={chart.id} className="glass-card rounded-xl p-6 hover:border-accent/50 transition-colors">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-foreground">{chart.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDate(chart.birth_date)}
-                          {chart.birth_place && ` • ${chart.birth_place}`}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                      <div className="space-y-1">
+                        <h3 className="font-semibold text-foreground text-lg">{chart.name}</h3>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {formatDate(chart.birth_date)}
+                          </span>
+                          {chart.birth_place && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              {chart.birth_place.split(',')[0]}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
                           Dibuat: {formatDate(chart.created_at)}
                         </p>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button onClick={() => handleViewChart(chart)} className="fire-glow">
                         Lihat Chart
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
