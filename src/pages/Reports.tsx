@@ -101,6 +101,7 @@ const Reports = () => {
   const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCheckoutPreview, setShowCheckoutPreview] = useState(false);
+  const [showTncModal, setShowTncModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToTnc, setAgreedToTnc] = useState(false);
 
@@ -633,9 +634,16 @@ const Reports = () => {
                 />
                 <label className="text-sm text-muted-foreground cursor-pointer">
                   Saya sudah membaca dan menyetujui{' '}
-                  <Link to="/syarat-ketentuan" className="text-accent hover:underline" onClick={(e) => e.stopPropagation()}>
+                  <button 
+                    type="button"
+                    className="text-accent hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowTncModal(true);
+                    }}
+                  >
                     Syarat dan Ketentuan
-                  </Link>{' '}
+                  </button>{' '}
                   website.
                 </label>
               </div>
@@ -673,6 +681,104 @@ const Reports = () => {
                 Bayar Sekarang
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Terms and Conditions Modal */}
+      <Dialog open={showTncModal} onOpenChange={setShowTncModal}>
+        <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-foreground">
+              Syarat & Ketentuan
+            </DialogTitle>
+            <DialogDescription>
+              Terakhir diperbarui: Januari 2026
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="overflow-y-auto flex-1 pr-2 space-y-6 text-sm">
+            <section>
+              <h3 className="font-semibold text-foreground mb-2">1. Penerimaan Ketentuan</h3>
+              <p className="text-muted-foreground">
+                Dengan mengakses dan menggunakan layanan Teman Batin, Anda menyetujui untuk 
+                terikat oleh syarat dan ketentuan ini. Jika Anda tidak setuju dengan ketentuan 
+                ini, harap tidak menggunakan layanan kami.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-foreground mb-2">2. Deskripsi Layanan</h3>
+              <p className="text-muted-foreground">
+                Teman Batin menyediakan layanan perhitungan Human Design Chart berdasarkan 
+                data kelahiran yang Anda berikan. Layanan ini bersifat informatif dan tidak 
+                dimaksudkan sebagai pengganti nasihat profesional medis, psikologis, atau 
+                hukum.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-foreground mb-2">3. Akurasi Informasi</h3>
+              <p className="text-muted-foreground">
+                Akurasi hasil Human Design Chart bergantung pada keakuratan data kelahiran 
+                yang Anda berikan. Kami tidak bertanggung jawab atas ketidakakuratan hasil 
+                yang disebabkan oleh data yang salah atau tidak lengkap.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-foreground mb-2">4. Penggunaan Layanan</h3>
+              <p className="text-muted-foreground mb-2">Anda setuju untuk:</p>
+              <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                <li>Memberikan informasi yang akurat dan lengkap</li>
+                <li>Menggunakan layanan hanya untuk tujuan personal dan non-komersial</li>
+                <li>Tidak menyalin atau mendistribusikan konten tanpa izin</li>
+                <li>Tidak menggunakan layanan untuk aktivitas ilegal</li>
+              </ul>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-foreground mb-2">5. Hak Kekayaan Intelektual</h3>
+              <p className="text-muted-foreground">
+                Semua konten, termasuk teks, grafik, logo, dan perangkat lunak yang tersedia 
+                di platform ini adalah milik Teman Batin dan dilindungi oleh undang-undang 
+                hak cipta.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-foreground mb-2">6. Batasan Tanggung Jawab</h3>
+              <p className="text-muted-foreground">
+                Teman Batin tidak bertanggung jawab atas kerugian langsung, tidak langsung, 
+                insidental, atau konsekuensial yang timbul dari penggunaan atau ketidakmampuan 
+                menggunakan layanan kami.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-foreground mb-2">7. Perubahan Ketentuan</h3>
+              <p className="text-muted-foreground">
+                Kami berhak untuk mengubah syarat dan ketentuan ini kapan saja. Perubahan akan 
+                berlaku segera setelah dipublikasikan di situs web.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-foreground mb-2">8. Hukum yang Berlaku</h3>
+              <p className="text-muted-foreground">
+                Syarat dan ketentuan ini diatur oleh dan ditafsirkan sesuai dengan hukum 
+                Republik Indonesia.
+              </p>
+            </section>
+          </div>
+
+          <div className="pt-4 border-t border-border mt-4">
+            <Button 
+              className="w-full" 
+              onClick={() => setShowTncModal(false)}
+            >
+              Tutup
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
