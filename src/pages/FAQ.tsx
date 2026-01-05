@@ -1,5 +1,6 @@
-import { Navbar } from '@/components/Navbar';
+import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
+import { Link } from 'react-router-dom';
 import {
   Accordion,
   AccordionContent,
@@ -61,7 +62,7 @@ const faqs = [
 const FAQ = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <MainNavbar />
       
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
@@ -94,12 +95,12 @@ const FAQ = () => {
             <p className="text-muted-foreground mb-4">
               Jika Anda tidak menemukan jawaban yang dicari, jangan ragu untuk menghubungi tim kami.
             </p>
-            <a 
-              href="/hubungi-kami" 
+            <Link 
+              to="/hubungi-kami" 
               className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-accent text-accent-foreground font-medium hover:bg-accent/90 transition-colors"
             >
               Hubungi Kami
-            </a>
+            </Link>
           </div>
         </div>
       </main>

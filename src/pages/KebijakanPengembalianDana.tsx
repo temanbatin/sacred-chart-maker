@@ -1,10 +1,10 @@
-import { Navbar } from '@/components/Navbar';
+import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
 
 const KebijakanPengembalianDana = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <MainNavbar />
       
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
