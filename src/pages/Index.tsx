@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { FloatingParticles } from '@/components/FloatingParticles';
 import { MainNavbar } from '@/components/MainNavbar';
 import { HeroSection } from '@/components/HeroSection';
@@ -13,6 +13,7 @@ import { Footer } from '@/components/Footer';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { User, Session } from '@supabase/supabase-js';
 
 export interface BirthDataForChart {
   year: number;
@@ -33,48 +34,110 @@ const Index = () => {
   const [birthData, setBirthData] = useState<BirthDataForChart | null>(null);
   const [showLeadCapture, setShowLeadCapture] = useState(false);
   const [pendingBirthData, setPendingBirthData] = useState<BirthData | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const scrollToCalculator = () => {
     calculatorRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleSubmit = async (data: BirthData) => {
-    // Show lead capture modal first
-    setPendingBirthData(data);
-    setShowLeadCapture(true);
+    // If user is already logged in, skip lead capture
+    if (user) {
+      await processChartGeneration(data, user.email || '', '', null);
+    } else {
+      // Show lead capture modal for signup
+      setPendingBirthData(data);
+      setShowLeadCapture(true);
+    }
   };
 
-  const handleLeadSubmit = async (leadData: { whatsapp: string; email: string }) => {
-    if (!pendingBirthData) return;
-
-    setShowLeadCapture(false);
+  const processChartGeneration = async (
+    birthDataInput: BirthData, 
+    email: string, 
+    whatsapp: string, 
+    password: string | null
+  ) => {
     setIsLoading(true);
-    setUserName(pendingBirthData.name);
-    setUserEmail(leadData.email);
-    setUserPhone(leadData.whatsapp);
+    setUserName(birthDataInput.name);
+    setUserEmail(email);
+    setUserPhone(whatsapp);
 
     // Store birth data for bodygraph
     setBirthData({
-      year: pendingBirthData.year,
-      month: pendingBirthData.month,
-      day: pendingBirthData.day,
-      hour: pendingBirthData.hour,
-      minute: pendingBirthData.minute,
-      place: pendingBirthData.place,
+      year: birthDataInput.year,
+      month: birthDataInput.month,
+      day: birthDataInput.day,
+      hour: birthDataInput.hour,
+      minute: birthDataInput.minute,
+      place: birthDataInput.place,
     });
 
     // Create birth date string for database
-    const birthDateStr = `${pendingBirthData.year}-${String(pendingBirthData.month).padStart(2, '0')}-${String(pendingBirthData.day).padStart(2, '0')}`;
+    const birthDateStr = `${birthDataInput.year}-${String(birthDataInput.month).padStart(2, '0')}-${String(birthDataInput.day).padStart(2, '0')}`;
+    const birthTimeStr = `${String(birthDataInput.hour).padStart(2, '0')}:${String(birthDataInput.minute).padStart(2, '0')}:00`;
 
     try {
+      let currentUser = user;
+
+      // If password provided, create account first
+      if (password && !user) {
+        const redirectUrl = `${window.location.origin}/`;
+        
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: redirectUrl,
+            data: {
+              name: birthDataInput.name,
+              whatsapp: whatsapp,
+            },
+          },
+        });
+
+        if (authError) {
+          if (authError.message.includes('User already registered')) {
+            toast.error('Email sudah terdaftar. Silakan login di halaman Akun.');
+            setIsLoading(false);
+            return;
+          }
+          console.error('Auth error:', authError);
+          toast.error('Gagal membuat akun: ' + authError.message);
+          setIsLoading(false);
+          return;
+        }
+
+        currentUser = authData.user;
+        toast.success('Akun berhasil dibuat!');
+      }
+
       // Save lead via edge function with rate limiting and validation
       const { error: leadError } = await supabase.functions.invoke('submit-lead', {
         body: {
-          name: pendingBirthData.name,
-          email: leadData.email,
-          whatsapp: leadData.whatsapp,
+          name: birthDataInput.name,
+          email: email,
+          whatsapp: whatsapp,
           birth_date: birthDateStr,
-          birth_place: pendingBirthData.place,
+          birth_place: birthDataInput.place,
         },
       });
 
@@ -89,15 +152,16 @@ const Index = () => {
         // Continue anyway for other errors - don't block user from seeing chart
       }
 
+      // Calculate chart
       const { data: result, error } = await supabase.functions.invoke('calculate-chart', {
         body: {
-          year: pendingBirthData.year,
-          month: pendingBirthData.month,
-          day: pendingBirthData.day,
-          hour: pendingBirthData.hour,
-          minute: pendingBirthData.minute,
-          place: pendingBirthData.place,
-          gender: pendingBirthData.gender,
+          year: birthDataInput.year,
+          month: birthDataInput.month,
+          day: birthDataInput.day,
+          hour: birthDataInput.hour,
+          minute: birthDataInput.minute,
+          place: birthDataInput.place,
+          gender: birthDataInput.gender,
         },
       });
 
@@ -106,6 +170,27 @@ const Index = () => {
         toast.error('Terjadi kesalahan saat menghitung chart. Silakan coba lagi.');
         setIsLoading(false);
         return;
+      }
+
+      // Save chart to database if user is logged in
+      if (currentUser) {
+        const { error: saveError } = await supabase
+          .from('saved_charts')
+          .insert({
+            user_id: currentUser.id,
+            name: birthDataInput.name,
+            birth_date: birthDateStr,
+            birth_time: birthTimeStr,
+            birth_place: birthDataInput.place,
+            chart_data: result,
+          });
+
+        if (saveError) {
+          console.error('Error saving chart:', saveError);
+          // Don't block the flow, chart is still displayed
+        } else {
+          toast.success('Chart berhasil disimpan ke akun Anda!');
+        }
       }
 
       setChartData(result);
@@ -118,6 +203,12 @@ const Index = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLeadSubmit = async (leadData: { whatsapp: string; email: string; password: string }) => {
+    if (!pendingBirthData) return;
+    setShowLeadCapture(false);
+    await processChartGeneration(pendingBirthData, leadData.email, leadData.whatsapp, leadData.password);
   };
 
   const handleReset = () => {
