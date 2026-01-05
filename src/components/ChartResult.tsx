@@ -761,10 +761,10 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, o
             onClick={onReset}
             variant="outline"
             size="lg"
-            className="border-primary text-foreground hover:bg-primary/10 rounded-xl"
+            className="border-primary text-primary-foreground bg-primary/20 hover:bg-primary/40 rounded-xl"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
-            Hitung Ulang
+            Buat Chart Baru
           </Button>
           <Button
             onClick={handleDownload}
@@ -783,10 +783,6 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, o
                 Unduh Hasil
               </>
             )}
-          </Button>
-          <Button variant="outline" size="lg" className="border-primary text-foreground hover:bg-primary/10 rounded-xl">
-            <Share2 className="w-4 h-4 mr-2" />
-            Bagikan
           </Button>
         </div>
       </div>
