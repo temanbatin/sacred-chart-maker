@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, User, BookOpen, FileText, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +11,29 @@ import {
 
 export const MainNavbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const scrollToCalculator = () => {
+    const element = document.getElementById('calculator');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleGetYourChart = () => {
+    if (location.pathname === '/') {
+      // Already on home page, just scroll
+      scrollToCalculator();
+    } else {
+      // Navigate to home then scroll
+      navigate('/');
+      setTimeout(() => {
+        scrollToCalculator();
+      }, 100);
+    }
+    setMobileMenuOpen(false);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border/50">
@@ -30,13 +53,13 @@ export const MainNavbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            <Link 
-              to="/#calculator" 
+            <button 
+              onClick={handleGetYourChart}
               className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
             >
               <Sparkles className="w-4 h-4" />
               Get Your Chart
-            </Link>
+            </button>
 
             <Link 
               to="/learn" 
@@ -93,14 +116,13 @@ export const MainNavbar = () => {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border/50 animate-fade-up">
             <div className="flex flex-col gap-4">
-              <Link 
-                to="/#calculator" 
-                className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Sparkles className="w-4 h-4" />
-                Get Your Chart
-              </Link>
+            <button 
+              onClick={handleGetYourChart}
+              className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              Get Your Chart
+            </button>
               <Link 
                 to="/learn" 
                 className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
