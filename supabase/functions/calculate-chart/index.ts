@@ -29,13 +29,29 @@ serve(async (req) => {
       }),
     });
 
+    const responseText = await response.text();
+    console.log('n8n response status:', response.status);
+    console.log('n8n response text:', responseText);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('n8n webhook error:', response.status, errorText);
-      throw new Error(`n8n error: ${response.status} - ${errorText}`);
+      console.error('n8n webhook error:', response.status, responseText);
+      throw new Error(`n8n error: ${response.status} - ${responseText}`);
     }
 
-    const data = await response.json();
+    // Handle empty response
+    if (!responseText || responseText.trim() === '') {
+      console.error('n8n returned empty response');
+      throw new Error('n8n webhook returned empty response');
+    }
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse n8n response as JSON:', responseText);
+      throw new Error(`Invalid JSON from n8n: ${responseText.substring(0, 100)}`);
+    }
+
     console.log('Chart data received from n8n');
 
     // n8n returns array, extract first element
