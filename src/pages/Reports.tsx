@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { Check, X, ArrowRight, Star, Shield, Clock, FileText, Plus, Calendar, MapPin, Loader2, AlertTriangle, CreditCard } from 'lucide-react';
+import { Check, X, ArrowRight, Star, Shield, Clock, FileText, Plus, Calendar, MapPin, Loader2, AlertTriangle, CreditCard, Mail, Phone, User as UserIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface SavedChart {
   id: string;
@@ -105,7 +107,13 @@ const Reports = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToTnc, setAgreedToTnc] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [userProfile, setUserProfile] = useState<{ whatsapp: string | null } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ name: string | null; whatsapp: string | null } | null>(null);
+  
+  // Billing info state
+  const [billingName, setBillingName] = useState('');
+  const [billingEmail, setBillingEmail] = useState('');
+  const [billingWhatsapp, setBillingWhatsapp] = useState('+62');
+  const [useAccountData, setUseAccountData] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -149,10 +157,10 @@ const Reports = () => {
       setSavedCharts(data || []);
     }
 
-    // Fetch user profile for phone number
+    // Fetch user profile for phone number and name
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('whatsapp')
+      .select('name, whatsapp')
       .single();
     
     if (profileData) {
@@ -217,19 +225,62 @@ const Reports = () => {
       toast.error('Pilih minimal 1 chart untuk melanjutkan');
       return;
     }
+    // Reset billing info
+    setBillingName('');
+    setBillingEmail('');
+    setBillingWhatsapp('+62');
+    setUseAccountData(false);
     setShowCheckoutPreview(true);
     setAgreedToTerms(false);
     setAgreedToTnc(false);
   };
 
+  const handleUseAccountData = (checked: boolean) => {
+    setUseAccountData(checked);
+    if (checked && user) {
+      setBillingEmail(user.email || '');
+      setBillingName(userProfile?.name || '');
+      setBillingWhatsapp(userProfile?.whatsapp || '+62');
+    } else {
+      setBillingName('');
+      setBillingEmail('');
+      setBillingWhatsapp('+62');
+    }
+  };
+
+  const handleWhatsappChange = (value: string) => {
+    // Ensure it always starts with +62
+    if (!value.startsWith('+62')) {
+      value = '+62' + value.replace(/^\+?62?/, '');
+    }
+    // Only allow numbers after +62
+    const cleanValue = '+62' + value.slice(3).replace(/[^0-9]/g, '');
+    setBillingWhatsapp(cleanValue);
+  };
+
+  const validateBillingInfo = () => {
+    if (!billingName.trim()) {
+      toast.error('Nama pemesan wajib diisi');
+      return false;
+    }
+    if (!billingEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingEmail)) {
+      toast.error('Email tidak valid');
+      return false;
+    }
+    if (!/^\+62[0-9]{9,12}$/.test(billingWhatsapp)) {
+      toast.error('Nomor WhatsApp tidak valid (contoh: +628123456789)');
+      return false;
+    }
+    return true;
+  };
+
   const handleConfirmPayment = async () => {
-    if (!agreedToTerms || !agreedToTnc) {
-      toast.error('Anda harus menyetujui semua ketentuan sebelum melanjutkan');
+    if (!validateBillingInfo()) {
       return;
     }
 
-    if (!user) {
-      toast.error('Silakan login terlebih dahulu');
+    if (!agreedToTerms || !agreedToTnc) {
+      toast.error('Anda harus menyetujui semua ketentuan sebelum melanjutkan');
       return;
     }
 
@@ -241,9 +292,9 @@ const Reports = () => {
 
       const { data, error } = await supabase.functions.invoke('doku-checkout', {
         body: {
-          customerName: selectedChartDetails[0]?.name || 'Customer',
-          customerEmail: user.email,
-          customerPhone: userProfile?.whatsapp || '',
+          customerName: billingName,
+          customerEmail: billingEmail,
+          customerPhone: billingWhatsapp,
           amount: getTotalPrice(),
           productName: productNames,
           chartIds: selectedCharts,
@@ -587,6 +638,78 @@ const Reports = () => {
           </DialogHeader>
 
           <div className="space-y-6 py-4">
+            {/* Billing Information */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground">Data Pemesan</h3>
+                {user && (
+                  <div 
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => handleUseAccountData(!useAccountData)}
+                  >
+                    <Checkbox
+                      checked={useAccountData}
+                      onCheckedChange={(checked) => handleUseAccountData(checked as boolean)}
+                      className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                    />
+                    <label className="text-sm text-muted-foreground cursor-pointer">
+                      Sama dengan akun
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="billing-name">Nama Pemesan</Label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="billing-name"
+                      type="text"
+                      placeholder="Masukkan nama lengkap"
+                      value={billingName}
+                      onChange={(e) => setBillingName(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="billing-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="billing-email"
+                      type="email"
+                      placeholder="contoh@email.com"
+                      value={billingEmail}
+                      onChange={(e) => setBillingEmail(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="billing-whatsapp">Nomor WhatsApp</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="billing-whatsapp"
+                      type="tel"
+                      placeholder="+628123456789"
+                      value={billingWhatsapp}
+                      onChange={(e) => handleWhatsappChange(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Report akan dikirim ke email dan notifikasi via WhatsApp
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Order Items */}
             <div className="space-y-3">
               <h3 className="font-semibold text-foreground">Detail Pesanan</h3>
