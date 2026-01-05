@@ -67,20 +67,26 @@ const Index = () => {
     const birthDateStr = `${pendingBirthData.year}-${String(pendingBirthData.month).padStart(2, '0')}-${String(pendingBirthData.day).padStart(2, '0')}`;
 
     try {
-      // Save lead to database
-      const { error: leadError } = await supabase
-        .from('leads')
-        .insert({
+      // Save lead via edge function with rate limiting and validation
+      const { error: leadError } = await supabase.functions.invoke('submit-lead', {
+        body: {
           name: pendingBirthData.name,
           email: leadData.email,
           whatsapp: leadData.whatsapp,
           birth_date: birthDateStr,
           birth_place: pendingBirthData.place,
-        });
+        },
+      });
 
       if (leadError) {
         console.error('Error saving lead:', leadError);
-        // Continue anyway - don't block user from seeing chart
+        // Check if it's a rate limit error
+        if (leadError.message?.includes('429') || leadError.message?.includes('Terlalu banyak')) {
+          toast.error('Terlalu banyak permintaan. Silakan coba lagi nanti.');
+          setIsLoading(false);
+          return;
+        }
+        // Continue anyway for other errors - don't block user from seeing chart
       }
 
       const { data: result, error } = await supabase.functions.invoke('calculate-chart', {
