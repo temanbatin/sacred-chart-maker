@@ -5,7 +5,7 @@ import { Check, X, ArrowRight, Star, Shield, Clock, FileText, Plus, Calendar, Ma
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -98,7 +98,6 @@ const reportFeatures = [
 const Reports = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [savedCharts, setSavedCharts] = useState<SavedChart[]>([]);
   const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -117,11 +116,10 @@ const Reports = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event, currentSession) => {
+        setUser(currentSession?.user ?? null);
         
-        if (session?.user) {
+        if (currentSession?.user) {
           setTimeout(() => {
             fetchSavedCharts();
           }, 0);
@@ -130,12 +128,10 @@ const Reports = () => {
         }
       }
     );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setUser(initialSession?.user ?? null);
       
-      if (session?.user) {
+      if (initialSession?.user) {
         fetchSavedCharts();
       } else {
         setIsLoading(false);

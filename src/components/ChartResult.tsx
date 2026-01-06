@@ -145,14 +145,6 @@ const PlanetColumn = ({ planets, title, side }: { planets: PlanetData[]; title: 
   );
 };
 
-// Variables/Four Arrows component
-interface VariableArrow {
-  value: string;
-  name: string;
-  aspect: string;
-  def_type: string;
-}
-
 // Variable descriptions for tooltips
 const variableDescriptions: Record<string, { title: string; description: string }> = {
   Digestion: {
@@ -174,61 +166,6 @@ const variableDescriptions: Record<string, { title: string; description: string 
   },
 };
 
-const VariableArrows = ({ variables, side }: { variables: Record<string, VariableArrow>; side: "left" | "right" }) => {
-  const isLeft = side === "left";
-  const topKey = isLeft ? "top_left" : "top_right";
-  const bottomKey = isLeft ? "bottom_left" : "bottom_right";
-
-  const topVar = variables[topKey];
-  const bottomVar = variables[bottomKey];
-
-  if (!topVar && !bottomVar) return null;
-
-  const getArrow = (value: string) => {
-    return value === "left" ? "←" : "→";
-  };
-
-  return (
-    <div className="flex flex-col justify-center h-full gap-24">
-      {topVar && (
-        <Popover>
-          <PopoverTrigger asChild>
-            <div
-              className={`flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity ${isLeft ? "text-primary" : "text-foreground"}`}
-            >
-              <span className="text-2xl font-bold">{getArrow(topVar.value)}</span>
-              <span className="text-[10px] text-muted-foreground text-center max-w-16">{topVar.name}</span>
-            </div>
-          </PopoverTrigger>
-          <PopoverContent side="top" className="max-w-xs p-3">
-            <p className="font-semibold">{variableDescriptions[topVar.name]?.title || topVar.name}</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {variableDescriptions[topVar.name]?.description || `${topVar.aspect} - ${topVar.def_type}`}
-            </p>
-          </PopoverContent>
-        </Popover>
-      )}
-      {bottomVar && (
-        <Popover>
-          <PopoverTrigger asChild>
-            <div
-              className={`flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity ${isLeft ? "text-primary" : "text-foreground"}`}
-            >
-              <span className="text-2xl font-bold">{getArrow(bottomVar.value)}</span>
-              <span className="text-[10px] text-muted-foreground text-center max-w-16">{bottomVar.name}</span>
-            </div>
-          </PopoverTrigger>
-          <PopoverContent side="bottom" className="max-w-xs p-3">
-            <p className="font-semibold">{variableDescriptions[bottomVar.name]?.title || bottomVar.name}</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {variableDescriptions[bottomVar.name]?.description || `${bottomVar.aspect} - ${bottomVar.def_type}`}
-            </p>
-          </PopoverContent>
-        </Popover>
-      )}
-    </div>
-  );
-};
 
 export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, onReset }: ChartResultProps) => {
   const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
