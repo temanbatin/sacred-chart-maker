@@ -15,6 +15,7 @@ import Reports from "./pages/Reports";
 import Shop from "./pages/Shop";
 import Account from "./pages/Account";
 import Methodology from "./pages/Methodology";
+import PaymentResult from "./pages/PaymentResult";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/reports" element={<Reports />} />
           <Route path="/report/full-personalized-report" element={<Reports />} />
           <Route path="/shop" element={<Shop />} />
+          <Route path="/payment-result" element={<PaymentResult />} />
           
           {/* Silo 4: User Area */}
           <Route path="/account" element={<Account />} />

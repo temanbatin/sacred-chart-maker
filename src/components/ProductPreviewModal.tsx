@@ -19,13 +19,6 @@ interface ProductPreviewModalProps {
   userPhone?: string;
 }
 
-// Declare DOKU checkout function
-declare global {
-  interface Window {
-    loadJokulCheckout?: (url: string) => void;
-  }
-}
-
 export const ProductPreviewModal = ({ 
   isOpen, 
   onClose, 
@@ -39,7 +32,7 @@ export const ProductPreviewModal = ({
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('doku-checkout', {
+      const { data, error } = await supabase.functions.invoke('ipaymu-checkout', {
         body: {
           customerName: userName,
           customerEmail: userEmail,
@@ -56,13 +49,8 @@ export const ProductPreviewModal = ({
       }
 
       if (data?.success && data?.paymentUrl) {
-        // Try to use DOKU modal if script is loaded
-        if (window.loadJokulCheckout) {
-          window.loadJokulCheckout(data.paymentUrl);
-        } else {
-          // Fallback to redirect
-          window.location.href = data.paymentUrl;
-        }
+        // Redirect to iPaymu payment page
+        window.location.href = data.paymentUrl;
         onClose();
       } else {
         toast.error(data?.error || 'Gagal mendapatkan link pembayaran');
@@ -170,7 +158,7 @@ export const ProductPreviewModal = ({
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
-              Pembayaran aman via DOKU • Akses instan setelah pembayaran
+              Pembayaran aman via iPaymu • Akses instan setelah pembayaran
             </p>
           </div>
         </div>

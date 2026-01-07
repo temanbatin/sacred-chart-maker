@@ -9,5 +9,8 @@ verify_jwt = false
 [functions.ipaymu-checkout]
 verify_jwt = false
 
+[functions.ipaymu-webhook]
+verify_jwt = false
+
 [functions.submit-lead]
 verify_jwt = false
