@@ -6,7 +6,7 @@ verify_jwt = false
 [functions.get-bodygraph]
 verify_jwt = false
 
-[functions.doku-checkout]
+[functions.ipaymu-checkout]
 verify_jwt = false
 
 [functions.submit-lead]

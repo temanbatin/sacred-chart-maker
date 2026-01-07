@@ -286,7 +286,7 @@ const Reports = () => {
       const selectedChartDetails = getSelectedChartDetails();
       const productNames = selectedChartDetails.map(c => `Full Report: ${c.name}`).join(', ');
 
-      const { data, error } = await supabase.functions.invoke('doku-checkout', {
+      const { data, error } = await supabase.functions.invoke('ipaymu-checkout', {
         body: {
           customerName: billingName,
           customerEmail: billingEmail,
@@ -305,7 +305,7 @@ const Reports = () => {
 
       if (data?.success && data?.paymentUrl) {
         toast.success('Mengarahkan ke halaman pembayaran...');
-        // Redirect to DOKU payment page
+        // Redirect to iPaymu payment page
         window.location.href = data.paymentUrl;
       } else {
         toast.error(data?.error || 'Gagal mendapatkan link pembayaran');
