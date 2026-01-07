@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, ShoppingCart, Loader2, User as UserIcon, Mail, Phone, AlertCircle } from "lucide-react";
+import { CheckCircle2, ShoppingCart, Loader2, User as UserIcon, Mail, Phone, AlertCircle, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ebookCover from "@/assets/cover_ebook_sample.png";
@@ -290,9 +290,16 @@ export const ProductPreviewModal = ({
                 )}
               </Button>
 
-              <p className="text-xs text-center text-muted-foreground">
-                Pembayaran aman via iPaymu • File akan dikirim Maks 24 jam setelah pembayaran
-              </p>
+              <div className="text-center space-y-2 pt-2">
+                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 font-medium">
+                  <Shield className="w-3.5 h-3.5" />
+                  Pembayaran Aman & Terverifikasi via iPaymu
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Mendukung QRIS, Virtual Account (BCA, Mandiri, BNI, BRI), & E-Wallet.
+                  <br />File dikirim maks 24 jam setelah pembayaran.
+                </p>
+              </div>
             </div>
           </div>
         </DialogContent>

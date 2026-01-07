@@ -387,7 +387,7 @@ const Account = () => {
                 <User className="w-8 h-8 text-accent" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Akun Saya</h1>
+                <h1 className="text-2xl font-bold text-foreground">My Charts</h1>
                 <p className="text-muted-foreground">{user.email}</p>
               </div>
             </div>

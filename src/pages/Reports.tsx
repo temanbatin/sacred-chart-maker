@@ -8,6 +8,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CalculatorForm, BirthData } from '@/components/CalculatorForm';
+import { LeadCaptureModal } from '@/components/LeadCaptureModal';
+import { LoadingAnimation } from '@/components/LoadingAnimation';
+import { ChartResult } from '@/components/ChartResult';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +31,7 @@ interface SavedChart {
   created_at: string;
 }
 
+// ... constants ...
 const painPoints = [
   'Merasa hidup tidak sesuai dengan diri sejati Anda',
   'Sering merasa kelelahan atau burnout tanpa tahu penyebabnya',
@@ -398,8 +403,161 @@ const Reports = () => {
     }
   };
 
+  const [showChartModal, setShowChartModal] = useState(false);
+  const [pendingBirthData, setPendingBirthData] = useState<BirthData | null>(null);
+  const [showLeadCapture, setShowLeadCapture] = useState(false);
+  const [isGeneratingChart, setIsGeneratingChart] = useState(false);
+
+  // New states for result view
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [currentChartData, setCurrentChartData] = useState<any>(null);
+  const [currentBirthData, setCurrentBirthData] = useState<any>(null);
+  const [currentChartId, setCurrentChartId] = useState<string | undefined>(undefined);
+
   const handleAddNewChart = () => {
-    navigate('/#calculator');
+    setShowChartModal(true);
+  };
+
+  const handleChartSubmit = async (data: BirthData) => {
+    if (user) {
+      await processChartGeneration(data, user.email || '', '', null);
+    } else {
+      setPendingBirthData(data);
+      setShowLeadCapture(true);
+      setShowChartModal(false);
+    }
+  };
+
+  const processChartGeneration = async (
+    birthDataInput: BirthData,
+    email: string,
+    whatsapp: string,
+    password: string | null
+  ) => {
+    setIsGeneratingChart(true);
+    const birthDateStr = `${birthDataInput.year}-${String(birthDataInput.month).padStart(2, '0')}-${String(birthDataInput.day).padStart(2, '0')}`;
+    const birthTimeStr = `${String(birthDataInput.hour).padStart(2, '0')}:${String(birthDataInput.minute).padStart(2, '0')}:00`;
+
+    try {
+      let currentUser = user;
+
+      // Handle Signup if needed
+      if (password && !user) {
+        // We don't necessarily need to redirect, just sign up and continue
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { name: birthDataInput.name, whatsapp: whatsapp },
+          },
+        });
+
+        if (authError) {
+          if (authError.message.includes('User already registered')) {
+            toast.error('Email sudah terdaftar. Silakan login.');
+          } else {
+            toast.error('Gagal membuat akun: ' + authError.message);
+          }
+          setIsGeneratingChart(false);
+          return;
+        }
+
+        // If auto-login happens or session is established
+        currentUser = authData.user;
+        toast.success('Akun berhasil dibuat!');
+
+        // Update profile manual check
+        if (currentUser) {
+          await supabase.from('profiles').update({ name: birthDataInput.name, whatsapp }).eq('user_id', currentUser.id);
+        }
+      }
+
+      // Submit Lead (if new)
+      if (password && whatsapp) {
+        await supabase.functions.invoke('submit-lead', {
+          body: {
+            name: birthDataInput.name,
+            email,
+            whatsapp,
+            birth_date: birthDateStr,
+            birth_place: birthDataInput.place,
+          }
+        });
+      }
+
+      // Calculate Chart
+      const { data: result, error } = await supabase.functions.invoke('calculate-chart', {
+        body: {
+          year: birthDataInput.year,
+          month: birthDataInput.month,
+          day: birthDataInput.day,
+          hour: birthDataInput.hour,
+          minute: birthDataInput.minute,
+          place: birthDataInput.place,
+          gender: birthDataInput.gender,
+        },
+      });
+
+      if (error) throw error;
+
+      // Save Chart - wait for user to be available if just signed up
+      // If signup requires email confirmation, we can't save yet. 
+      // Assuming Supabase config allows signin without confirmation or we just proceed.
+      // If currentUser is null (confirmation required), we can't save.
+
+      const { data: { user: freshUser } } = await supabase.auth.getUser();
+      currentUser = freshUser || currentUser;
+
+      if (currentUser) {
+        const { data: savedChart, error: saveError } = await supabase.from('saved_charts').insert({
+          user_id: currentUser.id,
+          name: birthDataInput.name,
+          birth_date: birthDateStr,
+          birth_time: birthTimeStr,
+          birth_place: birthDataInput.place,
+          chart_data: result,
+        })
+          .select()
+          .single();
+
+        if (!saveError) {
+          toast.success('Chart berhasil dibuat!');
+          await fetchSavedCharts();
+
+          // Show Result Logic
+          setCurrentChartData(result);
+          setCurrentChartId(savedChart.id);
+          setCurrentBirthData({
+            name: birthDataInput.name,
+            year: birthDataInput.year,
+            month: birthDataInput.month,
+            day: birthDataInput.day,
+            hour: birthDataInput.hour,
+            minute: birthDataInput.minute,
+            place: birthDataInput.place,
+            gender: birthDataInput.gender
+          });
+
+          setShowChartModal(false);
+          setShowLeadCapture(false);
+          setShowResultModal(true);
+        }
+      } else {
+        toast.message('Silakan cek email Anda untuk konfirmasi akun, lalu login untuk menyimpan chart.');
+        // Still close modal
+        setShowLeadCapture(false);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Terjadi kesalahan saat membuat chart.');
+    } finally {
+      setIsGeneratingChart(false);
+    }
+  };
+
+  const handleLeadSubmit = async (leadData: { whatsapp: string; email: string; password: string }) => {
+    if (!pendingBirthData) return;
+    await processChartGeneration(pendingBirthData, leadData.email, leadData.whatsapp, leadData.password);
   };
 
   return (
@@ -534,7 +692,9 @@ const Reports = () => {
               <div className="flex items-center justify-center gap-3">
                 <span className="text-2xl font-bold text-accent">{formatPrice(REPORT_PRICE)}</span>
                 <span className="text-lg text-muted-foreground line-through">{formatPrice(ORIGINAL_PRICE)}</span>
-                <span className="bg-accent/20 text-accent text-xs font-semibold px-2 py-1 rounded">HEMAT 4%</span>
+                <span className="bg-accent/20 text-accent text-xs font-semibold px-2 py-1 rounded">
+                  HEMAT {Math.round(((ORIGINAL_PRICE - REPORT_PRICE) / ORIGINAL_PRICE) * 100)}%
+                </span>
               </div>
             </div>
 
@@ -719,6 +879,54 @@ const Reports = () => {
             <ArrowRight className="w-4 h-4" />
           </Link>
         </section>
+        {/* Modals */}
+        <Dialog open={showChartModal} onOpenChange={setShowChartModal}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 border-none bg-transparent shadow-none">
+            <div className="bg-background/95 backdrop-blur-md rounded-3xl border border-border overflow-hidden">
+              <CalculatorForm onSubmit={handleChartSubmit} isLoading={isGeneratingChart} />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <LeadCaptureModal
+          isOpen={showLeadCapture}
+          onClose={() => setShowLeadCapture(false)}
+          onSubmit={handleLeadSubmit}
+          isLoading={isGeneratingChart}
+        />
+
+        {isGeneratingChart && <LoadingAnimation />}
+
+        {/* Result Modal */}
+        <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
+          <DialogContent className="max-w-[95vw] h-[95vh] p-0 border-none bg-background overflow-hidden flex flex-col">
+            <div className="h-full overflow-y-auto relative">
+              <Button
+                onClick={() => setShowResultModal(false)}
+                variant="ghost"
+                size="icon"
+                className="absolute right-4 top-4 z-50 rounded-full bg-background/50 hover:bg-background border border-border"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+              {currentChartData && (
+                <ChartResult
+                  data={currentChartData}
+                  userName={currentBirthData?.name || ''}
+                  userEmail={user?.email || ''}
+                  userPhone=""
+                  birthData={currentBirthData}
+                  chartId={currentChartId}
+                  userId={user?.id}
+                  onReset={() => {
+                    setShowResultModal(false);
+                    fetchSavedCharts();
+                  }}
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
 
       {/* Checkout Preview Modal */}

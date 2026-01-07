@@ -9,7 +9,7 @@ const products = [
     id: 'full-report',
     title: 'Full Personalized Report',
     description: 'Laporan komprehensif 40+ halaman tentang Human Design Anda',
-    price: 'Rp 299.000',
+    price: 'Rp 149.000',
     icon: FileText,
     featured: true,
     href: '/reports',
@@ -47,7 +47,7 @@ const Shop = () => {
   return (
     <div className="min-h-screen bg-background">
       <MainNavbar />
-      
+
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
@@ -67,9 +67,8 @@ const Shop = () => {
               return (
                 <div
                   key={product.id}
-                  className={`glass-card rounded-xl p-6 relative transition-all duration-300 hover:border-accent/50 ${
-                    product.featured ? 'ring-2 ring-primary/50' : ''
-                  }`}
+                  className={`glass-card rounded-xl p-6 relative transition-all duration-300 hover:border-accent/50 ${product.featured ? 'ring-2 ring-primary/50' : ''
+                    }`}
                 >
                   {product.featured && (
                     <span className="absolute -top-3 left-6 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-full font-semibold">
@@ -81,7 +80,7 @@ const Shop = () => {
                       Coming Soon
                     </span>
                   )}
-                  
+
                   <div className="flex items-start gap-4 mb-4">
                     <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
                       <Icon className="w-7 h-7 text-accent" />

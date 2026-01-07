@@ -263,7 +263,10 @@ const Index = () => {
       <main className="relative z-10">
         {!chartData ? (
           <>
-            <HeroSection onScrollToCalculator={scrollToCalculator} />
+            <HeroSection
+              onScrollToCalculator={scrollToCalculator}
+              userName={user?.user_metadata?.name}
+            />
             <HowItWorksSection />
             <div id="calculator">
               <CalculatorForm

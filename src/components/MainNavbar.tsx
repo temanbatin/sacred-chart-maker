@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, User, BookOpen, FileText, Sparkles } from 'lucide-react';
+import { Menu, X, ChevronDown, User, BookOpen, FileText, Sparkles, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -41,9 +41,9 @@ export const MainNavbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img 
-              src="/favicon.png" 
-              alt="Teman Batin Logo" 
+            <img
+              src="/favicon.png"
+              alt="Teman Batin Logo"
               className="w-8 h-8 rounded-lg"
             />
             <span className="text-lg font-semibold text-foreground">
@@ -53,7 +53,7 @@ export const MainNavbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            <button 
+            <button
               onClick={handleGetYourChart}
               className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
             >
@@ -61,20 +61,28 @@ export const MainNavbar = () => {
               Get Your Chart
             </button>
 
-            <Link 
-              to="/learn" 
+            <Link
+              to="/learn"
               className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
             >
               <BookOpen className="w-4 h-4" />
               Learn
             </Link>
 
-            <Link 
-              to="/reports" 
+            <Link
+              to="/reports"
               className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
             >
               <FileText className="w-4 h-4" />
-              Reports
+              Premium Report
+            </Link>
+
+            <Link
+              to="/shop"
+              className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Shop
             </Link>
 
             {/* About Dropdown */}
@@ -97,7 +105,7 @@ export const MainNavbar = () => {
             <Button variant="outline" size="sm" asChild className="border-primary/50 hover:border-primary">
               <Link to="/account" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
-                Account
+                My Charts
               </Link>
             </Button>
           </div>
@@ -116,50 +124,58 @@ export const MainNavbar = () => {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border/50 animate-fade-up">
             <div className="flex flex-col gap-4">
-            <button 
-              onClick={handleGetYourChart}
-              className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              Get Your Chart
-            </button>
-              <Link 
-                to="/learn" 
+              <button
+                onClick={handleGetYourChart}
+                className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Get Your Chart
+              </button>
+              <Link
+                to="/learn"
                 className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <BookOpen className="w-4 h-4" />
                 Learn
               </Link>
-              <Link 
-                to="/reports" 
+              <Link
+                to="/reports"
                 className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <FileText className="w-4 h-4" />
-                Reports
+                Premium Report
               </Link>
-              <Link 
-                to="/tentang-kami" 
+              <Link
+                to="/shop"
+                className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <ShoppingBag className="w-4 h-4" />
+                Shop
+              </Link>
+              <Link
+                to="/tentang-kami"
                 className="text-sm text-muted-foreground hover:text-accent transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Our Story
               </Link>
-              <Link 
-                to="/methodology" 
+              <Link
+                to="/methodology"
                 className="text-sm text-muted-foreground hover:text-accent transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Methodology
               </Link>
-              <Link 
-                to="/account" 
+              <Link
+                to="/account"
                 className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <User className="w-4 h-4" />
-                My Account
+                My Charts
               </Link>
             </div>
           </div>
