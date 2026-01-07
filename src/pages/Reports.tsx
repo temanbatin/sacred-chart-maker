@@ -330,7 +330,7 @@ const Reports = () => {
 
     try {
       const selectedChartDetails = getSelectedChartDetails();
-      const productNames = selectedChartDetails.map(c => `Full Report: ${c.name}`).join(', ');
+      const productNames = selectedChartDetails.map(c => `Full Report Human Design: ${c.name}`).join(', ');
 
       // Generate Reference ID uniquely
       const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
@@ -568,10 +568,10 @@ const Reports = () => {
                         key={chart.id}
                         onClick={() => !isDisabled && toggleChartSelection(chart.id)}
                         className={`p-4 rounded-xl border-2 transition-all ${isDisabled
-                            ? 'opacity-60 cursor-not-allowed bg-secondary/50 border-border'
-                            : selectedCharts.includes(chart.id)
-                              ? 'border-accent bg-accent/10 cursor-pointer'
-                              : 'border-border hover:border-accent/50 cursor-pointer'
+                          ? 'opacity-60 cursor-not-allowed bg-secondary/50 border-border'
+                          : selectedCharts.includes(chart.id)
+                            ? 'border-accent bg-accent/10 cursor-pointer'
+                            : 'border-border hover:border-accent/50 cursor-pointer'
                           }`}
                       >
                         <div className="flex items-center gap-4">

@@ -43,10 +43,10 @@ export const ProductPreviewModal = ({
           customer_name: userName,
           customer_email: userEmail,
           customer_phone: userPhone,
-          product_name: 'Laporan Analisis Mendalam Human Design',
+          product_name: `Full Report Human Design: ${userName}`,
           amount: 149000,
           status: 'PENDING',
-          metadata: { type: 'ebook_preview' }
+          metadata: { chart_ids: [""] }
         });
 
       if (orderError) {
@@ -64,7 +64,7 @@ export const ProductPreviewModal = ({
           customerEmail: userEmail,
           customerPhone: userPhone,
           amount: 149000,
-          productName: 'Laporan Analisis Mendalam Human Design'
+          productName: `Full Report Human Design: ${userName}`
         }
       });
 
