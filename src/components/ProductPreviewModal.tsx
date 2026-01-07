@@ -19,9 +19,9 @@ interface ProductPreviewModalProps {
   userPhone?: string;
 }
 
-export const ProductPreviewModal = ({ 
-  isOpen, 
-  onClose, 
+export const ProductPreviewModal = ({
+  isOpen,
+  onClose,
   userName,
   userEmail = '',
   userPhone = ''
@@ -32,8 +32,34 @@ export const ProductPreviewModal = ({
     setIsLoading(true);
 
     try {
+      // Generate Reference ID uniquely
+      const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+      // 1. Save order to database first
+      const { error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          reference_id: referenceId,
+          customer_name: userName,
+          customer_email: userEmail,
+          customer_phone: userPhone,
+          product_name: 'Laporan Analisis Mendalam Human Design',
+          amount: 149000,
+          status: 'PENDING',
+          metadata: { type: 'ebook_preview' }
+        });
+
+      if (orderError) {
+        console.error('Order creation error:', orderError);
+        toast.error('Gagal membuat pesanan: ' + orderError.message);
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Call Payment Gateway
       const { data, error } = await supabase.functions.invoke('ipaymu-checkout', {
         body: {
+          referenceId: referenceId, // Pass the SAME ID
           customerName: userName,
           customerEmail: userEmail,
           customerPhone: userPhone,
@@ -49,6 +75,12 @@ export const ProductPreviewModal = ({
       }
 
       if (data?.success && data?.paymentUrl) {
+        // Optional: Update order with payment URL
+        await supabase
+          .from('orders')
+          .update({ payment_url: data.paymentUrl })
+          .eq('reference_id', referenceId);
+
         // Redirect to iPaymu payment page
         window.location.href = data.paymentUrl;
         onClose();
@@ -96,7 +128,7 @@ export const ProductPreviewModal = ({
 
             <div className="space-y-3">
               <h4 className="font-semibold text-foreground">Apa yang kamu dapatkan:</h4>
-              
+
               <div className="space-y-2">
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
@@ -158,7 +190,7 @@ export const ProductPreviewModal = ({
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
-              Pembayaran aman via iPaymu • Akses instan setelah pembayaran
+              Pembayaran aman via iPaymu • File akan dikirim Maks 24 jam setelah pembayaran
             </p>
           </div>
         </div>

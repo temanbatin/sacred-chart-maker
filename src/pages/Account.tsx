@@ -30,7 +30,28 @@ const Account = () => {
   const [authLoading, setAuthLoading] = useState(false);
   const [savedCharts, setSavedCharts] = useState<SavedChart[]>([]);
   const [selectedChart, setSelectedChart] = useState<SavedChart | null>(null);
-  
+  const [orders, setOrders] = useState<any[]>([]);
+
+  /* Purchased Reports */
+  const fetchOrders = async () => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching orders:', error);
+    } else {
+      setOrders(data || []);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchOrders();
+    }
+  }, [user]);
+
   // Auth form state
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
@@ -163,16 +184,16 @@ const Account = () => {
 
   const getBirthDataFromChart = (chart: SavedChart): BirthDataForChart | null => {
     if (!chart.birth_date) return null;
-    
+
     const [year, month, day] = chart.birth_date.split('-').map(Number);
     let hour = 12, minute = 0;
-    
+
     if (chart.birth_time) {
       const timeParts = chart.birth_time.split(':');
       hour = parseInt(timeParts[0], 10);
       minute = parseInt(timeParts[1], 10);
     }
-    
+
     return {
       year,
       month,
@@ -195,19 +216,19 @@ const Account = () => {
     return (
       <div className="min-h-screen bg-background">
         <MainNavbar />
-        
+
         <main className="pt-24 pb-16 px-4">
           <div className="max-w-md mx-auto">
             <div className="glass-card rounded-2xl p-8">
               <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
                 <LogIn className="w-10 h-10 text-accent" />
               </div>
-              
+
               <h1 className="text-2xl font-bold text-foreground text-center mb-2">
                 {isLoginMode ? 'Masuk ke Akun' : 'Buat Akun Baru'}
               </h1>
               <p className="text-muted-foreground text-center mb-8">
-                {isLoginMode 
+                {isLoginMode
                   ? 'Masuk untuk melihat chart tersimpan dan riwayat laporan.'
                   : 'Daftar untuk menyimpan chart dan akses kapan saja.'}
               </p>
@@ -252,9 +273,9 @@ const Account = () => {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full fire-glow h-12 rounded-xl" 
+                <Button
+                  type="submit"
+                  className="w-full fire-glow h-12 rounded-xl"
                   disabled={authLoading}
                 >
                   {authLoading ? (
@@ -276,8 +297,8 @@ const Account = () => {
                   onClick={() => setIsLoginMode(!isLoginMode)}
                   className="text-accent hover:underline text-sm"
                 >
-                  {isLoginMode 
-                    ? 'Belum punya akun? Daftar' 
+                  {isLoginMode
+                    ? 'Belum punya akun? Daftar'
                     : 'Sudah punya akun? Masuk'}
                 </button>
               </div>
@@ -286,8 +307,8 @@ const Account = () => {
                 <p className="text-sm text-muted-foreground mb-4 text-center">
                   Belum punya chart?
                 </p>
-                <Link 
-                  to="/" 
+                <Link
+                  to="/"
                   className="text-accent hover:underline inline-flex items-center gap-1 justify-center w-full"
                 >
                   Buat Chart Gratis
@@ -306,11 +327,11 @@ const Account = () => {
   // Show selected chart
   if (selectedChart) {
     const birthData = getBirthDataFromChart(selectedChart);
-    
+
     return (
       <div className="min-h-screen bg-background">
         <MainNavbar />
-        
+
         <main className="pt-24 pb-16 px-4">
           <div className="max-w-4xl mx-auto mb-6">
             <Button variant="ghost" onClick={handleBackToList} className="gap-2">
@@ -318,7 +339,7 @@ const Account = () => {
               Kembali ke Daftar Chart
             </Button>
           </div>
-          
+
           <ChartResult
             data={selectedChart.chart_data}
             userName={selectedChart.name}
@@ -334,10 +355,27 @@ const Account = () => {
     );
   }
 
+
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'PAID':
+        return <span className="px-2 py-1 bg-green-500/20 text-green-500 text-xs rounded-full">Lunas</span>;
+      case 'PENDING':
+        return <span className="px-2 py-1 bg-yellow-500/20 text-yellow-500 text-xs rounded-full">Menunggu Pembayaran</span>;
+      case 'FAILED':
+        return <span className="px-2 py-1 bg-red-500/20 text-red-500 text-xs rounded-full">Gagal</span>;
+      case 'EXPIRED':
+        return <span className="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">Kedaluwarsa</span>;
+      default:
+        return <span className="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">{status}</span>;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <MainNavbar />
-      
+
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -362,7 +400,7 @@ const Account = () => {
               <FileText className="w-5 h-5 text-accent" />
               Chart Tersimpan
             </h2>
-            
+
             {savedCharts.length === 0 ? (
               <div className="glass-card rounded-xl p-8 text-center">
                 <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -416,18 +454,75 @@ const Account = () => {
               <FileText className="w-5 h-5 text-accent" />
               Laporan Saya
             </h2>
-            <div className="glass-card rounded-xl p-8 text-center">
-              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">
-                Anda belum membeli laporan
-              </p>
-              <Button variant="outline" asChild>
-                <Link to="/reports">
-                  Lihat Produk Kami
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
-            </div>
+            {orders.length === 0 ? (
+              <div className="glass-card rounded-xl p-8 text-center">
+                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  Anda belum membeli laporan
+                </p>
+                <Button variant="outline" asChild>
+                  <Link to="/reports">
+                    Lihat Produk Kami
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {orders.map((order) => (
+                  <div key={order.id} className="glass-card rounded-xl p-6 border border-border">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+                      {/* Left: Order Info */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-foreground text-lg">
+                            {order.product_name || 'Laporan Human Design'}
+                          </h3>
+                          {getStatusBadge(order.status)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Order Ref: {order.reference_id}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.paid_at
+                            ? `Dibayar pada: ${new Date(order.paid_at).toLocaleString()}`
+                            : `Dipesan pada: ${new Date(order.created_at).toLocaleString()}`}
+                        </p>
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-3">
+                        {/* PENDING: Show Pay Button */}
+                        {order.status === 'PENDING' && order.payment_url && (
+                          <Button asChild className="fire-glow">
+                            <a href={order.payment_url} target="_blank" rel="noopener noreferrer">
+                              Bayar Sekarang <ArrowRight className="w-4 h-4 ml-2" />
+                            </a>
+                          </Button>
+                        )}
+
+                        {/* PAID & NO REPORT: Show Processing */}
+                        {order.status === 'PAID' && !order.report_url && (
+                          <div className="bg-accent/10 text-accent px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Report sedang disusun oleh tim...
+                          </div>
+                        )}
+
+                        {/* PAID & REPORT READY: Show Download */}
+                        {order.status === 'PAID' && order.report_url && (
+                          <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent/10">
+                            <a href={order.report_url} target="_blank" rel="noopener noreferrer">
+                              <FileText className="w-4 h-4 mr-2" />
+                              Download PDF
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       </main>

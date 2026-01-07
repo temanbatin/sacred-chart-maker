@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { Check, X, ArrowRight, Star, Shield, Clock, FileText, Plus, Calendar, MapPin, Loader2, AlertTriangle, CreditCard, Mail, Phone, User as UserIcon } from 'lucide-react';
+import { Check, X, ArrowRight, Star, Shield, Clock, FileText, Plus, Calendar, MapPin, Loader2, CreditCard, Mail, Phone, User as UserIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -107,21 +107,26 @@ const Reports = () => {
   const [agreedToTnc, setAgreedToTnc] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [userProfile, setUserProfile] = useState<{ name: string | null; whatsapp: string | null } | null>(null);
-  
+
   // Billing info state
   const [billingName, setBillingName] = useState('');
   const [billingEmail, setBillingEmail] = useState('');
   const [billingWhatsapp, setBillingWhatsapp] = useState('+62');
   const [useAccountData, setUseAccountData] = useState(false);
 
+  // State for tracking ordered charts
+  const [orderedChartIds, setOrderedChartIds] = useState<Set<string>>(new Set());
+  const [pendingChartIds, setPendingChartIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         setUser(currentSession?.user ?? null);
-        
+
         if (currentSession?.user) {
           setTimeout(() => {
             fetchSavedCharts();
+            fetchOrders();
           }, 0);
         } else {
           setIsLoading(false);
@@ -130,9 +135,10 @@ const Reports = () => {
     );
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setUser(initialSession?.user ?? null);
-      
+
       if (initialSession?.user) {
         fetchSavedCharts();
+        fetchOrders();
       } else {
         setIsLoading(false);
       }
@@ -140,6 +146,37 @@ const Reports = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchOrders = async () => {
+    const { data: ordersData, error } = await supabase
+      .from('orders')
+      .select('status, metadata')
+      .in('status', ['PAID', 'PENDING']);
+
+    if (error) {
+      console.error('Error fetching orders:', error);
+      return;
+    }
+
+    const paidIds = new Set<string>();
+    const pendingIds = new Set<string>();
+
+    ordersData?.forEach((order: any) => {
+      const chartIds = order.metadata?.chart_ids || [];
+      if (Array.isArray(chartIds)) {
+        chartIds.forEach((id: string) => {
+          if (order.status === 'PAID') {
+            paidIds.add(id);
+          } else if (order.status === 'PENDING') {
+            pendingIds.add(id);
+          }
+        });
+      }
+    });
+
+    setOrderedChartIds(paidIds);
+    setPendingChartIds(pendingIds);
+  };
 
   const fetchSavedCharts = async () => {
     const { data, error } = await supabase
@@ -158,7 +195,7 @@ const Reports = () => {
       .from('profiles')
       .select('name, whatsapp')
       .single();
-    
+
     if (profileData) {
       setUserProfile(profileData);
     }
@@ -188,19 +225,28 @@ const Reports = () => {
     }).format(price);
   };
 
+  const isChartOrdered = (id: string) => orderedChartIds.has(id);
+  const isChartPending = (id: string) => pendingChartIds.has(id);
+
   const toggleChartSelection = (chartId: string) => {
-    setSelectedCharts(prev => 
-      prev.includes(chartId) 
+    if (isChartOrdered(chartId) || isChartPending(chartId)) return;
+
+    setSelectedCharts(prev =>
+      prev.includes(chartId)
         ? prev.filter(id => id !== chartId)
         : [...prev, chartId]
     );
   };
 
   const selectAllCharts = () => {
-    if (selectedCharts.length === savedCharts.length) {
+    const availableCharts = savedCharts
+      .map(c => c.id)
+      .filter(id => !isChartOrdered(id) && !isChartPending(id));
+
+    if (selectedCharts.length === availableCharts.length) {
       setSelectedCharts([]);
     } else {
-      setSelectedCharts(savedCharts.map(c => c.id));
+      setSelectedCharts(availableCharts);
     }
   };
 
@@ -286,8 +332,35 @@ const Reports = () => {
       const selectedChartDetails = getSelectedChartDetails();
       const productNames = selectedChartDetails.map(c => `Full Report: ${c.name}`).join(', ');
 
+      // Generate Reference ID uniquely
+      const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+      // 1. Save order to database first
+      const { error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user?.id || null, // Handle guest or logged in
+          reference_id: referenceId,
+          customer_name: billingName,
+          customer_email: billingEmail,
+          customer_phone: billingWhatsapp,
+          product_name: productNames,
+          amount: getTotalPrice(),
+          status: 'PENDING',
+          metadata: { chart_ids: selectedCharts }
+        });
+
+      if (orderError) {
+        console.error('Order creation error:', orderError);
+        toast.error('Gagal membuat pesanan: ' + orderError.message);
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      // 2. Call Payment Gateway
       const { data, error } = await supabase.functions.invoke('ipaymu-checkout', {
         body: {
+          referenceId: referenceId, // Pass the SAME ID
           customerName: billingName,
           customerEmail: billingEmail,
           customerPhone: billingWhatsapp,
@@ -298,12 +371,19 @@ const Reports = () => {
       });
 
       if (error) {
-        console.error('Payment error:', error);
+        console.error('Payment function error:', error);
         toast.error('Gagal memproses pembayaran. Silakan coba lagi.');
         return;
       }
 
       if (data?.success && data?.paymentUrl) {
+
+        // Optional: Update order with payment URL
+        await supabase
+          .from('orders')
+          .update({ payment_url: data.paymentUrl })
+          .eq('reference_id', referenceId);
+
         toast.success('Mengarahkan ke halaman pembayaran...');
         // Redirect to iPaymu payment page
         window.location.href = data.paymentUrl;
@@ -311,7 +391,7 @@ const Reports = () => {
         toast.error(data?.error || 'Gagal mendapatkan link pembayaran');
       }
     } catch (err) {
-      console.error('Payment error:', err);
+      console.error('Payment flow error:', err);
       toast.error('Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsProcessingPayment(false);
@@ -325,7 +405,7 @@ const Reports = () => {
   return (
     <div className="min-h-screen bg-background">
       <MainNavbar />
-      
+
       <main className="pt-24 pb-16">
         {/* Hero Section */}
         <section className="px-4 py-16 text-center">
@@ -478,44 +558,64 @@ const Reports = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {savedCharts.map((chart) => (
-                    <div
-                      key={chart.id}
-                      onClick={() => toggleChartSelection(chart.id)}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        selectedCharts.includes(chart.id)
-                          ? 'border-accent bg-accent/10'
-                          : 'border-border hover:border-accent/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <Checkbox
-                          checked={selectedCharts.includes(chart.id)}
-                          onCheckedChange={() => toggleChartSelection(chart.id)}
-                          className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
-                        />
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-foreground">{chart.name}</h4>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {formatDate(chart.birth_date)}
-                            </span>
-                            {chart.birth_place && (
+                  {savedCharts.map((chart) => {
+                    const isPaid = isChartOrdered(chart.id);
+                    const isPending = isChartPending(chart.id);
+                    const isDisabled = isPaid || isPending;
+
+                    return (
+                      <div
+                        key={chart.id}
+                        onClick={() => !isDisabled && toggleChartSelection(chart.id)}
+                        className={`p-4 rounded-xl border-2 transition-all ${isDisabled
+                            ? 'opacity-60 cursor-not-allowed bg-secondary/50 border-border'
+                            : selectedCharts.includes(chart.id)
+                              ? 'border-accent bg-accent/10 cursor-pointer'
+                              : 'border-border hover:border-accent/50 cursor-pointer'
+                          }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <Checkbox
+                            checked={selectedCharts.includes(chart.id)}
+                            onCheckedChange={() => !isDisabled && toggleChartSelection(chart.id)}
+                            disabled={isDisabled}
+                            className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-foreground">{chart.name}</h4>
+                              {isPaid && (
+                                <span className="text-[10px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
+                                  Sudah Dibeli
+                                </span>
+                              )}
+                              {isPending && (
+                                <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
+                                  Menunggu Pembayaran
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                               <span className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {chart.birth_place.split(',')[0]}
+                                <Calendar className="w-3 h-3" />
+                                {formatDate(chart.birth_date)}
                               </span>
-                            )}
+                              {chart.birth_place && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {chart.birth_place.split(',')[0]}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-accent font-semibold">{formatPrice(REPORT_PRICE)}</span>
+                            <span className="text-xs text-muted-foreground line-through ml-2">{formatPrice(ORIGINAL_PRICE)}</span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className="text-accent font-semibold">{formatPrice(REPORT_PRICE)}</span>
-                          <span className="text-xs text-muted-foreground line-through ml-2">{formatPrice(ORIGINAL_PRICE)}</span>
-                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Add new chart option */}
@@ -572,9 +672,9 @@ const Reports = () => {
                 <p className="text-muted-foreground mb-6">
                   Anda belum memiliki chart. Buat chart gratis terlebih dahulu untuk memesan Full Report.
                 </p>
-                <Button 
-                  size="lg" 
-                  className="fire-glow text-lg px-8 py-6" 
+                <Button
+                  size="lg"
+                  className="fire-glow text-lg px-8 py-6"
                   onClick={handleAddNewChart}
                 >
                   Buat Chart Gratis
@@ -595,9 +695,9 @@ const Reports = () => {
                   </div>
                 </div>
 
-                <Button 
-                  size="lg" 
-                  className="fire-glow text-lg px-8 py-6" 
+                <Button
+                  size="lg"
+                  className="fire-glow text-lg px-8 py-6"
                   onClick={handleAddNewChart}
                 >
                   Buat Chart Gratis Dulu
@@ -639,7 +739,7 @@ const Reports = () => {
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-foreground">Data Pemesan</h3>
                 {user && (
-                  <div 
+                  <div
                     className="flex items-center gap-2 cursor-pointer"
                     onClick={() => handleUseAccountData(!useAccountData)}
                   >
@@ -765,198 +865,112 @@ const Reports = () => {
               </div>
             </div>
 
-            {/* Warning */}
-            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
-              <div className="flex gap-3">
-                <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold text-destructive mb-1">Penting!</p>
-                  <p className="text-foreground">
-                    Pastikan tanggal, jam, dan tempat lahir sudah benar. Laporan yang dibuat berdasarkan data kelahiran yang salah <strong>tidak dapat di-refund</strong> karena chart sudah dihitung berdasarkan data yang Anda berikan.
+            {/* Terms and Conditions Checkbox */}
+            <div className="space-y-3 pt-4 border-t border-border">
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="terms"
+                  checked={agreedToTerms}
+                  onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                  className="mt-1"
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <label
+                    htmlFor="terms"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Saya menyetujui Syarat dan Ketentuan
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Dengan mencentang ini, Anda setuju dengan{' '}
+                    <span
+                      className="text-accent cursor-pointer hover:underline"
+                      onClick={() => setShowTncModal(true)}
+                    >
+                      Syarat dan Ketentuan
+                    </span>{' '}
+                    yang berlaku.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="tnc"
+                  checked={agreedToTnc}
+                  onCheckedChange={(checked) => setAgreedToTnc(checked as boolean)}
+                  className="mt-1"
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <label
+                    htmlFor="tnc"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Data yang saya masukkan sudah benar
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Saya telah memeriksa kembali nama, email, dan data kelahiran. Kesalahan data bukan tanggung jawab kami setelah report diproses.
                   </p>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Checkboxes */}
-            <div className="space-y-3">
-              <div 
-                className="flex items-start gap-3 cursor-pointer"
-                onClick={() => setAgreedToTerms(!agreedToTerms)}
-              >
-                <Checkbox
-                  checked={agreedToTerms}
-                  onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
-                  className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
-                />
-                <label className="text-sm text-muted-foreground cursor-pointer">
-                  Saya sudah memastikan data kelahiran di atas benar dan memahami bahwa kesalahan data tidak dapat di-refund.
-                </label>
-              </div>
-
-              <div 
-                className="flex items-start gap-3 cursor-pointer"
-                onClick={() => setAgreedToTnc(!agreedToTnc)}
-              >
-                <Checkbox
-                  checked={agreedToTnc}
-                  onCheckedChange={(checked) => setAgreedToTnc(checked as boolean)}
-                  className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
-                />
-                <label className="text-sm text-muted-foreground cursor-pointer">
-                  Saya sudah membaca dan menyetujui{' '}
-                  <button 
-                    type="button"
-                    className="text-accent hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowTncModal(true);
-                    }}
-                  >
-                    Syarat dan Ketentuan
-                  </button>{' '}
-                  website.
-                </label>
-              </div>
-            </div>
-
-            {/* Total */}
-            <div className="bg-secondary/50 rounded-lg p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-muted-foreground">Total ({selectedCharts.length} report)</span>
-                <div>
-                  <span className="text-sm text-muted-foreground line-through mr-2">{formatPrice(getOriginalTotalPrice())}</span>
-                  <span className="text-2xl font-bold text-accent">{formatPrice(getTotalPrice())}</span>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground text-right">
-                Hemat {formatPrice(getOriginalTotalPrice() - getTotalPrice())}!
-              </p>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowCheckoutPreview(false)}
-              >
-                Kembali
-              </Button>
-              <Button
-                className="flex-1 fire-glow"
-                onClick={handleConfirmPayment}
-                disabled={!agreedToTerms || !agreedToTnc || isProcessingPayment}
-              >
-                {isProcessingPayment ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Bayar Sekarang
-                  </>
-                )}
-              </Button>
-            </div>
+          <div className="flex flex-col gap-3 py-4">
+            <Button
+              className="w-full fire-glow py-6 text-lg"
+              onClick={handleConfirmPayment}
+              disabled={isProcessingPayment || !agreedToTerms || !agreedToTnc}
+            >
+              {isProcessingPayment ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-5 h-5 mr-2" />
+                  Bayar Sekarang
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowCheckoutPreview(false)}
+              disabled={isProcessingPayment}
+            >
+              Batal
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Terms and Conditions Modal */}
+      {/* T&C Modal */}
       <Dialog open={showTncModal} onOpenChange={setShowTncModal}>
-        <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogContent className="sm:max-w-lg bg-card border-border max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl text-foreground">
-              Syarat & Ketentuan
-            </DialogTitle>
-            <DialogDescription>
-              Terakhir diperbarui: Januari 2026
-            </DialogDescription>
+            <DialogTitle>Syarat dan Ketentuan</DialogTitle>
           </DialogHeader>
-
-          <div className="overflow-y-auto flex-1 pr-2 space-y-6 text-sm">
-            <section>
-              <h3 className="font-semibold text-foreground mb-2">1. Penerimaan Ketentuan</h3>
-              <p className="text-muted-foreground">
-                Dengan mengakses dan menggunakan layanan Teman Batin, Anda menyetujui untuk 
-                terikat oleh syarat dan ketentuan ini. Jika Anda tidak setuju dengan ketentuan 
-                ini, harap tidak menggunakan layanan kami.
-              </p>
-            </section>
-
-            <section>
-              <h3 className="font-semibold text-foreground mb-2">2. Deskripsi Layanan</h3>
-              <p className="text-muted-foreground">
-                Teman Batin menyediakan layanan perhitungan Human Design Chart berdasarkan 
-                data kelahiran yang Anda berikan. Layanan ini bersifat informatif dan tidak 
-                dimaksudkan sebagai pengganti nasihat profesional medis, psikologis, atau 
-                hukum.
-              </p>
-            </section>
-
-            <section>
-              <h3 className="font-semibold text-foreground mb-2">3. Akurasi Informasi</h3>
-              <p className="text-muted-foreground">
-                Akurasi hasil Human Design Chart bergantung pada keakuratan data kelahiran 
-                yang Anda berikan. Kami tidak bertanggung jawab atas ketidakakuratan hasil 
-                yang disebabkan oleh data yang salah atau tidak lengkap.
-              </p>
-            </section>
-
-            <section>
-              <h3 className="font-semibold text-foreground mb-2">4. Penggunaan Layanan</h3>
-              <p className="text-muted-foreground mb-2">Anda setuju untuk:</p>
-              <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>Memberikan informasi yang akurat dan lengkap</li>
-                <li>Menggunakan layanan hanya untuk tujuan personal dan non-komersial</li>
-                <li>Tidak menyalin atau mendistribusikan konten tanpa izin</li>
-                <li>Tidak menggunakan layanan untuk aktivitas ilegal</li>
-              </ul>
-            </section>
-
-            <section>
-              <h3 className="font-semibold text-foreground mb-2">5. Hak Kekayaan Intelektual</h3>
-              <p className="text-muted-foreground">
-                Semua konten, termasuk teks, grafik, logo, dan perangkat lunak yang tersedia 
-                di platform ini adalah milik Teman Batin dan dilindungi oleh undang-undang 
-                hak cipta.
-              </p>
-            </section>
-
-            <section>
-              <h3 className="font-semibold text-foreground mb-2">6. Batasan Tanggung Jawab</h3>
-              <p className="text-muted-foreground">
-                Teman Batin tidak bertanggung jawab atas kerugian langsung, tidak langsung, 
-                insidental, atau konsekuensial yang timbul dari penggunaan atau ketidakmampuan 
-                menggunakan layanan kami.
-              </p>
-            </section>
-
-            <section>
-              <h3 className="font-semibold text-foreground mb-2">7. Perubahan Ketentuan</h3>
-              <p className="text-muted-foreground">
-                Kami berhak untuk mengubah syarat dan ketentuan ini kapan saja. Perubahan akan 
-                berlaku segera setelah dipublikasikan di situs web.
-              </p>
-            </section>
-
-            <section>
-              <h3 className="font-semibold text-foreground mb-2">8. Hukum yang Berlaku</h3>
-              <p className="text-muted-foreground">
-                Syarat dan ketentuan ini diatur oleh dan ditafsirkan sesuai dengan hukum 
-                Republik Indonesia.
-              </p>
-            </section>
+          <div className="space-y-4 text-sm text-muted-foreground">
+            <p>
+              1. <strong>Data Kelahiran:</strong> Akurasi report sangat bergantung pada data kelahiran (jam & menit). Pastikan data yang Anda masukkan akurat.
+            </p>
+            <p>
+              2. <strong>Waktu Layanan:</strong> Report akan dikirimkan ke email Anda dalam waktu maksimal 24 jam setelah pembayaran dikonfirmasi.
+            </p>
+            <p>
+              3. <strong>Kebijakan Refund:</strong> Kami memberikan garansi uang kembali 30 hari jika Anda tidak mendapatkan manfaat dari report ini, dengan syarat Anda telah membaca dan mempelajarinya.
+            </p>
+            <p>
+              4. <strong>Privasi:</strong> Data kelahiran Anda hanya digunakan untuk pembuatan chart dan tidak akan disebarluaskan.
+            </p>
+            <p>
+              5. <strong>Non-Transferable:</strong> Report ini dibuat khusus untuk Anda dan tidak dapat dipindahtangankan manfaatnya.
+            </p>
           </div>
-
-          <div className="pt-4 border-t border-border mt-4">
-            <Button 
-              className="w-full" 
-              onClick={() => setShowTncModal(false)}
-            >
+          <div className="pt-4">
+            <Button onClick={() => setShowTncModal(false)} className="w-full">
               Tutup
             </Button>
           </div>

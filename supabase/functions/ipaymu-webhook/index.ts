@@ -41,7 +41,7 @@ serve(async (req) => {
     // Parse webhook data from iPaymu
     const formData = await req.formData();
     const callbackData: Partial<IPaymuCallback> = {};
-    
+
     for (const [key, value] of formData.entries()) {
       callbackData[key as keyof IPaymuCallback] = value as string;
     }
@@ -80,33 +80,97 @@ serve(async (req) => {
 
     if (isSuccess) {
       console.log('Payment successful! Processing order...');
-      
-      // TODO: Add your business logic here
-      // For example:
-      // 1. Update order status in database
-      // 2. Send confirmation email
-      // 3. Generate and send report
-      
-      // Example: Log successful payment
-      // await supabase.from('payments').insert({
-      //   transaction_id: trx_id,
-      //   session_id: sid,
-      //   reference_id: reference_id,
-      //   amount: parseInt(amount || '0'),
-      //   status: 'success',
-      //   buyer_name: buyer_name,
-      //   buyer_email: buyer_email,
-      //   payment_method: `${via} - ${channel}`,
-      //   paid_at: paid_at,
-      // });
+
+      // Update order status to PAID
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          status: 'PAID',
+          paid_at: new Date().toISOString(),
+          payment_method: `${via} - ${channel}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('reference_id', reference_id);
+
+      if (updateError) {
+        console.error('Error updating order status:', updateError);
+      } else {
+        console.log(`Order ${reference_id} updated to PAID`);
+
+        // TRIGGER N8N WORKFLOW
+        try {
+          // Replace this with your actual n8n webhook URL
+          const N8N_WEBHOOK_URL = 'https://n8n.indonetwork.or.id/webhook/hd-order-paid';
+
+          console.log(`Triggering n8n workflow at ${N8N_WEBHOOK_URL}...`);
+
+          // Fetch order details to send complete data to n8n
+          const { data: orderData } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('reference_id', reference_id)
+            .single();
+
+          // Fetch related charts data to include in payload
+          const chartIds = orderData?.metadata?.chart_ids || [];
+          let chartsData: any[] = [];
+
+          if (Array.isArray(chartIds) && chartIds.length > 0) {
+            const { data: fetchedCharts } = await supabase
+              .from('saved_charts')
+              .select('*')
+              .in('id', chartIds);
+            chartsData = fetchedCharts || [];
+          }
+
+          const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order: orderData,
+              charts: chartsData, // Send full chart data including planetary positions
+              transaction: {
+                trx_id,
+                sid,
+                via,
+                channel,
+                paid_at
+              }
+            })
+          });
+
+          if (n8nResponse.ok) {
+            console.log('n8n workflow triggered successfully');
+          } else {
+            console.error('Failed to trigger n8n workflow:', n8nResponse.status);
+          }
+        } catch (n8nError) {
+          console.error('Error calling n8n webhook:', n8nError);
+          // Don't fail the whole request just because n8n failed
+        }
+      }
+
     } else if (isPending) {
       console.log('Payment pending...');
+      // Optional: Update to PENDING if not already (default is PENDING)
     } else if (isFailed) {
       console.log('Payment failed.');
+      // Update order status to FAILED
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          status: 'FAILED',
+          updated_at: new Date().toISOString()
+        })
+        .eq('reference_id', reference_id);
+
+      if (updateError) {
+        console.error('Error updating order status for failure:', updateError);
+      }
     }
 
     // Return success response to iPaymu
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       success: true,
       message: 'Webhook received successfully',
       trx_id: trx_id,
@@ -118,9 +182,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing iPaymu webhook:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
