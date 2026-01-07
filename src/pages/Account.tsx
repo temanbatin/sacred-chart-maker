@@ -346,6 +346,8 @@ const Account = () => {
             userEmail={user.email || ''}
             userPhone=""
             birthData={birthData}
+            chartId={selectedChart.id}
+            userId={user.id}
             onReset={handleBackToList}
           />
         </main>

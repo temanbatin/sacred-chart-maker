@@ -15,6 +15,8 @@ interface ChartResultProps {
   userEmail?: string;
   userPhone?: string;
   birthData: BirthDataForChart | null;
+  chartId?: string;
+  userId?: string;
   onReset: () => void;
 }
 
@@ -167,7 +169,7 @@ const variableDescriptions: Record<string, { title: string; description: string 
 };
 
 
-export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, onReset }: ChartResultProps) => {
+export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, chartId, userId, onReset }: ChartResultProps) => {
   const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
   const [bodygraphLoading, setBodygraphLoading] = useState(false);
   const [bodygraphError, setBodygraphError] = useState<string | null>(null);
@@ -682,14 +684,14 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, o
             </div>
           </div>
         </div>
-
-        {/* Product Preview Modal */}
         <ProductPreviewModal
           isOpen={isProductModalOpen}
           onClose={() => setIsProductModalOpen(false)}
           userName={userName}
           userEmail={userEmail}
           userPhone={userPhone}
+          chartId={chartId}
+          userId={userId}
         />
 
         {/* Action Buttons */}

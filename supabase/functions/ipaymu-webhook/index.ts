@@ -128,7 +128,7 @@ serve(async (req) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               order: orderData,
-              charts: chartsData, // Send full chart data including planetary positions
+              charts: chartsData, // Contains full chart details including IDs
               transaction: {
                 trx_id,
                 sid,

@@ -36,6 +36,7 @@ const Index = () => {
   const [pendingBirthData, setPendingBirthData] = useState<BirthData | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [currentChartId, setCurrentChartId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     // Set up auth state listener
@@ -71,9 +72,9 @@ const Index = () => {
   };
 
   const processChartGeneration = async (
-    birthDataInput: BirthData, 
-    email: string, 
-    whatsapp: string, 
+    birthDataInput: BirthData,
+    email: string,
+    whatsapp: string,
     password: string | null
   ) => {
     setIsLoading(true);
@@ -101,7 +102,7 @@ const Index = () => {
       // If password provided, create account first
       if (password && !user) {
         const redirectUrl = `${window.location.origin}/`;
-        
+
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
@@ -183,7 +184,7 @@ const Index = () => {
 
       // Save chart to database if user is logged in
       if (currentUser) {
-        const { error: saveError } = await supabase
+        const { data: savedChart, error: saveError } = await supabase
           .from('saved_charts')
           .insert({
             user_id: currentUser.id,
@@ -192,12 +193,15 @@ const Index = () => {
             birth_time: birthTimeStr,
             birth_place: birthDataInput.place,
             chart_data: result,
-          });
+          })
+          .select()
+          .single();
 
         if (saveError) {
           console.error('Error saving chart:', saveError);
           // Don't block the flow, chart is still displayed
         } else {
+          setCurrentChartId(savedChart.id);
           toast.success('Chart berhasil disimpan ke akun Anda!');
         }
       }
@@ -227,6 +231,7 @@ const Index = () => {
     setUserPhone('');
     setBirthData(null);
     setPendingBirthData(null);
+    setCurrentChartId(undefined);
     scrollToCalculator();
   };
 
@@ -239,7 +244,7 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
       {/* Navbar */}
       <MainNavbar />
-      
+
       {/* Floating particles background */}
       <FloatingParticles />
 
@@ -278,6 +283,8 @@ const Index = () => {
             userEmail={userEmail}
             userPhone={userPhone}
             birthData={birthData}
+            chartId={currentChartId}
+            userId={user?.id}
             onReset={handleReset}
           />
         )}
