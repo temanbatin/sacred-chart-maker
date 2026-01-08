@@ -332,6 +332,15 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           <div className="text-center mb-12 animate-fade-up">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-fire">Selamat, {userName}! 🌟</h2>
             <p className="text-xl text-muted-foreground">Inilah cetak biru energi kosmikmu</p>
+            {birthData && (
+              <div className="flex items-center justify-center gap-2 mt-4 text-muted-foreground text-sm bg-secondary/30 py-2 px-4 rounded-full inline-block">
+                <span>{birthData.day} {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][birthData.month - 1]} {birthData.year}</span>
+                <span>•</span>
+                <span>{String(birthData.hour).padStart(2, '0')}:{String(birthData.minute).padStart(2, '0')}</span>
+                <span>•</span>
+                <span>{birthData.place}</span>
+              </div>
+            )}
           </div>
 
           {/* Bodygraph with Planet Columns */}
