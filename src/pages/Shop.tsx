@@ -3,13 +3,14 @@ import { Footer } from '@/components/Footer';
 import { FileText, Users, Heart, Briefcase, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { PRICING_CONFIG, formatPrice } from '@/config/pricing';
 
 const products = [
   {
     id: 'full-report',
     title: 'Full Personalized Report',
     description: 'Laporan komprehensif 100+ halaman tentang Human Design Anda',
-    price: 'Rp 199.000',
+    price: formatPrice(PRICING_CONFIG.REPORT_PRICE),
     icon: FileText,
     featured: true,
     href: '/reports',

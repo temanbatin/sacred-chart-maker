@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import reportSS1 from "@/assets/Report SS.jpg";
 import reportSS2 from "@/assets/Report SS 2.jpg";
 import reportSS3 from "@/assets/Report SS 3.jpg";
+import { PRICING_CONFIG, formatPrice } from "@/config/pricing";
 
 const reportSlides = [
   { img: reportSS1, title: "Daftar Isi Lengkap", desc: "100+ halaman strukturnya jelas, mudah diikuti dari awal hingga akhir" },
@@ -718,16 +719,19 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 src={reportSlides[slideIndex].img}
                 alt={reportSlides[slideIndex].title}
                 className="w-full h-auto"
+                loading="lazy"
               />
             </div>
             {/* Navigation Arrows */}
             <button
+              aria-label="Previous slide"
               onClick={() => setSlideIndex((prev) => (prev === 0 ? reportSlides.length - 1 : prev - 1))}
               className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
+              aria-label="Next slide"
               onClick={() => setSlideIndex((prev) => (prev === reportSlides.length - 1 ? 0 : prev + 1))}
               className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
             >
@@ -786,8 +790,8 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               Dapatkan Laporan Lengkap
             </Button>
             <div className="flex items-center gap-3">
-              <span className="text-amber-300 font-bold text-2xl">Rp 199.000</span>
-              <span className="text-white/60 line-through text-lg">Rp 500.000</span>
+              <span className="text-amber-300 font-bold text-2xl">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
+              <span className="text-white/60 line-through text-lg">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
             </div>
           </div>
           <p className="text-center text-white/60 text-sm mt-4">⚡ Dikirim ke email dalam 24 jam</p>

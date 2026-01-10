@@ -55,16 +55,19 @@ const ReportGallery = () => {
           src={reportSlides[slideIndex].img}
           alt={reportSlides[slideIndex].title}
           className="w-full h-auto"
+          loading="lazy"
         />
       </div>
       {/* Navigation */}
       <button
+        aria-label="Previous slide"
         onClick={() => setSlideIndex((prev) => (prev === 0 ? reportSlides.length - 1 : prev - 1))}
         className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full"
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
       <button
+        aria-label="Next slide"
         onClick={() => setSlideIndex((prev) => (prev === reportSlides.length - 1 ? 0 : prev + 1))}
         className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full"
       >

@@ -88,8 +88,7 @@ const testimonials = [
   },
 ];
 
-const REPORT_PRICE = 199000;
-const ORIGINAL_PRICE = 500000;
+import { PRICING_CONFIG, formatPrice } from '@/config/pricing';
 
 const reportFeatures = [
   'Analisis mendalam 100+ halaman',
@@ -223,14 +222,6 @@ const Reports = () => {
     return `${hour}:${minute}`;
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
   const isChartOrdered = (id: string) => orderedChartIds.has(id);
   const isChartPending = (id: string) => pendingChartIds.has(id);
 
@@ -257,11 +248,11 @@ const Reports = () => {
   };
 
   const getTotalPrice = () => {
-    return selectedCharts.length * REPORT_PRICE;
+    return selectedCharts.length * PRICING_CONFIG.REPORT_PRICE;
   };
 
   const getOriginalTotalPrice = () => {
-    return selectedCharts.length * ORIGINAL_PRICE;
+    return selectedCharts.length * PRICING_CONFIG.ORIGINAL_PRICE;
   };
 
   const getSelectedChartDetails = () => {
@@ -694,10 +685,10 @@ const Reports = () => {
                 Laporan 100+ halaman yang dipersonalisasi berdasarkan data kelahiran Anda.
               </p>
               <div className="flex items-center justify-center gap-3">
-                <span className="text-2xl font-bold text-accent">{formatPrice(REPORT_PRICE)}</span>
-                <span className="text-lg text-muted-foreground line-through">{formatPrice(ORIGINAL_PRICE)}</span>
+                <span className="text-2xl font-bold text-accent">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
+                <span className="text-lg text-muted-foreground line-through">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
                 <span className="bg-accent/20 text-accent text-xs font-semibold px-2 py-1 rounded">
-                  HEMAT {Math.round(((ORIGINAL_PRICE - REPORT_PRICE) / ORIGINAL_PRICE) * 100)}%
+                  HEMAT {Math.round(((PRICING_CONFIG.ORIGINAL_PRICE - PRICING_CONFIG.REPORT_PRICE) / PRICING_CONFIG.ORIGINAL_PRICE) * 100)}%
                 </span>
               </div>
             </div>
@@ -773,8 +764,8 @@ const Reports = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className="text-accent font-semibold">{formatPrice(REPORT_PRICE)}</span>
-                            <span className="text-xs text-muted-foreground line-through ml-2">{formatPrice(ORIGINAL_PRICE)}</span>
+                            <span className="text-accent font-semibold">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
+                            <span className="text-xs text-muted-foreground line-through ml-2">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
                           </div>
                         </div>
                       </div>
@@ -1029,8 +1020,8 @@ const Reports = () => {
                       <p className="text-sm text-accent">Full Foundation Report</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-semibold text-foreground">{formatPrice(REPORT_PRICE)}</span>
-                      <span className="text-xs text-muted-foreground line-through ml-1">{formatPrice(ORIGINAL_PRICE)}</span>
+                      <span className="font-semibold text-foreground">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
+                      <span className="text-xs text-muted-foreground line-through ml-1">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground space-y-1 mt-3 pt-3 border-t border-border">

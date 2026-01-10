@@ -15,6 +15,7 @@ import ebookCover from "@/assets/cover_ebook_sample.jpg";
 import reportSS1 from "@/assets/Report SS.jpg";
 import reportSS2 from "@/assets/Report SS 2.jpg";
 import reportSS3 from "@/assets/Report SS 3.jpg";
+import { PRICING_CONFIG, formatPrice } from "@/config/pricing";
 
 interface ProductPreviewModalProps {
   isOpen: boolean;
@@ -97,7 +98,7 @@ export const ProductPreviewModal = ({
           customer_email: billingEmail,
           customer_phone: billingPhone,
           product_name: `Full Report Human Design: ${userName}`,
-          amount: 199000,
+          amount: PRICING_CONFIG.REPORT_PRICE,
           status: 'PENDING',
           metadata: { chart_ids: chartIds }
         });
@@ -116,7 +117,7 @@ export const ProductPreviewModal = ({
           customerName: billingName,
           customerEmail: billingEmail,
           customerPhone: billingPhone,
-          amount: 199000,
+          amount: PRICING_CONFIG.REPORT_PRICE,
           productName: `Full Report Human Design: ${userName}`,
           chartIds: chartIds
         }
@@ -310,10 +311,10 @@ export const ProductPreviewModal = ({
                   </div>
                   <div className="border-t border-border pt-2 mt-2 flex justify-between items-baseline">
                     <span className="text-muted-foreground">
-                      <span className="line-through mr-2">Rp 500.000</span>
-                      <span className="bg-green-500/20 text-green-400 text-xs px-1.5 py-0.5 rounded">-60%</span>
+                      <span className="line-through mr-2">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
+                      <span className="bg-green-500/20 text-green-400 text-xs px-1.5 py-0.5 rounded">-{Math.round(((PRICING_CONFIG.ORIGINAL_PRICE - PRICING_CONFIG.REPORT_PRICE) / PRICING_CONFIG.ORIGINAL_PRICE) * 100)}%</span>
                     </span>
-                    <span className="text-2xl font-bold text-primary">Rp 199.000</span>
+                    <span className="text-2xl font-bold text-primary">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
                   </div>
                 </div>
               </div>
@@ -333,7 +334,7 @@ export const ProductPreviewModal = ({
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5 mr-2" />
-                    Bayar Rp 199.000
+                    Bayar {formatPrice(PRICING_CONFIG.REPORT_PRICE)}
                   </>
                 )}
               </Button>
