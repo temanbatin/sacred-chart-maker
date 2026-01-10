@@ -1,66 +1,109 @@
-import { Calendar, Cpu, Compass } from 'lucide-react';
+import { Sparkles, Zap, Gift } from 'lucide-react';
 
 const steps = [
   {
-    icon: Calendar,
-    title: 'Masukkan Data Lahir',
-    description: 'Isi tanggal, waktu, dan tempat kelahiranmu dengan akurat',
+    icon: Sparkles,
+    number: "01",
+    title: "Isi Data Lahirmu",
+    description: "Cukup 1 menit. Masukkan tanggal, waktu, dan kota kelahiran.",
+    highlight: "GRATIS"
   },
   {
-    icon: Cpu,
-    title: 'Sistem Menghitung',
-    description: 'Algoritma kami membaca posisi planet saat kamu dilahirkan',
+    icon: Zap,
+    number: "02",
+    title: "Lihat Desain Unikmu",
+    description: "Chart langsung muncul! Tipe, Strategi, dan Otoritas-mu terungkap.",
+    highlight: "INSTANT"
   },
   {
-    icon: Compass,
-    title: 'Temukan Desainmu',
-    description: 'Dapatkan peta energi unik yang hanya milikmu',
+    icon: Gift,
+    number: "03",
+    title: "Pahami & Terapkan",
+    description: "Gunakan insight untuk keputusan karir, relasi, dan hidup lebih aligned.",
+    highlight: "ACTIONABLE"
   },
 ];
 
 export const HowItWorksSection = () => {
   return (
     <section className="py-20 px-4">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-gradient-fire">
-          Bagaimana Cara Kerjanya?
-        </h2>
-        <p className="text-muted-foreground text-center mb-16 max-w-2xl mx-auto">
-          Hanya dalam 3 langkah sederhana, kamu akan memiliki peta lengkap tentang energi dan potensi hidupmu
-        </p>
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-16">
+          <span className="inline-block bg-primary/20 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+            Prosesnya Gampang Banget
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-gradient-fire mb-4">
+            3 Langkah Kenali Dirimu
+          </h2>
+          <p className="text-muted-foreground max-w-xl mx-auto text-lg">
+            Tidak perlu belajar berbulan-bulan. Dalam hitungan menit, kamu punya peta hidup yang akurat.
+          </p>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-6">
           {steps.map((step, index) => (
             <div
               key={index}
               className="relative group"
             >
-              {/* Connector line */}
+              {/* Connector Arrow (hidden on mobile) */}
               {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-12 left-1/2 w-full h-0.5 bg-gradient-to-r from-primary/50 to-transparent" />
+                <div className="hidden md:block absolute top-1/2 -right-3 w-6 h-6 z-20">
+                  <div className="w-0 h-0 border-t-8 border-b-8 border-l-8 border-transparent border-l-primary/50" />
+                </div>
               )}
 
-              <div className="glass-card rounded-2xl p-8 text-center relative z-10 transition-transform hover:scale-105">
-                {/* Step number */}
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
-                  {index + 1}
+              <div className="glass-card rounded-2xl p-8 text-center h-full relative overflow-hidden transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
+                {/* Highlight Badge */}
+                <div className="absolute top-4 right-4 bg-accent/20 text-accent px-2 py-0.5 rounded text-xs font-bold">
+                  {step.highlight}
+                </div>
+
+                {/* Large Number */}
+                <div className="text-6xl font-black bg-gradient-to-br from-primary/40 to-accent/40 bg-clip-text text-transparent mb-2">
+                  {step.number}
                 </div>
 
                 {/* Icon */}
-                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors">
-                  <step.icon className="w-8 h-8 text-accent" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <step.icon className="w-7 h-7 text-accent" />
                 </div>
 
                 {/* Content */}
-                <h3 className="text-xl font-semibold mb-3 text-foreground">
+                <h3 className="text-xl font-bold mb-2 text-foreground">
                   {step.title}
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   {step.description}
                 </p>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Animated Arrow Down */}
+        <div className="flex flex-col items-center mt-16">
+          <p className="text-muted-foreground text-sm mb-4">Mulai Sekarang ↓</p>
+          <div className="relative">
+            {/* Pulsing glow ring */}
+            <div className="absolute inset-0 w-14 h-14 rounded-full bg-primary/30 animate-ping" />
+            {/* Arrow container */}
+            <div
+              className="relative w-14 h-14 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg shadow-primary/50"
+              onClick={() => {
+                const calculator = document.getElementById('calculator');
+                calculator?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              {/* Custom animated arrow */}
+              <div className="animate-bounce">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <path d="M12 4L12 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  <path d="M5 13L12 20L19 13" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

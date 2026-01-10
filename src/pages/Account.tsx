@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
 import { User, FileText, Clock, ArrowRight, LogIn, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, Calendar, MapPin } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,7 @@ interface SavedChart {
 
 const Account = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,11 +33,17 @@ const Account = () => {
   const [selectedChart, setSelectedChart] = useState<SavedChart | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
 
-  /* Purchased Reports */
-  const fetchOrders = async () => {
+  // Get email from URL params (for signup from payment result)
+  const urlEmail = searchParams.get('email') || '';
+  const urlRef = searchParams.get('ref') || '';
+
+  /* Purchased Reports - fetch by user_id OR email */
+  const fetchOrders = async (userEmail?: string) => {
+    // Fetch orders where user_id matches OR customer_email matches
     const { data, error } = await supabase
       .from('orders')
       .select('*')
+      .or(`customer_email.eq.${userEmail}`)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -48,15 +55,52 @@ const Account = () => {
 
   useEffect(() => {
     if (user) {
-      fetchOrders();
+      fetchOrders(user.email);
     }
   }, [user]);
 
-  // Auth form state
-  const [isLoginMode, setIsLoginMode] = useState(true);
-  const [email, setEmail] = useState('');
+  // Auth form state - default to signup mode if email is in URL
+  const [isLoginMode, setIsLoginMode] = useState(!urlEmail);
+  const [email, setEmail] = useState(urlEmail);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [signupMessage, setSignupMessage] = useState('');
+
+  // If URL has email param from payment, show helpful message
+  useEffect(() => {
+    if (urlEmail) {
+      setIsLoginMode(false);
+      setEmail(urlEmail);
+      setSignupMessage('Buat akun untuk track status pesanan dan download laporan.');
+    }
+  }, [urlEmail]);
+
+  // Function to save pending chart from sessionStorage after login/signup
+  const savePendingChart = async (userId: string) => {
+    const pendingChartData = sessionStorage.getItem('pendingChart');
+    if (!pendingChartData) return;
+
+    try {
+      const chart = JSON.parse(pendingChartData);
+      const { error } = await supabase
+        .from('saved_charts')
+        .insert({
+          user_id: userId,
+          name: chart.name,
+          birth_date: chart.birth_date,
+          birth_time: chart.birth_time,
+          birth_place: chart.birth_place,
+          chart_data: chart.chart_data,
+        });
+
+      if (!error) {
+        sessionStorage.removeItem('pendingChart');
+        toast.success('Chart kamu berhasil disimpan ke akun!');
+      }
+    } catch (e) {
+      console.error('Error saving pending chart:', e);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -66,10 +110,11 @@ const Account = () => {
         setUser(session?.user ?? null);
         setIsLoading(false);
 
-        // Fetch charts when user logs in
+        // Fetch charts and save pending chart when user logs in
         if (session?.user) {
           setTimeout(() => {
             fetchSavedCharts();
+            savePendingChart(session.user.id);
           }, 0);
         }
       }
@@ -83,6 +128,7 @@ const Account = () => {
 
       if (session?.user) {
         fetchSavedCharts();
+        // Don't auto-save pending chart on initial load (only on new login)
       }
     });
 
@@ -136,7 +182,7 @@ const Account = () => {
 
     const redirectUrl = `${window.location.origin}/`;
 
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -146,13 +192,31 @@ const Account = () => {
 
     if (error) {
       if (error.message.includes('User already registered')) {
-        toast.error('Email sudah terdaftar. Silakan login.');
         setIsLoginMode(true);
+        setSignupMessage('Email ini sudah terdaftar. Silakan masuk dengan password kamu.');
+        // Keep email, just switch to login
       } else {
         toast.error(error.message);
       }
-    } else {
+    } else if (authData.user) {
+      // Create profile for new user
+      await supabase
+        .from('profiles')
+        .upsert({
+          user_id: authData.user.id,
+          email: email,
+          name: '', // Will be updated when they save a chart
+        });
+
+      // Link existing orders by email to this new user
+      await supabase
+        .from('orders')
+        .update({ user_id: authData.user.id })
+        .eq('customer_email', email)
+        .is('user_id', null);
+
       toast.success('Akun berhasil dibuat! Silakan cek email untuk verifikasi.');
+      setSignupMessage('');
     }
 
     setAuthLoading(false);
@@ -234,6 +298,16 @@ const Account = () => {
               </p>
 
               <form onSubmit={isLoginMode ? handleLogin : handleSignup} className="space-y-4">
+                {/* Message Banner */}
+                {signupMessage && (
+                  <div className={`p-3 rounded-xl text-sm text-center ${isLoginMode
+                    ? 'bg-amber-500/10 border border-amber-500/30 text-amber-200'
+                    : 'bg-primary/10 border border-primary/30 text-primary'
+                    }`}>
+                    {signupMessage}
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="auth-email">Email</Label>
                   <div className="relative">
@@ -262,6 +336,7 @@ const Account = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10 pr-10 h-12 rounded-xl"
                       required
+                      minLength={6}
                     />
                     <button
                       type="button"
@@ -271,6 +346,9 @@ const Account = () => {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  {!isLoginMode && (
+                    <p className="text-xs text-muted-foreground">Minimal 6 karakter</p>
+                  )}
                 </div>
 
                 <Button

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn } from "lucide-react";
+import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
@@ -12,6 +12,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
+import reportSS1 from "@/assets/Report SS.jpg";
+import reportSS2 from "@/assets/Report SS 2.jpg";
+import reportSS3 from "@/assets/Report SS 3.jpg";
+
+const reportSlides = [
+  { img: reportSS1, title: "Daftar Isi Lengkap", desc: "100+ halaman strukturnya jelas, mudah diikuti dari awal hingga akhir" },
+  { img: reportSS2, title: "Langkah Praktis Sesuai Authority", desc: "Panduan spesifik berdasarkan cara kamu membuat keputusan terbaik" },
+  { img: reportSS3, title: "Strategi Personal Kehidupan", desc: "Cara memanfaatkan kekuatan unikmu di karir, relasi, dan keseharian" },
+];
 
 interface ChartResultProps {
   data: any;
@@ -181,6 +190,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
   const chartRef = useRef<HTMLDivElement>(null);
 
   // Warning saat user mau tutup tab (hanya untuk guest yang belum save)
@@ -190,6 +200,11 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
     if (!isUnsaved) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Skip warning if user is in payment process
+      if (sessionStorage.getItem('paymentRefId')) {
+        return;
+      }
+
       e.preventDefault();
       e.returnValue = 'Chart kamu belum disimpan!';
       return e.returnValue;
@@ -369,6 +384,23 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 <span>{String(birthData.hour).padStart(2, '0')}:{String(birthData.minute).padStart(2, '0')}</span>
                 <span>•</span>
                 <span>{birthData.place}</span>
+              </div>
+            )}
+
+            {/* Unsaved Chart Banner for Guest Users */}
+            {isUnsaved && (
+              <div className="mt-6 bg-amber-500/10 border border-amber-500/30 rounded-xl py-3 px-4 flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up">
+                <span className="text-amber-200 text-sm">
+                  ⚠️ Chart belum tersimpan — akan hilang jika halaman ditutup
+                </span>
+                <Button
+                  size="sm"
+                  onClick={() => setShowSaveDialog(true)}
+                  className="bg-amber-500 hover:bg-amber-600 text-black font-medium rounded-lg"
+                >
+                  <Save className="w-4 h-4 mr-1" />
+                  Simpan Sekarang
+                </Button>
               </div>
             )}
           </div>
@@ -679,11 +711,50 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             </p>
           </div>
 
+          {/* Report Screenshots Carousel */}
+          <div className="relative mb-8 max-w-2xl mx-auto">
+            <div className="overflow-hidden rounded-xl border border-amber-400/30 shadow-2xl">
+              <img
+                src={reportSlides[slideIndex].img}
+                alt={reportSlides[slideIndex].title}
+                className="w-full h-auto"
+              />
+            </div>
+            {/* Navigation Arrows */}
+            <button
+              onClick={() => setSlideIndex((prev) => (prev === 0 ? reportSlides.length - 1 : prev - 1))}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setSlideIndex((prev) => (prev === reportSlides.length - 1 ? 0 : prev + 1))}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            {/* Caption */}
+            <div className="text-center mt-4">
+              <p className="text-amber-300 font-semibold text-lg">{reportSlides[slideIndex].title}</p>
+              <p className="text-white/80 text-sm">{reportSlides[slideIndex].desc}</p>
+            </div>
+            {/* Dots */}
+            <div className="flex justify-center gap-2 mt-3">
+              {reportSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSlideIndex(idx)}
+                  className={`w-2.5 h-2.5 rounded-full transition-colors ${idx === slideIndex ? 'bg-amber-400' : 'bg-white/30'}`}
+                />
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-3 mb-8 max-w-2xl mx-auto">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-white/90">
-                <span className="font-semibold">30+ Halaman Analisis Mendalam</span> — Tipe, Strategi, Otoritas, Profil, dan semua yang kamu lihat di atas
+                <span className="font-semibold">100+ Halaman Analisis Mendalam</span> — Tipe, Strategi, Otoritas, Profil, dan semua yang kamu lihat di atas
               </p>
             </div>
             <div className="flex items-start gap-3">
@@ -773,10 +844,39 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           </DialogContent>
         </Dialog>
 
+        {/* Unsaved Chart Warning Dialog */}
+        <Dialog open={showUnsavedWarning} onOpenChange={setShowUnsavedWarning}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Chart Belum Tersimpan</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Chart ini akan hilang jika kamu menutup halaman. Simpan sekarang?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 pt-4">
+              <Button asChild className="fire-glow w-full">
+                <Link to="/account">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Simpan dengan Buat Akun
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowUnsavedWarning(false);
+                  onReset();
+                }}
+              >
+                Lanjut Tanpa Menyimpan
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up mt-8">
           <Button
-            onClick={onReset}
+            onClick={handleResetClick}
             variant="outline"
             size="lg"
             className="border-primary text-primary-foreground bg-primary/20 hover:bg-primary/40 rounded-xl"

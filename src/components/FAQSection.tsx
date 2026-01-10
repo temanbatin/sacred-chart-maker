@@ -1,14 +1,20 @@
+import { useState } from 'react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import reportSS1 from "@/assets/Report SS.jpg";
+import reportSS2 from "@/assets/Report SS 2.jpg";
+import reportSS3 from "@/assets/Report SS 3.jpg";
 
 const faqs = [
   {
     question: 'Apa bedanya chart gratis dengan laporan berbayar?',
-    answer: 'Chart gratis memberikan gambaran umum tipe, strategi, dan otoritas kamu. Laporan berbayar (30+ halaman) menjelaskan secara detail tentang misi hidupmu, penjelasan setiap gate & center, strategi karir yang tepat, panduan relasi, dan langkah konkret untuk menjalani desainmu sehari-hari.',
+    answer: 'Chart gratis memberikan gambaran umum tipe, strategi, dan otoritas kamu. Laporan berbayar (100+ halaman) menjelaskan secara detail tentang misi hidupmu, penjelasan setiap gate & center, strategi karir yang tepat, panduan relasi, dan langkah konkret untuk menjalani desainmu sehari-hari.',
+    showGallery: true,
   },
   {
     question: 'Bagaimana jika laporan tidak sesuai harapan?',
@@ -21,6 +27,7 @@ const faqs = [
   {
     question: 'Bisakah saya melihat contoh laporan sebelum membeli?',
     answer: 'Ya! Saat kamu klik "Dapatkan Laporan Lengkap", kami menampilkan preview beberapa halaman dan sample analisis yang sudah disesuaikan dengan chart unikmu.',
+    showGallery: true,
   },
   {
     question: 'Apakah waktu lahir harus akurat?',
@@ -31,6 +38,56 @@ const faqs = [
     answer: 'Human Design adalah sistem yang menggabungkan astrologi, I\'Ching, Kabbalah, sistem chakra, dan fisika kuantum. Sistem ini memberikan peta unik tentang bagaimana energimu bekerja dan bagaimana kamu bisa hidup selaras dengan desain sejatimu.',
   },
 ];
+
+const reportSlides = [
+  { img: reportSS1, title: "📋 Daftar Isi Lengkap", desc: "100+ halaman terstruktur rapi, mudah dipahami" },
+  { img: reportSS2, title: "⚡ Langkah Praktis Sesuai Authority-mu", desc: "Panduan keputusan berdasarkan desain unikmu" },
+  { img: reportSS3, title: "🎯 Strategi Kehidupan Personal", desc: "Kekuatan unikmu untuk karir & relasi" },
+];
+
+const ReportGallery = () => {
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  return (
+    <div className="mt-4 relative">
+      <div className="overflow-hidden rounded-lg border border-accent/30">
+        <img
+          src={reportSlides[slideIndex].img}
+          alt={reportSlides[slideIndex].title}
+          className="w-full h-auto"
+        />
+      </div>
+      {/* Navigation */}
+      <button
+        onClick={() => setSlideIndex((prev) => (prev === 0 ? reportSlides.length - 1 : prev - 1))}
+        className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => setSlideIndex((prev) => (prev === reportSlides.length - 1 ? 0 : prev + 1))}
+        className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
+      {/* Caption */}
+      <div className="mt-2 text-center">
+        <p className="text-accent text-sm font-medium">{reportSlides[slideIndex].title}</p>
+        <p className="text-muted-foreground text-xs">{reportSlides[slideIndex].desc}</p>
+      </div>
+      {/* Dots */}
+      <div className="flex justify-center gap-1.5 mt-2">
+        {reportSlides.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setSlideIndex(idx)}
+            className={`w-2 h-2 rounded-full transition-colors ${idx === slideIndex ? 'bg-accent' : 'bg-muted-foreground/30'}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export const FAQSection = () => {
   return (
@@ -55,6 +112,7 @@ export const FAQSection = () => {
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-6">
                 {faq.answer}
+                {faq.showGallery && <ReportGallery />}
               </AccordionContent>
             </AccordionItem>
           ))}

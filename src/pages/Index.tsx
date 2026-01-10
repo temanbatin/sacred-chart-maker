@@ -8,6 +8,7 @@ import { LoadingAnimation } from '@/components/LoadingAnimation';
 import { ChartResult } from '@/components/ChartResult';
 import { TestimonialsSection } from '@/components/TestimonialsSection';
 import { FAQSection } from '@/components/FAQSection';
+import { ReportPreviewSection } from '@/components/ReportPreviewSection';
 import { NewsletterSection } from '@/components/NewsletterSection';
 import { Footer } from '@/components/Footer';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
@@ -40,6 +41,9 @@ const Index = () => {
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
+    // Scroll to top on initial page load
+    window.scrollTo(0, 0);
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -202,8 +206,15 @@ const Index = () => {
           toast.success('Chart berhasil disimpan ke akun Anda!');
         }
       } else {
-        // Guest user - chart is displayed but not saved to database
-        // They can save it later by signing up
+        // Guest user - save pending chart data to sessionStorage for auto-save after signup
+        const pendingChart = {
+          name: birthDataInput.name,
+          birth_date: birthDateStr,
+          birth_time: birthTimeStr,
+          birth_place: birthDataInput.place,
+          chart_data: result,
+        };
+        sessionStorage.setItem('pendingChart', JSON.stringify(pendingChart));
       }
 
       setChartData(result);
@@ -276,6 +287,7 @@ const Index = () => {
               />
             </div>
             <TestimonialsSection />
+            <ReportPreviewSection />
             <FAQSection />
             <NewsletterSection />
           </>

@@ -8,8 +8,8 @@ const products = [
   {
     id: 'full-report',
     title: 'Full Personalized Report',
-    description: 'Laporan komprehensif 40+ halaman tentang Human Design Anda',
-    price: 'Rp 149.000',
+    description: 'Laporan komprehensif 100+ halaman tentang Human Design Anda',
+    price: 'Rp 199.000',
     icon: FileText,
     featured: true,
     href: '/reports',

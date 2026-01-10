@@ -128,6 +128,19 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
         });
     };
 
+    // Handle Enter key to proceed to next step
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentStep === 1 && canProceedToStep2) {
+                handleNext();
+            } else if (currentStep === 2 && canProceedToStep3) {
+                handleNext();
+            }
+            // Step 3 uses form submit
+        }
+    };
+
     const getStepTitle = (step: number) => {
         switch (step) {
             case 1: return 'Siapa Namamu?';
@@ -211,8 +224,8 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                                     placeholder="Masukkan nama lengkapmu"
                                     value={name}
                                     onChange={e => setName(e.target.value)}
+                                    onKeyDown={handleKeyDown}
                                     className="bg-input border-border text-foreground placeholder:text-muted-foreground h-14 rounded-xl text-lg"
-                                    autoFocus
                                 />
                             </div>
 
@@ -253,6 +266,7 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                                         type="date"
                                         value={birthDate}
                                         onChange={e => setBirthDate(e.target.value)}
+                                        onKeyDown={handleKeyDown}
                                         className="hd-date relative bg-input border-border text-foreground h-14 rounded-xl pr-10 text-lg"
                                         autoFocus
                                     />
@@ -270,6 +284,7 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                                         type="time"
                                         value={birthTime}
                                         onChange={e => setBirthTime(e.target.value)}
+                                        onKeyDown={handleKeyDown}
                                         className="hd-time relative bg-input border-border text-foreground h-14 rounded-xl pr-10 text-lg"
                                     />
                                     <Clock className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground" />

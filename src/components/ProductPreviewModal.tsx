@@ -8,10 +8,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, ShoppingCart, Loader2, User as UserIcon, Mail, Phone, AlertCircle, Shield } from "lucide-react";
+import { CheckCircle2, ShoppingCart, Loader2, User as UserIcon, Mail, Phone, AlertCircle, Shield, CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import ebookCover from "@/assets/cover_ebook_sample.png";
+import ebookCover from "@/assets/cover_ebook_sample.jpg";
+import reportSS1 from "@/assets/Report SS.jpg";
+import reportSS2 from "@/assets/Report SS 2.jpg";
+import reportSS3 from "@/assets/Report SS 3.jpg";
 
 interface ProductPreviewModalProps {
   isOpen: boolean;
@@ -126,30 +129,42 @@ export const ProductPreviewModal = ({
       }
 
       if (data?.success && data?.token) {
-        // Use Midtrans Snap popup
-        // @ts-ignore - snap is loaded from external script
-        window.snap.pay(data.token, {
-          onSuccess: function (result: any) {
-            console.log('Payment success:', result);
-            toast.success('Pembayaran berhasil! Laporan akan dikirim dalam 24 jam.');
-            onClose();
-            window.location.href = `/payment-result?ref=${referenceId}`;
-          },
-          onPending: function (result: any) {
-            console.log('Payment pending:', result);
-            toast.info('Pembayaran pending. Silakan selesaikan pembayaran.');
-            onClose();
-            window.location.href = `/payment-result?ref=${referenceId}`;
-          },
-          onError: function (result: any) {
-            console.error('Payment error:', result);
-            toast.error('Pembayaran gagal. Silakan coba lagi.');
-          },
-          onClose: function () {
-            console.log('Snap popup closed');
-            setIsLoading(false);
-          }
-        });
+        // Save referenceId to sessionStorage for callback persistence
+        sessionStorage.setItem('paymentRefId', referenceId);
+
+        // Close our modal
+        onClose();
+
+        // Use Snap popup only
+        setTimeout(() => {
+          // @ts-ignore - snap is loaded from external script
+          window.snap.pay(data.token, {
+            onSuccess: function (result: any) {
+              console.log('Payment success:', result);
+              const refId = sessionStorage.getItem('paymentRefId') || '';
+              sessionStorage.removeItem('paymentRefId');
+              window.location.href = `/payment-result?ref=${refId}&status=success`;
+            },
+            onPending: function (result: any) {
+              console.log('Payment pending:', result);
+              const refId = sessionStorage.getItem('paymentRefId') || '';
+              sessionStorage.removeItem('paymentRefId');
+              window.location.href = `/payment-result?ref=${refId}&status=pending`;
+            },
+            onError: function (result: any) {
+              console.error('Payment error:', result);
+              toast.error('Pembayaran gagal. Silakan coba lagi.');
+              sessionStorage.removeItem('paymentRefId');
+              setIsLoading(false);
+            },
+            onClose: function () {
+              console.log('Snap popup closed by user');
+              toast.info('Pembayaran dibatalkan. Kamu bisa mencoba lagi kapan saja.');
+              sessionStorage.removeItem('paymentRefId');
+              setIsLoading(false);
+            }
+          });
+        }, 300);
       } else {
         toast.error(data?.error || 'Gagal mendapatkan token pembayaran');
       }
@@ -172,7 +187,7 @@ export const ProductPreviewModal = ({
           </DialogHeader>
 
           <div className="flex flex-col md:flex-row gap-6 mt-4">
-            {/* Product Image */}
+            {/* Product Cover Image */}
             <div className="flex-shrink-0 mx-auto md:mx-0">
               <div className="relative">
                 <img
@@ -181,7 +196,7 @@ export const ProductPreviewModal = ({
                   className="w-64 h-auto rounded-lg shadow-xl"
                 />
                 <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold">
-                  -90%
+                  100+ Halaman
                 </div>
               </div>
             </div>
@@ -273,22 +288,40 @@ export const ProductPreviewModal = ({
                 </div>
               </div>
 
-              {/* Pricing */}
-              <div className="bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg p-4 border border-primary/30">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-muted-foreground line-through">Rp 500.000</span>
-                  <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded">HEMAT 60%</span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-primary">Rp 199.000</span>
-                  <span className="text-sm text-muted-foreground">sekali bayar</span>
+              {/* Order Summary */}
+              <div className="bg-secondary/30 rounded-xl p-4 border border-border space-y-3">
+                <h4 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4" />
+                  Ringkasan Pesanan
+                </h4>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Produk</span>
+                    <span className="text-foreground">Laporan Human Design Lengkap</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Untuk</span>
+                    <span className="text-accent font-medium">{userName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Dikirim ke</span>
+                    <span className="text-foreground">{billingEmail || 'email Anda'}</span>
+                  </div>
+                  <div className="border-t border-border pt-2 mt-2 flex justify-between items-baseline">
+                    <span className="text-muted-foreground">
+                      <span className="line-through mr-2">Rp 500.000</span>
+                      <span className="bg-green-500/20 text-green-400 text-xs px-1.5 py-0.5 rounded">-60%</span>
+                    </span>
+                    <span className="text-2xl font-bold text-primary">Rp 199.000</span>
+                  </div>
                 </div>
               </div>
 
               {/* CTA Button */}
               <Button
                 onClick={handleBuy}
-                disabled={isLoading}
+                disabled={isLoading || !billingName || !billingEmail}
                 size="lg"
                 className="w-full fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg py-6"
               >
@@ -299,8 +332,8 @@ export const ProductPreviewModal = ({
                   </>
                 ) : (
                   <>
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Beli Sekarang
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    Bayar Rp 199.000
                   </>
                 )}
               </Button>

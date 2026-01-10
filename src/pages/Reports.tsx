@@ -12,6 +12,7 @@ import { CalculatorForm, BirthData } from '@/components/CalculatorForm';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { LoadingAnimation } from '@/components/LoadingAnimation';
 import { ChartResult } from '@/components/ChartResult';
+import { ReportPreviewSection } from '@/components/ReportPreviewSection';
 import {
   Dialog,
   DialogContent,
@@ -49,7 +50,7 @@ const wrongSolutions = [
 
 const reportBenefits = [
   {
-    title: 'Analisis Mendalam 40+ Halaman',
+    title: 'Analisis Mendalam 100+ Halaman',
     description: 'Laporan komprehensif tentang tipe, profil, otoritas, dan strategi Anda',
   },
   {
@@ -87,11 +88,11 @@ const testimonials = [
   },
 ];
 
-const REPORT_PRICE = 149000;
-const ORIGINAL_PRICE = 1550000;
+const REPORT_PRICE = 199000;
+const ORIGINAL_PRICE = 500000;
 
 const reportFeatures = [
-  'Analisis mendalam 40+ halaman',
+  'Analisis mendalam 100+ halaman',
   'Profil lengkap: Tipe, Strategi & Otoritas',
   'Analisis 9 Energy Center',
   'Panduan karir & hubungan',
@@ -648,6 +649,9 @@ const Reports = () => {
           </div>
         </section>
 
+        {/* Preview Section */}
+        <ReportPreviewSection />
+
         {/* Testimonials */}
         <section className="px-4 py-16">
           <div className="max-w-4xl mx-auto">
@@ -687,7 +691,7 @@ const Reports = () => {
                 Dapatkan Full Report Anda
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto mb-4">
-                Laporan 40+ halaman yang dipersonalisasi berdasarkan data kelahiran Anda.
+                Laporan 100+ halaman yang dipersonalisasi berdasarkan data kelahiran Anda.
               </p>
               <div className="flex items-center justify-center gap-3">
                 <span className="text-2xl font-bold text-accent">{formatPrice(REPORT_PRICE)}</span>
