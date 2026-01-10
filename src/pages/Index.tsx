@@ -3,7 +3,7 @@ import { FloatingParticles } from '@/components/FloatingParticles';
 import { MainNavbar } from '@/components/MainNavbar';
 import { HeroSection } from '@/components/HeroSection';
 import { HowItWorksSection } from '@/components/HowItWorksSection';
-import { CalculatorForm, BirthData } from '@/components/CalculatorForm';
+import { MultiStepForm, BirthData } from '@/components/MultiStepForm';
 import { LoadingAnimation } from '@/components/LoadingAnimation';
 import { ChartResult } from '@/components/ChartResult';
 import { TestimonialsSection } from '@/components/TestimonialsSection';
@@ -11,6 +11,7 @@ import { FAQSection } from '@/components/FAQSection';
 import { NewsletterSection } from '@/components/NewsletterSection';
 import { Footer } from '@/components/Footer';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
+import { ExitIntentPopup } from '@/components/ExitIntentPopup';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User, Session } from '@supabase/supabase-js';
@@ -61,14 +62,10 @@ const Index = () => {
   };
 
   const handleSubmit = async (data: BirthData) => {
-    // If user is already logged in, skip lead capture
-    if (user) {
-      await processChartGeneration(data, user.email || '', '', null);
-    } else {
-      // Show lead capture modal for signup
-      setPendingBirthData(data);
-      setShowLeadCapture(true);
-    }
+    // Generate chart directly - no registration required
+    // User can save chart later by logging in
+    const email = user?.email || '';
+    await processChartGeneration(data, email, '', null);
   };
 
   const processChartGeneration = async (
@@ -204,6 +201,9 @@ const Index = () => {
           setCurrentChartId(savedChart.id);
           toast.success('Chart berhasil disimpan ke akun Anda!');
         }
+      } else {
+        // Guest user - chart is displayed but not saved to database
+        // They can save it later by signing up
       }
 
       setChartData(result);
@@ -269,7 +269,7 @@ const Index = () => {
             />
             <HowItWorksSection />
             <div id="calculator">
-              <CalculatorForm
+              <MultiStepForm
                 ref={calculatorRef}
                 onSubmit={handleSubmit}
                 isLoading={isLoading}
@@ -292,6 +292,7 @@ const Index = () => {
           />
         )}
         <Footer />
+        <ExitIntentPopup />
       </main>
     </div>
   );

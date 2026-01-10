@@ -1,13 +1,17 @@
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Share2, RotateCcw, Loader2, CheckCircle2 } from "lucide-react";
+import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import type { BirthDataForChart } from "@/pages/Index";
 import { ProductPreviewModal } from "./ProductPreviewModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Link } from "react-router-dom";
 
 interface ChartResultProps {
   data: any;
@@ -175,7 +179,33 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const [bodygraphError, setBodygraphError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
+
+  // Warning saat user mau tutup tab (hanya untuk guest yang belum save)
+  const isUnsaved = !chartId && !userId;
+
+  useEffect(() => {
+    if (!isUnsaved) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'Chart kamu belum disimpan!';
+      return e.returnValue;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isUnsaved]);
+
+  const handleResetClick = () => {
+    if (isUnsaved) {
+      setShowUnsavedWarning(true);
+    } else {
+      onReset();
+    }
+  };
 
   const typeDescriptions: Record<string, string> = {
     Generator:
@@ -640,11 +670,12 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         {/* Upsell CTA Section */}
         <div className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
           <div className="text-center mb-6">
+            <p className="text-amber-400 text-sm font-medium mb-2">🔥 Hanya 50 slot tersisa bulan ini</p>
             <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
               Siap Menyelami Potensi Terbesarmu?
             </h3>
             <p className="text-white/90 text-lg">
-              Apa yang kamu lihat di sini hanyalah 10% dari desain aslimu. Buka Full Foundation Analysis (30+ Halaman) untuk mengungkap misi hidup dan bakat terpendammu.
+              Apa yang kamu lihat di sini hanyalah permukaan. Buka Full Foundation Analysis untuk mengungkap misi hidup dan bakat terpendammu.
             </p>
           </div>
 
@@ -652,29 +683,25 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-white/90">
-                <span className="font-semibold">Analisis Mendalam</span> tentang Tipe, strategi, otoritas, profil, dan semua detail yang kamu lihat diatas{" "}
-                <span className="text-amber-300">(senilai 300K)</span>
+                <span className="font-semibold">30+ Halaman Analisis Mendalam</span> — Tipe, Strategi, Otoritas, Profil, dan semua yang kamu lihat di atas
               </p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-white/90">
-                <span className="font-semibold">Penjelasan Detail Incarnation Cross</span> (Misi Hidup){" "}
-                <span className="text-amber-300">(senilai 300K)</span>
+                <span className="font-semibold">Misi Hidupmu (Incarnation Cross)</span> — Mengapa kamu ada di dunia ini
               </p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-white/90">
-                <span className="font-semibold">Penjelasan detail gate dan center</span> kamu{" "}
-                <span className="text-amber-300">(senilai 500K)</span>
+                <span className="font-semibold">Panduan Praktis Karir & Relasi</span> — Langkah konkret sesuai desainmu
               </p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-white/90">
-                <span className="font-semibold">Panduan Strategi Karir & Relasi</span> berdasarkan human designmu{" "}
-                <span className="text-amber-300">(senilai 450K)</span>
+                <span className="font-semibold">Garansi 100% Uang Kembali</span> — Jika tidak puas dalam 7 hari
               </p>
             </div>
           </div>
@@ -688,10 +715,11 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               Dapatkan Laporan Lengkap
             </Button>
             <div className="flex items-center gap-3">
-              <span className="text-amber-300 font-bold text-2xl">Rp 149.000</span>
-              <span className="text-white/60 line-through text-lg">Rp 1.550.000</span>
+              <span className="text-amber-300 font-bold text-2xl">Rp 199.000</span>
+              <span className="text-white/60 line-through text-lg">Rp 500.000</span>
             </div>
           </div>
+          <p className="text-center text-white/60 text-sm mt-4">⚡ Dikirim ke email dalam 24 jam</p>
         </div>
         <ProductPreviewModal
           isOpen={isProductModalOpen}
@@ -702,6 +730,48 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           chartId={chartId}
           userId={userId}
         />
+
+        {/* Save Chart Dialog for Guest Users */}
+        <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-xl text-gradient-fire">Simpan Chart Kamu</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Buat akun gratis untuk menyimpan chart ini dan akses kapan saja
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div className="bg-secondary/50 rounded-xl p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">Dengan membuat akun, kamu bisa:</p>
+                <ul className="text-sm space-y-1">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary" />
+                    <span>Simpan semua chart yang kamu buat</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary" />
+                    <span>Akses chart dari perangkat manapun</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary" />
+                    <span>Pesan laporan analisis mendalam</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button asChild className="fire-glow w-full">
+                  <Link to="/account">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Buat Akun / Masuk
+                  </Link>
+                </Button>
+                <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+                  Nanti Saja
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up mt-8">
@@ -714,6 +784,20 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             <RotateCcw className="w-4 h-4 mr-2" />
             Buat Chart Baru
           </Button>
+
+          {/* Show Save button only for guest users (no chartId means not saved) */}
+          {!chartId && !userId && (
+            <Button
+              onClick={() => setShowSaveDialog(true)}
+              variant="outline"
+              size="lg"
+              className="border-accent text-foreground hover:bg-accent/20 rounded-xl"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Simpan Chart
+            </Button>
+          )}
+
           <Button
             onClick={handleDownload}
             disabled={isDownloading}

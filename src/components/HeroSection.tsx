@@ -43,14 +43,14 @@ export const HeroSection = ({
         </>
       ) : (
         <>
-          <h1 className="text-5xl font-bold mb-6 text-gradient-fire leading-tight md:text-5xl my-0">
-            Satu-satunya Peta yang Kamu Butuhkan Untuk Menjadi Dirimu Sendiri
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gradient-fire leading-tight my-0">
+            Lelah Merasa Ada yang Salah dengan Dirimu?
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-4 max-w-2xl mx-auto leading-relaxed">
-            Dunia selalu menyuruhmu menjadi orang lain. Kami membantumu pulang ke desain sejatimu, mengenali bakat bawaan, dan memahami mengapa kamu diciptakan berbeda.
+            Analisis kami akan menjelaskan KENAPA dan memberikan jalan keluar — dalam hitungan detik.
           </p>
           <Button onClick={onScrollToCalculator} size="lg" className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 py-6 rounded-full font-semibold">
-            Buat Chart Human Design Gratis
+            Temukan Jawabannya (Gratis)
           </Button>
         </>
       )}

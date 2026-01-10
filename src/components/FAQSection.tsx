@@ -7,28 +7,28 @@ import {
 
 const faqs = [
   {
-    question: 'Apa itu Human Design?',
-    answer: 'Human Design adalah sistem yang menggabungkan astrologi, I\'Ching, Kabbalah, sistem chakra Hindu-Brahmin, dan fisika kuantum. Sistem ini memberikan peta unik tentang bagaimana energimu bekerja dan bagaimana kamu bisa hidup selaras dengan desain sejatimu.',
+    question: 'Apa bedanya chart gratis dengan laporan berbayar?',
+    answer: 'Chart gratis memberikan gambaran umum tipe, strategi, dan otoritas kamu. Laporan berbayar (30+ halaman) menjelaskan secara detail tentang misi hidupmu, penjelasan setiap gate & center, strategi karir yang tepat, panduan relasi, dan langkah konkret untuk menjalani desainmu sehari-hari.',
+  },
+  {
+    question: 'Bagaimana jika laporan tidak sesuai harapan?',
+    answer: 'Kami memberikan garansi 100% uang kembali dalam 7 hari jika kamu merasa laporan tidak bermanfaat. Cukup hubungi support kami via WhatsApp, dan kami akan memproses refund tanpa pertanyaan.',
+  },
+  {
+    question: 'Berapa lama laporan dikirim?',
+    answer: 'Laporan personal kamu akan dikirim ke email dalam maksimal 24 jam setelah pembayaran terverifikasi. Biasanya lebih cepat dari itu!',
+  },
+  {
+    question: 'Bisakah saya melihat contoh laporan sebelum membeli?',
+    answer: 'Ya! Saat kamu klik "Dapatkan Laporan Lengkap", kami menampilkan preview beberapa halaman dan sample analisis yang sudah disesuaikan dengan chart unikmu.',
   },
   {
     question: 'Apakah waktu lahir harus akurat?',
     answer: 'Idealnya ya, karena waktu lahir mempengaruhi posisi planet yang menentukan chart-mu. Namun, jika kamu tidak tahu waktu pasti, gunakan perkiraan terdekat. Perbedaan beberapa jam bisa mengubah beberapa aspek chart.',
   },
   {
-    question: 'Apa perbedaan antara Type, Strategy, dan Authority?',
-    answer: 'Type menunjukkan energi dasarmu (Generator, Projector, Manifestor, Reflector, atau Manifesting Generator). Strategy adalah cara terbaik kamu berinteraksi dengan dunia. Authority adalah panduan internal untuk membuat keputusan yang benar untukmu.',
-  },
-  {
-    question: 'Bagaimana cara menggunakan informasi Human Design?',
-    answer: 'Mulailah dengan memahami Type-mu dan ikuti Strategy-nya dalam kehidupan sehari-hari. Gunakan Authority-mu untuk membuat keputusan penting. Human Design bukan tentang mengubah diri, tapi tentang memahami dan menerima siapa dirimu sebenarnya.',
-  },
-  {
-    question: 'Apakah Human Design bisa berubah seiring waktu?',
-    answer: 'Tidak, chart Human Design-mu tetap sama sejak lahir hingga akhir hayat. Yang berubah adalah bagaimana kamu memahami dan menjalani desainmu dengan lebih baik seiring pengalaman dan kesadaran.',
-  },
-  {
-    question: 'Apakah hasil perhitungan ini gratis?',
-    answer: 'Ya, perhitungan dasar Human Design sepenuhnya gratis. Kami ingin setiap orang memiliki akses untuk memahami desain sejati mereka.',
+    question: 'Apa itu Human Design?',
+    answer: 'Human Design adalah sistem yang menggabungkan astrologi, I\'Ching, Kabbalah, sistem chakra, dan fisika kuantum. Sistem ini memberikan peta unik tentang bagaimana energimu bekerja dan bagaimana kamu bisa hidup selaras dengan desain sejatimu.',
   },
 ];
 
@@ -40,7 +40,7 @@ export const FAQSection = () => {
           Pertanyaan yang Sering Diajukan
         </h2>
         <p className="text-muted-foreground text-center mb-12">
-          Temukan jawaban atas pertanyaan umum tentang Human Design
+          Temukan jawaban atas pertanyaan umum tentang Human Design & laporan kami
         </p>
 
         <Accordion type="single" collapsible className="space-y-4">

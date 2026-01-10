@@ -88,13 +88,13 @@ export const ProductPreviewModal = ({
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
-          user_id: userId || null, // Fill user_id if available
+          user_id: userId || null,
           reference_id: referenceId,
           customer_name: billingName,
           customer_email: billingEmail,
           customer_phone: billingPhone,
           product_name: `Full Report Human Design: ${userName}`,
-          amount: 149000,
+          amount: 199000,
           status: 'PENDING',
           metadata: { chart_ids: chartIds }
         });
@@ -106,14 +106,14 @@ export const ProductPreviewModal = ({
         return;
       }
 
-      // 2. Call Payment Gateway
-      const { data, error } = await supabase.functions.invoke('ipaymu-checkout', {
+      // 2. Get Midtrans Snap Token
+      const { data, error } = await supabase.functions.invoke('midtrans-checkout', {
         body: {
-          referenceId: referenceId, // Pass the SAME ID
+          referenceId: referenceId,
           customerName: billingName,
           customerEmail: billingEmail,
           customerPhone: billingPhone,
-          amount: 149000,
+          amount: 199000,
           productName: `Full Report Human Design: ${userName}`,
           chartIds: chartIds
         }
@@ -125,18 +125,33 @@ export const ProductPreviewModal = ({
         return;
       }
 
-      if (data?.success && data?.paymentUrl) {
-        // Optional: Update order with payment URL
-        await supabase
-          .from('orders')
-          .update({ payment_url: data.paymentUrl })
-          .eq('reference_id', referenceId);
-
-        // Redirect to iPaymu payment page
-        window.location.href = data.paymentUrl;
-        onClose();
+      if (data?.success && data?.token) {
+        // Use Midtrans Snap popup
+        // @ts-ignore - snap is loaded from external script
+        window.snap.pay(data.token, {
+          onSuccess: function (result: any) {
+            console.log('Payment success:', result);
+            toast.success('Pembayaran berhasil! Laporan akan dikirim dalam 24 jam.');
+            onClose();
+            window.location.href = `/payment-result?ref=${referenceId}`;
+          },
+          onPending: function (result: any) {
+            console.log('Payment pending:', result);
+            toast.info('Pembayaran pending. Silakan selesaikan pembayaran.');
+            onClose();
+            window.location.href = `/payment-result?ref=${referenceId}`;
+          },
+          onError: function (result: any) {
+            console.error('Payment error:', result);
+            toast.error('Pembayaran gagal. Silakan coba lagi.');
+          },
+          onClose: function () {
+            console.log('Snap popup closed');
+            setIsLoading(false);
+          }
+        });
       } else {
-        toast.error(data?.error || 'Gagal mendapatkan link pembayaran');
+        toast.error(data?.error || 'Gagal mendapatkan token pembayaran');
       }
     } catch (err) {
       console.error('Checkout error:', err);
@@ -261,11 +276,11 @@ export const ProductPreviewModal = ({
               {/* Pricing */}
               <div className="bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg p-4 border border-primary/30">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-muted-foreground line-through">Rp 1.550.000</span>
-                  <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded">HEMAT 90%</span>
+                  <span className="text-muted-foreground line-through">Rp 500.000</span>
+                  <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded">HEMAT 60%</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-primary">Rp 149.000</span>
+                  <span className="text-3xl font-bold text-primary">Rp 199.000</span>
                   <span className="text-sm text-muted-foreground">sekali bayar</span>
                 </div>
               </div>
@@ -291,13 +306,19 @@ export const ProductPreviewModal = ({
               </Button>
 
               <div className="text-center space-y-2 pt-2">
-                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 font-medium">
-                  <Shield className="w-3.5 h-3.5" />
-                  Pembayaran Aman & Terverifikasi via iPaymu
+                <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Shield className="w-3.5 h-3.5" />
+                    Garansi Uang Kembali
+                  </span>
+                  <span>•</span>
+                  <span>1500+ Chart Dibuat</span>
+                </div>
+                <p className="text-xs text-muted-foreground font-medium">
+                  Pembayaran Aman via Midtrans (QRIS, VA, E-Wallet)
                 </p>
                 <p className="text-[10px] text-muted-foreground">
-                  Mendukung QRIS, Virtual Account (BCA, Mandiri, BNI, BRI), & E-Wallet.
-                  <br />File dikirim maks 24 jam setelah pembayaran.
+                  ⚡ Laporan dikirim dalam 24 jam ke email Anda
                 </p>
               </div>
             </div>
