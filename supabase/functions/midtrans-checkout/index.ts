@@ -1,4 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Supabase Admin Client (needed to read/write coupons)
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
@@ -79,38 +85,97 @@ serve(async (req) => {
             throw new Error('Payment gateway not configured');
         }
 
-        const requestData: CheckoutRequest = await req.json();
-        console.log('Checkout request received:', {
-            customerName: requestData.customerName,
-            customerEmail: requestData.customerEmail,
-            amount: requestData.amount
+        const {
+            referenceId,
+            customerName,
+            customerEmail,
+            customerPhone,
+            amount,
+            productName,
+            chartIds,
+            couponCode
+        }: CheckoutRequest & { couponCode?: string } = await req.json();
+
+        // --- Discount Logic Start ---
+        let finalAmount = amount;
+        let discountInfo = null;
+
+        if (couponCode) {
+            // Validate Coupon Server-side
+            const { data: coupon, error: couponError } = await supabase
+                .from('coupons')
+                .select('*')
+                .eq('code', couponCode)
+                .eq('is_active', true)
+                .single();
+
+            if (!couponError && coupon) {
+                // Check expiry
+                if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+                    console.log('Coupon expired');
+                } else if (coupon.current_uses >= coupon.max_uses) {
+                    console.log('Coupon limit reached');
+                } else {
+                    // Apply Discount
+                    if (coupon.discount_type === 'percentage') {
+                        const discountValue = Number(coupon.discount_value) || 0;
+                        const discountAmount = Math.round((amount * discountValue) / 100);
+                        finalAmount = Math.max(0, amount - discountAmount); // Ensure no negative
+
+                        discountInfo = {
+                            code: couponCode,
+                            type: 'percentage',
+                            value: discountValue,
+                            cut: discountAmount
+                        };
+                    }
+                    // Add other types if needed (fixed_amount)
+
+                    // Increment Usage (Optimistic)
+                    // In real world, might wait for payment success webhook, but for MVP this secures the use
+                    await supabase
+                        .from('coupons')
+                        .update({ current_uses: coupon.current_uses + 1 })
+                        .eq('id', coupon.id);
+                }
+            }
+        }
+        // --- Discount Logic End ---
+
+        // Debug Environment
+        const isProduction = Deno.env.get('MIDTRANS_IS_PRODUCTION');
+        console.log('Environment Config:', {
+            isProductionVar: isProduction,
+            apiUrl: MIDTRANS_API_URL,
+            serverKeyLength: MIDTRANS_SERVER_KEY?.length,
+            serverKeyPrefix: MIDTRANS_SERVER_KEY?.substring(0, 5) + '...'
         });
 
-        const referenceId = requestData.referenceId || generateReferenceId();
+        const refId = referenceId || generateReferenceId();
         const origin = req.headers.get('origin') || 'https://temanbatin.com';
 
         // Hardcode the production Supabase Function URL for webhook
         const PROJECT_REF = 'ggyhinxltikifmzczuyg';
-        const FINISH_URL = `${origin}/payment-result?ref=${referenceId}`;
+        const FINISH_URL = `${origin}/payment-result?ref=${refId}`;
 
         // Prepare Midtrans Snap request body
         const snapRequest = {
             transaction_details: {
-                order_id: referenceId,
-                gross_amount: requestData.amount
+                order_id: refId,
+                gross_amount: finalAmount  // Use Final Discounted Amount
             },
             item_details: [
                 {
                     id: 'full-report',
-                    price: requestData.amount,
+                    price: finalAmount, // Use Final Discounted Amount
                     quantity: 1,
-                    name: requestData.productName || 'Laporan Analisis Mendalam Human Design'
+                    name: productName || 'Laporan Analisis Mendalam Human Design'
                 }
             ],
             customer_details: {
-                first_name: requestData.customerName,
-                email: requestData.customerEmail,
-                phone: formatPhoneNumber(requestData.customerPhone)
+                first_name: customerName,
+                email: customerEmail,
+                phone: formatPhoneNumber(customerPhone)
             },
             callbacks: {
                 finish: FINISH_URL
@@ -171,7 +236,8 @@ serve(async (req) => {
         return new Response(JSON.stringify({
             success: true,
             token: snapToken,
-            redirectUrl: redirectUrl,
+            redirect_url: redirectUrl,
+            paymentUrl: redirectUrl,
             referenceId: referenceId
         }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

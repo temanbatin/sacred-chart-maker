@@ -43,6 +43,93 @@ export const ProductPreviewModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
 
+
+  // Coupon State
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
+
+  const checkCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setIsCheckingCoupon(true);
+    try {
+      // @ts-ignore
+      const { data, error } = await supabase.rpc('check_coupon_validity', { coupon_code: couponCode.trim() });
+
+      if (error) throw error;
+
+      const result = data as any;
+
+      if (result.valid) {
+        setAppliedCoupon(result);
+        toast.success(result.message);
+      } else {
+        setAppliedCoupon(null);
+        toast.error(result.message);
+      }
+    } catch (err: any) {
+      console.error('Coupon check error:', err);
+      toast.error('Gagal mengecek kupon');
+    } finally {
+      setIsCheckingCoupon(false);
+    }
+  };
+
+  const handleRedeemFree = async () => {
+    setIsLoading(true);
+    try {
+      // ... Reuse same pre-save chart logic as handleBuy if needed ...
+      // For brevity, assuming chartId is handled or we use the unified flow
+
+      // 0. Handle Buyer Guest (Copy-Paste from handleBuy or extract to function in refactor)
+      let finalChartIds = chartId ? [chartId] : [];
+      if (!chartId && birthData && chartData) {
+        const newChartId = crypto.randomUUID();
+        const { error: saveError } = await supabase.from('saved_charts').insert({
+          id: newChartId,
+          user_id: userId || null,
+          name: birthData.name,
+          birth_date: `${birthData.year}-${String(birthData.month).padStart(2, '0')}-${String(birthData.day).padStart(2, '0')}`,
+          birth_time: `${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}:00`,
+          birth_place: birthData.place,
+          chart_data: chartData,
+        });
+        if (!saveError) finalChartIds = [newChartId];
+      }
+
+      const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+      const { data, error } = await supabase.functions.invoke('redeem-free-order', {
+        body: {
+          couponCode: couponCode.trim(),
+          referenceId,
+          customerName: billingName,
+          customerEmail: billingEmail,
+          customerPhone: billingPhone,
+          productName: `Full Report Human Design: ${userName}`,
+          chartIds: finalChartIds,
+          birthData,
+          userId
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.redirect_url) {
+        toast.success('Kupon berhasil digunakan! Mengarahkan...');
+        window.location.href = data.redirect_url;
+      } else {
+        throw new Error(data?.error || 'Redeem gagal');
+      }
+
+    } catch (err: any) {
+      console.error('Redeem error:', err);
+      toast.error(err.message || 'Gagal klaim kupon');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Billing state
   const [billingName, setBillingName] = useState(userName);
   const [billingEmail, setBillingEmail] = useState(userEmail);
@@ -161,7 +248,8 @@ export const ProductPreviewModal = ({
           status: 'PENDING',
           metadata: {
             chart_ids: finalChartIds,
-            birth_data: birthData
+            birth_data: birthData,
+            coupon_code: couponCode // Save coupon code in metadata for N8N tracking
           }
         });
 
@@ -182,7 +270,8 @@ export const ProductPreviewModal = ({
           amount: PRICING_CONFIG.REPORT_PRICE,
           productName: `Full Report Human Design: ${userName}`,
           chartIds: finalChartIds,
-          birthData: birthData
+          birthData: birthData,
+          couponCode: couponCode // Pass coupon code to backend
         }
       });
 
@@ -192,45 +281,19 @@ export const ProductPreviewModal = ({
         return;
       }
 
-      if (data?.success && data?.token) {
+      if (data?.success && data?.redirect_url) {
         // Save referenceId to sessionStorage for callback persistence
         sessionStorage.setItem('paymentRefId', referenceId);
 
         // Close our modal
         onClose();
 
-        // Use Snap popup only
-        setTimeout(() => {
-          // @ts-ignore - snap is loaded from external script
-          window.snap.pay(data.token, {
-            onSuccess: function (result: any) {
-              // Payment success
-              const refId = sessionStorage.getItem('paymentRefId') || '';
-              sessionStorage.removeItem('paymentRefId');
-              window.location.href = `/payment-result?ref=${refId}&status=success`;
-            },
-            onPending: function (result: any) {
-              // Payment pending
-              const refId = sessionStorage.getItem('paymentRefId') || '';
-              sessionStorage.removeItem('paymentRefId');
-              window.location.href = `/payment-result?ref=${refId}&status=pending`;
-            },
-            onError: function (result: any) {
-              console.error('Payment error:', result);
-              toast.error('Pembayaran gagal. Silakan coba lagi.');
-              sessionStorage.removeItem('paymentRefId');
-              setIsLoading(false);
-            },
-            onClose: function () {
-              // Snap popup closed by user
-              toast.info('Pembayaran dibatalkan. Kamu bisa mencoba lagi kapan saja.');
-              sessionStorage.removeItem('paymentRefId');
-              setIsLoading(false);
-            }
-          });
-        }, 300);
+        toast.success('Mengarahkan ke halaman pembayaran...');
+
+        // Use Redirect Mode (More reliable for Production)
+        window.location.href = data.redirect_url;
       } else {
-        toast.error(data?.error || 'Gagal mendapatkan token pembayaran');
+        toast.error(data?.error || 'Gagal mendapatkan link pembayaran');
       }
     } catch (err) {
       console.error('Checkout error:', err);
@@ -272,33 +335,25 @@ export const ProductPreviewModal = ({
                 <p className="text-lg font-semibold text-accent">{userName}</p>
               </div>
 
+              {/* ... Features List (Keep existing) ... */}
               <div className="space-y-3">
                 <h4 className="font-semibold text-foreground">Apa yang kamu dapatkan:</h4>
-
                 <div className="space-y-2">
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground">
-                      <span className="text-foreground font-medium">Analisis Mendalam</span> tentang Tipe, Strategi, Otoritas, Profil
-                    </p>
+                    <p className="text-sm text-muted-foreground"><span className="text-foreground font-medium">Analisis Mendalam</span> tentang Tipe, Strategi, Otoritas, Profil</p>
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground">
-                      <span className="text-foreground font-medium">Penjelasan Detail Incarnation Cross</span> (Misi Hidup)
-                    </p>
+                    <p className="text-sm text-muted-foreground"><span className="text-foreground font-medium">Penjelasan Detail Incarnation Cross</span> (Misi Hidup)</p>
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground">
-                      <span className="text-foreground font-medium">Penjelasan detail Gate & Center</span>
-                    </p>
+                    <p className="text-sm text-muted-foreground"><span className="text-foreground font-medium">Penjelasan detail Gate & Center</span></p>
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground">
-                      <span className="text-foreground font-medium">Panduan Strategi Karir & Relasi</span>
-                    </p>
+                    <p className="text-sm text-muted-foreground"><span className="text-foreground font-medium">Panduan Strategi Karir & Relasi</span></p>
                   </div>
                 </div>
               </div>
@@ -306,50 +361,51 @@ export const ProductPreviewModal = ({
               {/* Billing Inputs */}
               <div className="space-y-3 border-t border-border pt-4">
                 <h4 className="font-semibold text-foreground text-sm">Data Pemesan (Wajib Diisi):</h4>
-
                 <div className="space-y-2">
                   <Label htmlFor="billing-name" className="text-xs">Nama Lengkap</Label>
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="billing-name"
-                      value={billingName}
-                      onChange={handleNameChange}
-                      placeholder="Nama Lengkap"
-                      className="pl-9 h-9 text-sm"
-                    />
-                  </div>
+                  <Input id="billing-name" value={billingName} onChange={handleNameChange} placeholder="Nama Lengkap" className="h-9 text-sm" />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="billing-email" className="text-xs">Email (untuk pengiriman file)</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="billing-email"
-                      type="email"
-                      value={billingEmail}
-                      onChange={(e) => setBillingEmail(e.target.value)}
-                      placeholder="email@contoh.com"
-                      className="pl-9 h-9 text-sm"
-                    />
-                  </div>
+                  <Label htmlFor="billing-email" className="text-xs">Email</Label>
+                  <Input id="billing-email" type="email" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} placeholder="email@contoh.com" className="h-9 text-sm" />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="billing-phone" className="text-xs">WhatsApp (untuk konfirmasi)</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="billing-phone"
-                      type="tel"
-                      value={billingPhone}
-                      onChange={(e) => setBillingPhone(e.target.value)}
-                      placeholder="+62812345678"
-                      className="pl-9 h-9 text-sm"
-                    />
-                  </div>
+                  <Label htmlFor="billing-phone" className="text-xs">WhatsApp</Label>
+                  <Input id="billing-phone" type="tel" value={billingPhone} onChange={(e) => setBillingPhone(e.target.value)} placeholder="+628..." className="h-9 text-sm" />
                 </div>
+              </div>
+
+              {/* Coupon Input */}
+              <div className="space-y-3 border-t border-border pt-4">
+                <Label className="text-xs font-semibold">Punya kode kupon?</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    placeholder="Masukkan kode"
+                    className="h-9 text-sm uppercase"
+                    disabled={!!appliedCoupon}
+                  />
+                  {appliedCoupon ? (
+                    <Button variant="outline" size="sm" onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} className="text-destructive border-destructive hover:bg-destructive/10">
+                      Hapus
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={checkCoupon}
+                      disabled={isCheckingCoupon || !couponCode}
+                    >
+                      {isCheckingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Cek'}
+                    </Button>
+                  )}
+                </div>
+                {appliedCoupon && (
+                  <p className="text-xs text-green-500 font-medium flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Kupon berhasil dipasang!
+                  </p>
+                )}
               </div>
 
               {/* Order Summary */}
@@ -364,43 +420,81 @@ export const ProductPreviewModal = ({
                     <span className="text-muted-foreground">Produk</span>
                     <span className="text-foreground">Laporan Human Design Lengkap</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Untuk</span>
-                    <span className="text-accent font-medium">{userName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Dikirim ke</span>
-                    <span className="text-foreground">{billingEmail || 'email Anda'}</span>
-                  </div>
-                  <div className="border-t border-border pt-2 mt-2 flex justify-between items-baseline">
-                    <span className="text-muted-foreground">
-                      <span className="line-through mr-2">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
-                      <span className="bg-green-500/20 text-green-400 text-xs px-1.5 py-0.5 rounded">-{Math.round(((PRICING_CONFIG.ORIGINAL_PRICE - PRICING_CONFIG.REPORT_PRICE) / PRICING_CONFIG.ORIGINAL_PRICE) * 100)}%</span>
-                    </span>
-                    <span className="text-2xl font-bold text-primary">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
-                  </div>
+
+                  {appliedCoupon?.discount_type === 'full_free' ? (
+                    <div className="flex justify-between items-baseline border-t border-border pt-2 mt-2">
+                      <span className="text-muted-foreground">Total</span>
+                      <div className="text-right">
+                        <span className="line-through text-muted-foreground text-sm mr-2">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
+                        <span className="text-xl font-bold text-green-500">GRATIS</span>
+                      </div>
+                    </div>
+                  ) : appliedCoupon?.discount_type === 'percentage' ? (
+                    <div className="flex justify-between items-baseline border-t border-border pt-2 mt-2">
+                      <span className="text-muted-foreground">
+                        <span className="line-through mr-2">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
+                        <span className="bg-green-500/20 text-green-400 text-xs px-1.5 py-0.5 rounded">-{Math.round(Number(appliedCoupon.discount_value))}%</span>
+                      </span>
+                      <span className="text-2xl font-bold text-primary">
+                        {formatPrice(Math.round(PRICING_CONFIG.REPORT_PRICE * (1 - Number(appliedCoupon.discount_value) / 100)))}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-baseline border-t border-border pt-2 mt-2">
+                      <span className="text-muted-foreground">
+                        <span className="line-through mr-2">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
+                        <span className="bg-green-500/20 text-green-400 text-xs px-1.5 py-0.5 rounded">-{Math.round(((PRICING_CONFIG.ORIGINAL_PRICE - PRICING_CONFIG.REPORT_PRICE) / PRICING_CONFIG.ORIGINAL_PRICE) * 100)}%</span>
+                      </span>
+                      <span className="text-2xl font-bold text-primary">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* CTA Button */}
-              <Button
-                onClick={handleBuy}
-                disabled={isLoading || !billingName || !billingEmail}
-                size="lg"
-                className="w-full fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg py-6"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-5 h-5 mr-2" />
-                    Bayar {formatPrice(PRICING_CONFIG.REPORT_PRICE)}
-                  </>
-                )}
-              </Button>
+              {appliedCoupon?.discount_type === 'full_free' ? (
+                <Button
+                  onClick={handleRedeemFree}
+                  disabled={isLoading || !billingName || !billingEmail}
+                  size="lg"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl text-lg py-6 shadow-lg shadow-green-500/20"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Memproses Klaim...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                      Klaim Report Gratis
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleBuy}
+                  disabled={isLoading || !billingName || !billingEmail}
+                  size="lg"
+                  className="w-full fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg py-6"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Memproses...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-5 h-5 mr-2" />
+                      Bayar {appliedCoupon?.discount_type === 'percentage'
+                        ? formatPrice(Math.round(PRICING_CONFIG.REPORT_PRICE * (1 - Number(appliedCoupon.discount_value) / 100)))
+                        : formatPrice(PRICING_CONFIG.REPORT_PRICE)}
+                    </>
+                  )}
+                </Button>
+              )}
+
+
 
               <div className="text-center space-y-2 pt-2">
                 <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">

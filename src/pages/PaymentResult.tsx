@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { CheckCircle2, XCircle, Clock, Home, Mail, UserPlus, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthSession } from '@/hooks/useAuthSession';
 
 type PaymentStatus = 'success' | 'pending' | 'failed' | 'unknown';
 
@@ -78,6 +79,7 @@ const PaymentResult = () => {
   const [referenceId, setReferenceId] = useState<string | null>(null);
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { session } = useAuthSession();
 
   useEffect(() => {
     const fetchOrderStatus = async () => {
@@ -182,19 +184,21 @@ const PaymentResult = () => {
               </div>
             )}
 
-            {/* CTA: Create Account */}
-            <div className="bg-primary/10 border border-primary/30 rounded-xl p-6 mb-8 max-w-md mx-auto">
-              <UserPlus className="w-8 h-8 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold text-foreground mb-2">Buat Akun untuk Track Pesanan</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Dengan akun, kamu bisa pantau status laporan dan akses semua chart yang pernah kamu buat.
-              </p>
-              <Button asChild className="fire-glow w-full">
-                <Link to={`/account?email=${encodeURIComponent(orderData?.customer_email || '')}&ref=${referenceId || ''}`}>
-                  Buat Akun Gratis
-                </Link>
-              </Button>
-            </div>
+            {/* CTA: Create Account - Check using session from useAuthSession */}
+            {!session && (
+              <div className="bg-primary/10 border border-primary/30 rounded-xl p-6 mb-8 max-w-md mx-auto">
+                <UserPlus className="w-8 h-8 text-primary mx-auto mb-3" />
+                <h3 className="font-semibold text-foreground mb-2">Buat Akun untuk Track Pesanan</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Dengan akun, kamu bisa pantau status laporan dan akses semua chart yang pernah kamu buat.
+                </p>
+                <Button asChild className="fire-glow w-full">
+                  <Link to={`/account?email=${encodeURIComponent(orderData?.customer_email || '')}&ref=${referenceId || ''}`}>
+                    Buat Akun Gratis
+                  </Link>
+                </Button>
+              </div>
+            )}
 
             <Button asChild variant="outline" size="lg">
               <Link to="/">
