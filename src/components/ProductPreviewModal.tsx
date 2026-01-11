@@ -141,13 +141,13 @@ export const ProductPreviewModal = ({
           // @ts-ignore - snap is loaded from external script
           window.snap.pay(data.token, {
             onSuccess: function (result: any) {
-              console.log('Payment success:', result);
+              // Payment success
               const refId = sessionStorage.getItem('paymentRefId') || '';
               sessionStorage.removeItem('paymentRefId');
               window.location.href = `/payment-result?ref=${refId}&status=success`;
             },
             onPending: function (result: any) {
-              console.log('Payment pending:', result);
+              // Payment pending
               const refId = sessionStorage.getItem('paymentRefId') || '';
               sessionStorage.removeItem('paymentRefId');
               window.location.href = `/payment-result?ref=${refId}&status=pending`;
@@ -159,7 +159,7 @@ export const ProductPreviewModal = ({
               setIsLoading(false);
             },
             onClose: function () {
-              console.log('Snap popup closed by user');
+              // Snap popup closed by user
               toast.info('Pembayaran dibatalkan. Kamu bisa mencoba lagi kapan saja.');
               sessionStorage.removeItem('paymentRefId');
               setIsLoading(false);

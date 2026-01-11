@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sparkles, MapPin, Loader2, Calendar, Clock, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import { birthDataSchema, type BirthDataInput } from '@/lib/validation';
+import { toast } from 'sonner';
 
 interface City {
     display_name: string;
@@ -47,6 +49,9 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
     const [citySearch, setCitySearch] = useState('');
     const [selectedCity, setSelectedCity] = useState<City | null>(null);
     const [citySuggestions, setCitySuggestions] = useState<City[]>([]);
+
+    // Spam Protection
+    const [honeypot, setHoneypot] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -111,12 +116,22 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedCity || !birthDate || !birthTime) {
+
+        // Spam Check
+        if (honeypot) {
+            // Bot detected
             return;
         }
+
+        if (!selectedCity || !birthDate || !birthTime) {
+            toast.error("Mohon lengkapi semua data");
+            return;
+        }
+
         const [year, month, day] = birthDate.split('-').map(Number);
         const [hour, minute] = birthTime.split(':').map(Number);
-        onSubmit({
+
+        const formData = {
             name,
             year,
             month,
@@ -124,8 +139,24 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
             hour,
             minute,
             place: selectedCity.display_name,
-            gender
-        });
+            gender,
+            honeypot // should be empty string
+        };
+
+        const result = birthDataSchema.safeParse(formData);
+
+        if (!result.success) {
+            const errorMsg = result.error.errors[0]?.message || "Data tidak valid";
+            toast.error(errorMsg);
+            return;
+        }
+
+        // Clean valid data (omit honeypot)
+        const validData = result.data;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { honeypot: _, ...finalData } = validData;
+
+        onSubmit(finalData as BirthData);
     };
 
     // Handle Enter key to proceed to next step
@@ -349,6 +380,20 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                             )}
                         </div>
                     )}
+
+                    {/* Honeypot Field (Hidden) - Anti-Spam */}
+                    <div className="absolute opacity-0 -z-50 pointer-events-none" aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }}>
+                        <label htmlFor="website-field">Website</label>
+                        <input
+                            type="text"
+                            id="website-field"
+                            name="website"
+                            tabIndex={-1}
+                            autoComplete="off"
+                            value={honeypot}
+                            onChange={(e) => setHoneypot(e.target.value)}
+                        />
+                    </div>
 
                     {/* Navigation Buttons */}
                     <div className="flex justify-between mt-10">

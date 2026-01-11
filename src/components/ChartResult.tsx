@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
-import type { BirthDataForChart } from "@/pages/Index";
+import type { BirthData } from "@/components/MultiStepForm";
 import { ProductPreviewModal } from "./ProductPreviewModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ interface ChartResultProps {
   userName: string;
   userEmail?: string;
   userPhone?: string;
-  birthData: BirthDataForChart | null;
+  birthData: BirthData | null;
   chartId?: string;
   userId?: string;
   onReset: () => void;
@@ -220,6 +220,40 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       setShowUnsavedWarning(true);
     } else {
       onReset();
+    }
+  };
+
+  const handleShare = async () => {
+    if (!birthData) return;
+
+    const params = new URLSearchParams();
+    params.set('action', 'generate');
+    params.set('n', birthData.name);
+    // Format date d-m-y
+    const dateStr = `${birthData.day}-${birthData.month}-${birthData.year}`;
+    params.set('d', dateStr);
+
+    if (birthData.hour !== undefined && birthData.minute !== undefined) {
+      const timeStr = `${birthData.hour}:${birthData.minute}`;
+      params.set('t', timeStr);
+    }
+
+    params.set('p', birthData.place);
+    params.set('g', birthData.gender);
+
+    const shareUrl = `${window.location.origin}/?${params.toString()}`;
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Link chart berhasil disalin!",
+        description: "Anda bisa membagikannya ke orang lain."
+      });
+    } catch (err) {
+      toast({
+        title: "Gagal menyalin link",
+        variant: "destructive"
+      });
     }
   };
 
@@ -887,6 +921,16 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           >
             <RotateCcw className="w-4 h-4 mr-2" />
             Buat Chart Baru
+          </Button>
+
+          <Button
+            onClick={handleShare}
+            variant="outline"
+            size="lg"
+            className="border-primary text-primary hover:bg-primary/10 rounded-xl"
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Salin Link
           </Button>
 
           {/* Show Save button only for guest users (no chartId means not saved) */}

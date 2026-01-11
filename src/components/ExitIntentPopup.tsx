@@ -68,7 +68,7 @@ export const ExitIntentPopup = () => {
 
             if (error) {
                 // Might fail due to unique constraint, that's OK
-                console.log('Lead save result:', error.message);
+                // Might fail due to unique constraint, that's OK
             }
 
             toast.success('Terima kasih! Panduan akan dikirim ke email kamu.');

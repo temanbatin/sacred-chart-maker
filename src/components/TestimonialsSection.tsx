@@ -27,22 +27,68 @@ const testimonials = [
 
 // Video testimonial placeholders
 const videoTestimonials = [
-  { id: 1, name: "Rina", type: "Generator", duration: "1:24" },
-  { id: 2, name: "Andi", type: "Projector", duration: "2:05" },
-  { id: 3, name: "Maya", type: "Manifestor", duration: "1:48" },
+  // CARA MENGISI VIDEO:
+  // 1. Upload video ke YouTube (bisa Unlisted atau Shorts)
+  // 2. Ambil ID video atau Link Embed
+  // 3. Masukkan ke dalam property 'videoUrl' di bawah ini
+  {
+    id: 1,
+    name: "Nurul",
+    type: "Projektor",
+    duration: "1:24",
+    // Contoh link embed YouTube:
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
+  },
+  {
+    id: 2,
+    name: "Devi",
+    type: "Projector",
+    duration: "2:05",
+    videoUrl: "" // Isi link di sini
+  },
+  {
+    id: 3,
+    name: "Galuh Amelia",
+    type: "Manifestor",
+    duration: "1:48",
+    videoUrl: "" // Isi link di sini
+  },
 ];
 
 const VideoPlaceholder = ({ video }: { video: typeof videoTestimonials[0] }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  if (isPlaying && video.videoUrl) {
+    return (
+      <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-black animate-fade-in">
+        <iframe
+          src={`${video.videoUrl}?autoplay=1`}
+          title={`Testimoni ${video.name}`}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+        <button
+          onClick={() => setIsPlaying(false)}
+          className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white/70 hover:text-white transition-colors"
+        >
+          <span className="sr-only">Close Video</span>
+          ×
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
-      className="relative aspect-[9/16] rounded-2xl overflow-hidden cursor-pointer group"
+      className="relative aspect-[9/16] rounded-2xl overflow-hidden cursor-pointer group shadow-lg"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => video.videoUrl && setIsPlaying(true)}
     >
       {/* Gradient placeholder background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary to-accent/20" />
+      <div className={`absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary to-accent/20 transition-all duration-500 ease-out ${isHovered ? 'brightness-75 scale-110' : 'brightness-100 scale-100'}`} />
 
       {/* Pattern overlay */}
       <div className="absolute inset-0 opacity-20" style={{
@@ -52,14 +98,17 @@ const VideoPlaceholder = ({ video }: { video: typeof videoTestimonials[0] }) => 
 
       {/* Play button overlay - always visible */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className={`w-16 h-16 rounded-full bg-white/90 flex items-center justify-center transition-transform ${isHovered ? 'scale-110' : 'scale-100'}`}>
-          <Play className="w-7 h-7 text-primary fill-primary ml-1" />
+        <div className={`w-16 h-16 rounded-full bg-white/90 flex items-center justify-center transition-all duration-300 shadow-xl ${isHovered ? 'scale-125 bg-accent' : 'scale-100'}`}>
+          <Play className={`w-7 h-7 ml-1 transition-colors ${isHovered ? 'text-white fill-white' : 'text-primary fill-primary'}`} />
         </div>
       </div>
 
       {/* Bottom info */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-        <p className="text-white font-semibold">{video.name}</p>
+      <div className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent transition-transform duration-300 ${isHovered ? 'translate-y-0' : 'translate-y-2'}`}>
+        <p className="text-white font-semibold flex items-center gap-2">
+          {video.name}
+          {video.videoUrl && <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded uppercase tracking-wider">Video</span>}
+        </p>
         <p className="text-white/70 text-sm">{video.type} • {video.duration}</p>
       </div>
     </div>
@@ -84,10 +133,8 @@ export const TestimonialsSection = () => {
 
         {/* Video Testimonials */}
         <div className="mb-16">
-          <h3 className="text-xl font-semibold text-center text-foreground mb-6">
-            🎥 Video Testimoni
-          </h3>
-          <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
             {videoTestimonials.map((video) => (
               <VideoPlaceholder key={video.id} video={video} />
             ))}
