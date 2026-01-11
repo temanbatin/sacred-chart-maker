@@ -98,8 +98,20 @@ const PaymentResult = () => {
           setOrderData(data as OrderData);
           if (data.status === 'PAID' && data.report_url) {
             setStatus('success'); // Report sent
+            // Track Purchase (Once per session)
+            const trackKey = `tracked_purchase_${refId}`;
+            if (window.fbq && !sessionStorage.getItem(trackKey)) {
+              window.fbq('track', 'Purchase', { value: 199000, currency: 'IDR' });
+              sessionStorage.setItem(trackKey, 'true');
+            }
           } else if (data.status === 'PAID') {
             setStatus('success'); // Paid, processing
+            // Track Purchase (Once per session)
+            const trackKey = `tracked_purchase_${refId}`;
+            if (window.fbq && !sessionStorage.getItem(trackKey)) {
+              window.fbq('track', 'Purchase', { value: 199000, currency: 'IDR' });
+              sessionStorage.setItem(trackKey, 'true');
+            }
           } else if (data.status === 'FAILED') {
             setStatus('failed');
           } else {

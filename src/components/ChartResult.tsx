@@ -311,6 +311,11 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
 
   // Fetch bodygraph image when component mounts
   useEffect(() => {
+    // Track Lead Event when chart is viewed
+    if (window.fbq) {
+      window.fbq('track', 'Lead');
+    }
+
     const fetchBodygraph = async () => {
       if (!birthData) return;
 

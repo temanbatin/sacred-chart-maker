@@ -141,6 +141,11 @@ export const ProductPreviewModal = ({
       setBillingName(userName);
       setBillingEmail(userEmail);
       setBillingPhone(userPhone);
+
+      // Track Initiate Checkout
+      if (window.fbq) {
+        window.fbq('track', 'InitiateCheckout');
+      }
     }
   }, [isOpen, userName, userEmail, userPhone]);
 
