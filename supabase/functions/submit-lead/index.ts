@@ -1,9 +1,25 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'https://temanbatin.com',
+  'https://www.temanbatin.com',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'http://localhost:8080',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:8080'
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+}
 
 // Rate limit: max 5 submissions per email per hour
 const RATE_LIMIT_COUNT = 5;
@@ -73,6 +89,8 @@ function validateInput(data: LeadRequest): { valid: boolean; error?: string } {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -88,9 +106,9 @@ Deno.serve(async (req) => {
     }
 
     // Get client IP for rate limiting
-    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
-                     req.headers.get('x-real-ip') || 
-                     'unknown';
+    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
     const userAgent = req.headers.get('user-agent') || 'unknown';
 
     console.log(`Lead submission attempt from IP: ${clientIP}`);
@@ -174,7 +192,7 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error('Error inserting lead:', insertError);
-      
+
       // Check for specific constraint violations
       if (insertError.message.includes('leads_email_format')) {
         return new Response(
@@ -188,7 +206,7 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
+
       return new Response(
         JSON.stringify({ error: 'Gagal menyimpan data. Silakan coba lagi.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

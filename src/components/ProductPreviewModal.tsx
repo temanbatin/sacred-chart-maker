@@ -25,6 +25,8 @@ interface ProductPreviewModalProps {
   userPhone?: string;
   chartId?: string;
   userId?: string;
+  birthData?: any;
+  chartData?: any;
 }
 
 export const ProductPreviewModal = ({
@@ -34,7 +36,9 @@ export const ProductPreviewModal = ({
   userEmail = '',
   userPhone = '',
   chartId,
-  userId
+  userId,
+  birthData,
+  chartData
 }: ProductPreviewModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
@@ -66,17 +70,37 @@ export const ProductPreviewModal = ({
       return;
     }
 
-    // Check for duplicate purchase if chartId is present
-    if (chartId) {
-      const { data: existingOrder } = await supabase
+    // Check for duplicate purchase (Prevent re-ordering same chart)
+    // We check based on CONTENT (birthData) + Identity (UserId or Email)
+    if (birthData) {
+      let query = supabase
         .from('orders')
         .select('id')
         .eq('status', 'PAID')
-        .contains('metadata', { chart_ids: [chartId] })
-        .maybeSingle();
+        .contains('metadata', {
+          birth_data: {
+            name: birthData.name,
+            year: birthData.year,
+            month: birthData.month,
+            day: birthData.day,
+            hour: birthData.hour,
+            minute: birthData.minute
+            // We exclude 'place' and 'gender' to be more lenient on minor variations, 
+            // or include them if strict required. Name+Time is usually unique enough.
+          }
+        });
+
+      if (userId) {
+        query = query.eq('user_id', userId);
+      } else {
+        query = query.eq('customer_email', billingEmail);
+      }
+
+      const { data: existingOrder } = await query.maybeSingle();
 
       if (existingOrder) {
         setShowDuplicateAlert(true);
+        setIsLoading(false); // Stop loading!
         return;
       }
     }
@@ -84,9 +108,44 @@ export const ProductPreviewModal = ({
     setIsLoading(true);
 
     try {
+      // 0. Handle Buyer Guest: If no chartId exists (guest user), save chart now to get an ID
+      let finalChartIds = chartId ? [chartId] : [];
+
+      if (!chartId && birthData && chartData) {
+        try {
+          const birthDateStr = `${birthData.year}-${String(birthData.month).padStart(2, '0')}-${String(birthData.day).padStart(2, '0')}`;
+          const birthTimeStr = `${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}:00`;
+
+          // Generate ID client-side to avoid "select" permission issues from strict RLS
+          const newChartId = crypto.randomUUID();
+
+          // Insert with the pre-generated ID
+          const { error: saveError } = await supabase
+            .from('saved_charts')
+            .insert({
+              id: newChartId,
+              user_id: userId || null, // Allow null for guests
+              name: birthData.name,
+              birth_date: birthDateStr,
+              birth_time: birthTimeStr,
+              birth_place: birthData.place,
+              chart_data: chartData,
+            });
+
+          if (saveError) {
+            console.error('Auto-save chart error:', saveError);
+            // Continue without ID if save fails (will use birthData in metadata)
+          } else {
+            // Success - use the pre-generated ID
+            finalChartIds = [newChartId];
+          }
+        } catch (err) {
+          console.error('Auto-save chart exception:', err);
+        }
+      }
+
       // Generate Reference ID uniquely
       const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-      const chartIds = chartId ? [chartId] : [];
 
       // 1. Save order to database first
       const { error: orderError } = await supabase
@@ -100,7 +159,10 @@ export const ProductPreviewModal = ({
           product_name: `Full Report Human Design: ${userName}`,
           amount: PRICING_CONFIG.REPORT_PRICE,
           status: 'PENDING',
-          metadata: { chart_ids: chartIds }
+          metadata: {
+            chart_ids: finalChartIds,
+            birth_data: birthData
+          }
         });
 
       if (orderError) {
@@ -119,7 +181,8 @@ export const ProductPreviewModal = ({
           customerPhone: billingPhone,
           amount: PRICING_CONFIG.REPORT_PRICE,
           productName: `Full Report Human Design: ${userName}`,
-          chartIds: chartIds
+          chartIds: finalChartIds,
+          birthData: birthData
         }
       });
 

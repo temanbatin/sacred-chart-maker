@@ -1,14 +1,32 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+    'https://temanbatin.com',
+    'https://www.temanbatin.com',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'http://localhost:8080',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:8080'
+];
+
+function getCorsHeaders(req: Request) {
+    const origin = req.headers.get('origin') || '';
+    const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+    return {
+        'Access-Control-Allow-Origin': allowedOrigin,
+        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    };
+}
 
 // Midtrans API Configuration
 // Sandbox: https://app.sandbox.midtrans.com/snap/v1/transactions
 // Production: https://app.midtrans.com/snap/v1/transactions
-const MIDTRANS_API_URL = 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+const MIDTRANS_API_URL = Deno.env.get('MIDTRANS_IS_PRODUCTION') === 'true'
+    ? 'https://app.midtrans.com/snap/v1/transactions'
+    : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
 interface CheckoutRequest {
     referenceId?: string;
@@ -47,6 +65,8 @@ function formatPhoneNumber(phone: string | undefined): string {
 }
 
 serve(async (req) => {
+    const corsHeaders = getCorsHeaders(req);
+
     if (req.method === 'OPTIONS') {
         return new Response(null, { headers: corsHeaders });
     }

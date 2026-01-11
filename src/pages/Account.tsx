@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { ChartResult } from '@/components/ChartResult';
-import { BirthDataForChart } from '@/pages/Index';
+import { BirthData as BirthDataForChart } from '@/components/MultiStepForm';
 
 interface SavedChart {
   id: string;
@@ -43,7 +43,6 @@ const Account = () => {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .or(`customer_email.eq.${userEmail}`)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -112,7 +111,15 @@ const Account = () => {
 
         // Fetch charts and save pending chart when user logs in
         if (session?.user) {
-          setTimeout(() => {
+          setTimeout(async () => {
+            // 1. Claim guest data (link anonymous charts from orders to this user)
+            try {
+              await supabase.rpc('claim_guest_data');
+            } catch (err) {
+              console.error('Error claiming guest data:', err);
+            }
+
+            // 2. Fetch updated list
             fetchSavedCharts();
             savePendingChart(session.user.id);
           }, 0);
@@ -127,7 +134,10 @@ const Account = () => {
       setIsLoading(false);
 
       if (session?.user) {
-        fetchSavedCharts();
+        // Claim guest data on initial load too
+        supabase.rpc('claim_guest_data').then(() => {
+          fetchSavedCharts();
+        });
         // Don't auto-save pending chart on initial load (only on new login)
       }
     });
@@ -144,7 +154,21 @@ const Account = () => {
     if (error) {
       console.error('Error fetching charts:', error);
     } else {
-      setSavedCharts(data || []);
+      // Deduplicate charts based on content (Name + Birth Details)
+      // Keep the most recent one (first in the list due to order desc)
+      const uniqueCharts = (data || []).reduce((acc: SavedChart[], current) => {
+        const signature = `${current.name}|${current.birth_date}|${current.birth_time}|${current.birth_place}`;
+        const isDuplicate = acc.some(item =>
+          `${item.name}|${item.birth_date}|${item.birth_time}|${item.birth_place}` === signature
+        );
+
+        if (!isDuplicate) {
+          acc.push(current);
+        }
+        return acc;
+      }, []);
+
+      setSavedCharts(uniqueCharts);
     }
   };
 
@@ -259,12 +283,14 @@ const Account = () => {
     }
 
     return {
+      name: chart.name,
       year,
       month,
       day,
       hour,
       minute,
       place: chart.birth_place || '',
+      gender: chart.chart_data?.gender || 'male',
     };
   };
 

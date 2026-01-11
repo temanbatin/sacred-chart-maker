@@ -27,7 +27,12 @@ const reportSlides = [
     },
 ];
 
-export const ReportPreviewSection = () => {
+interface ReportPreviewSectionProps {
+    onOpenChartModal?: () => void;
+    hideCta?: boolean;
+}
+
+export const ReportPreviewSection = ({ onOpenChartModal, hideCta = false }: ReportPreviewSectionProps) => {
     const [slideIndex, setSlideIndex] = useState(0);
 
     return (
@@ -119,19 +124,27 @@ export const ReportPreviewSection = () => {
                             </span>
                         </div>
 
-                        <Button
-                            size="lg"
-                            className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg px-8 py-6 mt-4"
-                            onClick={() => {
-                                const calculator = document.getElementById('calculator');
-                                calculator?.scrollIntoView({ behavior: 'smooth' });
-                            }}
-                        >
-                            Buat Chart Gratis Dulu →
-                        </Button>
-                        <p className="text-muted-foreground text-sm">
-                            Buat chart gratis, lalu pesan laporan lengkap yang dipersonalisasi.
-                        </p>
+                        {!hideCta && (
+                            <>
+                                <Button
+                                    size="lg"
+                                    className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg px-8 py-6 mt-4"
+                                    onClick={() => {
+                                        if (onOpenChartModal) {
+                                            onOpenChartModal();
+                                        } else {
+                                            const calculator = document.getElementById('calculator');
+                                            calculator?.scrollIntoView({ behavior: 'smooth' });
+                                        }
+                                    }}
+                                >
+                                    Buat Chart & Pesan Sekarang →
+                                </Button>
+                                <p className="text-muted-foreground text-sm">
+                                    Buat chart gratis, lalu pesan laporan lengkap yang dipersonalisasi.
+                                </p>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

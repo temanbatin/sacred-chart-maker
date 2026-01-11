@@ -8,7 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CalculatorForm, BirthData } from '@/components/CalculatorForm';
+import { ChartGenerationModal } from '@/components/ChartGenerationModal';
+import { BirthData } from '@/components/CalculatorForm';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { LoadingAnimation } from '@/components/LoadingAnimation';
 import { ChartResult } from '@/components/ChartResult';
@@ -355,7 +356,7 @@ const Reports = () => {
       }
 
       // 2. Call Payment Gateway
-      const { data, error } = await supabase.functions.invoke('ipaymu-checkout', {
+      const { data, error } = await supabase.functions.invoke('midtrans-checkout', {
         body: {
           referenceId: referenceId, // Pass the SAME ID
           customerName: billingName,
@@ -641,7 +642,7 @@ const Reports = () => {
         </section>
 
         {/* Preview Section */}
-        <ReportPreviewSection />
+        <ReportPreviewSection hideCta={true} />
 
         {/* Testimonials */}
         <section className="px-4 py-16">
@@ -697,135 +698,11 @@ const Reports = () => {
               <div className="flex justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-accent" />
               </div>
-            ) : user && savedCharts.length > 0 ? (
-              /* User has charts - show selection */
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Pilih Chart untuk Full Report
-                  </h3>
-                  <button
-                    onClick={selectAllCharts}
-                    className="text-sm text-accent hover:underline"
-                  >
-                    {selectedCharts.length === savedCharts.length ? 'Batal Pilih Semua' : 'Pilih Semua'}
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  {savedCharts.map((chart) => {
-                    const isPaid = isChartOrdered(chart.id);
-                    const isPending = isChartPending(chart.id);
-                    const isDisabled = isPaid || isPending;
-
-                    return (
-                      <div
-                        key={chart.id}
-                        onClick={() => !isDisabled && toggleChartSelection(chart.id)}
-                        className={`p-4 rounded-xl border-2 transition-all ${isDisabled
-                          ? 'opacity-60 cursor-not-allowed bg-secondary/50 border-border'
-                          : selectedCharts.includes(chart.id)
-                            ? 'border-accent bg-accent/10 cursor-pointer'
-                            : 'border-border hover:border-accent/50 cursor-pointer'
-                          }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <Checkbox
-                            checked={selectedCharts.includes(chart.id)}
-                            onCheckedChange={() => !isDisabled && toggleChartSelection(chart.id)}
-                            disabled={isDisabled}
-                            className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-foreground">{chart.name}</h4>
-                              {isPaid && (
-                                <span className="text-[10px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
-                                  Sudah Dibeli
-                                </span>
-                              )}
-                              {isPending && (
-                                <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
-                                  Menunggu Pembayaran
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {formatDate(chart.birth_date)}
-                              </span>
-                              {chart.birth_place && (
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="w-3 h-3" />
-                                  {chart.birth_place.split(',')[0]}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-accent font-semibold">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
-                            <span className="text-xs text-muted-foreground line-through ml-2">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Add new chart option */}
-                <Button
-                  variant="outline"
-                  className="w-full border-dashed border-2 py-6"
-                  onClick={handleAddNewChart}
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Tambah Chart Baru
-                </Button>
-
-                {/* Summary and checkout */}
-                {selectedCharts.length > 0 && (
-                  <div className="bg-secondary/50 rounded-xl p-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">
-                        {selectedCharts.length} Full Report
-                      </span>
-                      <div className="text-right">
-                        <span className="text-xl font-bold text-foreground">
-                          {formatPrice(getTotalPrice())}
-                        </span>
-                        <span className="text-sm text-muted-foreground line-through ml-2">
-                          {formatPrice(getOriginalTotalPrice())}
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      size="lg"
-                      className="w-full fire-glow text-lg py-6"
-                      onClick={handleCheckoutClick}
-                    >
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Lanjut ke Pembayaran
-                    </Button>
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Shield className="w-4 h-4 text-accent" />
-                    Jaminan uang kembali 30 hari
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="w-4 h-4 text-accent" />
-                    Dikirim dalam 24 jam
-                  </div>
-                </div>
-              </div>
             ) : user ? (
-              /* User logged in but no charts */
+              /* User logged in */
               <div className="text-center">
                 <p className="text-muted-foreground mb-6">
-                  Anda belum memiliki chart. Buat chart gratis terlebih dahulu untuk memesan Full Report.
+                  Buat chart gratis terlebih dahulu untuk memesan Full Report.
                 </p>
                 <Button
                   size="lg"
@@ -875,13 +752,12 @@ const Reports = () => {
           </Link>
         </section>
         {/* Modals */}
-        <Dialog open={showChartModal} onOpenChange={setShowChartModal}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 border-none bg-transparent shadow-none">
-            <div className="bg-background/95 backdrop-blur-md rounded-3xl border border-border overflow-hidden">
-              <CalculatorForm onSubmit={handleChartSubmit} isLoading={isGeneratingChart} />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <ChartGenerationModal
+          isOpen={showChartModal}
+          onClose={() => setShowChartModal(false)}
+          onSubmit={handleChartSubmit}
+          isLoading={isGeneratingChart}
+        />
 
         <LeadCaptureModal
           isOpen={showLeadCapture}
@@ -915,8 +791,9 @@ const Reports = () => {
                   userId={user?.id}
                   onReset={() => {
                     setShowResultModal(false);
-                    fetchSavedCharts();
+                    setShowChartModal(true);
                   }}
+                  isOrdered={currentChartId ? isChartOrdered(currentChartId) : false}
                 />
               )}
             </div>

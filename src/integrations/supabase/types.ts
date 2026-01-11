@@ -109,31 +109,31 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
-          email: string
+          email: string | null
           id: string
-          name: string
+          name: string | null
           updated_at: string
           user_id: string
-          whatsapp: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
-          email: string
+          email?: string | null
           id?: string
-          name: string
+          name?: string | null
           updated_at?: string
           user_id: string
-          whatsapp?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
           id?: string
-          name?: string
+          name?: string | null
           updated_at?: string
           user_id?: string
-          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -146,7 +146,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           birth_date: string
@@ -156,7 +156,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           birth_date?: string
@@ -166,7 +166,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -175,7 +175,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_guest_data: {
+        Args: Record<PropertyKey, never>
+        Returns: void
+      }
+      is_admin: {
+        Args: {
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

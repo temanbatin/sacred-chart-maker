@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn, ChevronLeft, ChevronRight, Plus, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
@@ -32,6 +32,7 @@ interface ChartResultProps {
   chartId?: string;
   userId?: string;
   onReset: () => void;
+  isOrdered?: boolean;
 }
 
 interface PlanetData {
@@ -183,7 +184,7 @@ const variableDescriptions: Record<string, { title: string; description: string 
 };
 
 
-export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, chartId, userId, onReset }: ChartResultProps) => {
+export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, chartId, userId, onReset, isOrdered = false }: ChartResultProps) => {
   const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
   const [bodygraphLoading, setBodygraphLoading] = useState(false);
   const [bodygraphError, setBodygraphError] = useState<string | null>(null);
@@ -193,6 +194,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
   const chartRef = useRef<HTMLDivElement>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   // Warning saat user mau tutup tab (hanya untuk guest yang belum save)
   const isUnsaved = !chartId && !userId;
@@ -338,30 +340,36 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
     };
 
     fetchBodygraph();
-  }, [birthData]);
+  }, [JSON.stringify(birthData)]);
 
   // Download chart as PNG image
+  // Download chart as PNG image
   const handleDownload = async () => {
-    if (!chartRef.current) return;
+    if (!exportRef.current) return;
 
     setIsDownloading(true);
 
     try {
-      const canvas = await html2canvas(chartRef.current, {
+      const canvas = await html2canvas(exportRef.current, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: "#1a1a2e",
+        backgroundColor: "#030712", // dark background
         logging: false,
+        onclone: (clonedDoc) => {
+          const exportEl = clonedDoc.getElementById('chart-export-view');
+          if (exportEl) {
+            exportEl.style.display = 'block';
+          }
+        }
       });
 
-      // Convert canvas to blob and download
       canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
-          link.download = `human-design-chart-${userName.replace(/\s+/g, "-").toLowerCase()}.png`;
+          link.download = `temanbatin-chart-${userName.replace(/\s+/g, "-").toLowerCase()}.png`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -369,7 +377,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
 
           toast({
             title: "Berhasil!",
-            description: "Chart berhasil diunduh sebagai gambar.",
+            description: "Chart berhasil diunduh.",
           });
         }
       }, "image/png");
@@ -453,7 +461,15 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               {/* Bodygraph Image (Center) */}
               <div className="flex-shrink-0 relative">
                 {bodygraphLoading ? (
-                  <Skeleton className="w-64 md:w-96 lg:w-[480px] xl:w-[540px] h-96 md:h-[550px] lg:h-[650px] xl:h-[700px] rounded-2xl" />
+                  <div className="w-64 md:w-96 lg:w-[480px] xl:w-[540px] h-96 md:h-[550px] lg:h-[650px] xl:h-[700px] rounded-2xl bg-secondary/30 flex flex-col items-center justify-center border-2 border-dashed border-muted animate-pulse">
+                    <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+                    <p className="text-muted-foreground text-center px-4 font-medium animate-pulse">
+                      Sedang menggambar bodygraph anda...
+                    </p>
+                    <p className="text-xs text-muted-foreground/60 mt-2">
+                      (Mohon tunggu sebentar)
+                    </p>
+                  </div>
                 ) : bodygraphError ? (
                   <div className="text-center text-muted-foreground py-12 w-64 md:w-96 lg:w-[480px] xl:w-[540px]">
                     <p>{bodygraphError}</p>
@@ -664,25 +680,16 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               </div>
             )}
 
-            {/* Incarnation Cross & Aura */}
-            {(incarnationCross && incarnationCross !== "Unknown") || aura ? (
-              <div className="mt-8 grid md:grid-cols-2 gap-6">
-                {incarnationCross && incarnationCross !== "Unknown" && (
-                  <div className="bg-primary/10 rounded-2xl p-6 text-center">
-                    <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Incarnation Cross</h4>
-                    <p className="text-lg font-semibold text-foreground">{incarnationCross}</p>
-                    <p className="text-sm text-muted-foreground mt-2">Misi hidupmu yang lebih besar</p>
-                  </div>
-                )}
-                {aura && (
-                  <div className="bg-secondary/50 rounded-2xl p-6 text-center">
-                    <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Aura</h4>
-                    <p className="text-lg font-semibold text-foreground">{aura}</p>
-                    <p className="text-sm text-muted-foreground mt-2">Bagaimana energimu dirasakan oleh orang lain</p>
-                  </div>
-                )}
+            {/* Incarnation Cross */}
+            {incarnationCross && incarnationCross !== "Unknown" && (
+              <div className="mt-8">
+                <div className="bg-primary/10 rounded-2xl p-6 text-center">
+                  <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Incarnation Cross</h4>
+                  <p className="text-lg font-semibold text-foreground">{incarnationCross}</p>
+                  <p className="text-sm text-muted-foreground mt-2">Misi hidupmu yang lebih besar</p>
+                </div>
               </div>
-            ) : null}
+            )}
           </div>
 
           {/* Channels Section */}
@@ -734,102 +741,176 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         </div>
         {/* End of Downloadable Content Area */}
 
-        {/* Upsell CTA Section */}
-        <div className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
-          <div className="text-center mb-6">
-            <p className="text-amber-400 text-sm font-medium mb-2">🔥 Hanya 50 slot tersisa bulan ini</p>
-            <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
-              Siap Menyelami Potensi Terbesarmu?
-            </h3>
-            <p className="text-white/90 text-lg">
-              Apa yang kamu lihat di sini hanyalah permukaan. Buka Full Foundation Analysis untuk mengungkap misi hidup dan bakat terpendammu.
-            </p>
-          </div>
+        {/* Upsell CTA Section - Only Show if NOT Ordered */}
+        {/* Upsell CTA Section - Only Show if NOT Ordered */}
+        {!isOrdered ? (
+          <div className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
+            <div className="text-center mb-6">
+              <p className="text-amber-400 text-sm font-medium mb-2">🔥 Hanya 50 slot tersisa bulan ini</p>
+              <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
+                Siap Menyelami Potensi Terbesarmu?
+              </h3>
+              <p className="text-white/90 text-lg">
+                Apa yang kamu lihat di sini hanyalah permukaan. Buka Full Foundation Analysis untuk mengungkap misi hidup dan bakat terpendammu.
+              </p>
+            </div>
 
-          {/* Report Screenshots Carousel */}
-          <div className="relative mb-8 max-w-2xl mx-auto">
-            <div className="overflow-hidden rounded-xl border border-amber-400/30 shadow-2xl">
-              <img
-                src={reportSlides[slideIndex].img}
-                alt={reportSlides[slideIndex].title}
-                className="w-full h-auto"
-                loading="lazy"
-              />
-            </div>
-            {/* Navigation Arrows */}
-            <button
-              aria-label="Previous slide"
-              onClick={() => setSlideIndex((prev) => (prev === 0 ? reportSlides.length - 1 : prev - 1))}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              aria-label="Next slide"
-              onClick={() => setSlideIndex((prev) => (prev === reportSlides.length - 1 ? 0 : prev + 1))}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-            {/* Caption */}
-            <div className="text-center mt-4">
-              <p className="text-amber-300 font-semibold text-lg">{reportSlides[slideIndex].title}</p>
-              <p className="text-white/80 text-sm">{reportSlides[slideIndex].desc}</p>
-            </div>
-            {/* Dots */}
-            <div className="flex justify-center gap-2 mt-3">
-              {reportSlides.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSlideIndex(idx)}
-                  className={`w-2.5 h-2.5 rounded-full transition-colors ${idx === slideIndex ? 'bg-amber-400' : 'bg-white/30'}`}
+            {/* Report Screenshots Carousel */}
+            <div className="relative mb-8 max-w-2xl mx-auto">
+              <div className="overflow-hidden rounded-xl border border-amber-400/30 shadow-2xl">
+                <img
+                  src={reportSlides[slideIndex % reportSlides.length].img}
+                  alt={reportSlides[slideIndex % reportSlides.length].title}
+                  className="w-full h-auto"
+                  loading="lazy"
                 />
-              ))}
+              </div>
+              {/* Navigation Arrows */}
+              <button
+                aria-label="Previous slide"
+                onClick={() => setSlideIndex((prev) => (prev === 0 ? reportSlides.length - 1 : prev - 1))}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                aria-label="Next slide"
+                onClick={() => setSlideIndex((prev) => (prev === reportSlides.length - 1 ? 0 : prev + 1))}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              {/* Caption */}
+              <div className="text-center mt-4">
+                <p className="text-amber-300 font-semibold text-lg">{reportSlides[slideIndex % reportSlides.length].title}</p>
+                <p className="text-white/80 text-sm">{reportSlides[slideIndex % reportSlides.length].desc}</p>
+              </div>
+              {/* Dots */}
+              <div className="flex justify-center gap-2 mt-3">
+                {reportSlides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSlideIndex(idx)}
+                    className={`w-2.5 h-2.5 rounded-full transition-colors ${idx === (slideIndex % reportSlides.length) ? 'bg-amber-400' : 'bg-white/30'}`}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-3 mb-8 max-w-2xl mx-auto">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-white/90">
-                <span className="font-semibold">100+ Halaman Analisis Mendalam</span> — Tipe, Strategi, Otoritas, Profil, dan semua yang kamu lihat di atas
-              </p>
+            <div className="space-y-3 mb-8 max-w-2xl mx-auto">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-white/90">
+                  <span className="font-semibold">100+ Halaman Analisis Mendalam</span> — Tipe, Strategi, Otoritas, Profil, dan semua yang kamu lihat di atas
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-white/90">
+                  <span className="font-semibold">Misi Hidupmu (Incarnation Cross)</span> — Mengapa kamu ada di dunia ini
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-white/90">
+                  <span className="font-semibold">Panduan Praktis Karir & Relasi</span> — Langkah konkret sesuai desainmu
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-white/90">
+                  <span className="font-semibold">Garansi 100% Uang Kembali</span> — Jika tidak puas dalam 7 hari
+                </p>
+              </div>
             </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-white/90">
-                <span className="font-semibold">Misi Hidupmu (Incarnation Cross)</span> — Mengapa kamu ada di dunia ini
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-white/90">
-                <span className="font-semibold">Panduan Praktis Karir & Relasi</span> — Langkah konkret sesuai desainmu
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-white/90">
-                <span className="font-semibold">Garansi 100% Uang Kembali</span> — Jika tidak puas dalam 7 hari
-              </p>
-            </div>
-          </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
-              size="lg"
-              className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg px-8 py-6"
-              onClick={() => setIsProductModalOpen(true)}
-            >
-              Dapatkan Laporan Lengkap
-            </Button>
-            <div className="flex items-center gap-3">
-              <span className="text-amber-300 font-bold text-2xl">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
-              <span className="text-white/60 line-through text-lg">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
+            <div className="text-center">
+              <Button
+                size="lg"
+                onClick={() => setIsProductModalOpen(true)}
+                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(245,158,11,0.5)] border-2 border-amber-400/50 animate-pulse-slow w-full md:w-auto"
+              >
+                Dapatkan Full Report Sekarang
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <div className="flex items-center justify-center gap-3 mt-4">
+                <span className="text-amber-300 font-bold text-xl">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
+                <span className="text-white/60 line-through text-base">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
+              </div>
+              <p className="text-center text-white/60 text-sm mt-2">⚡ Dikirim ke email dalam 24 jam</p>
             </div>
           </div>
-          <p className="text-center text-white/60 text-sm mt-4">⚡ Dikirim ke email dalam 24 jam</p>
-        </div>
+        ) : (
+          /* Already Ordered Section */
+          <div className="mt-12 space-y-12 animate-fade-up">
+            {/* Success Access Banner - Showing Full Report Result */}
+            <div className="bg-emerald-900/40 border border-emerald-500/30 rounded-3xl p-8 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 mb-6">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-emerald-400 mb-3">
+                Full Report Tersedia
+              </h3>
+              <p className="text-muted-foreground max-w-xl mx-auto mb-8">
+                Anda telah membuka akses penuh ke analisis chart ini. Silakan unduh dokumen PDF lengkap untuk mempelajarinya lebih dalam.
+              </p>
+              <div className="flex justify-center gap-4">
+                <Button
+                  onClick={() => toast({ title: "Silakan cek dashboard atau email Anda", description: "Link download report telah dikirimkan." })}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF Report
+                </Button>
+              </div>
+            </div>
+
+            {/* Upsell for New Chart (Partner/Family) */}
+            <div className="glass-card rounded-3xl p-8 md:p-12 text-center border-2 border-primary/20">
+              <div className="mb-6">
+                <span className="inline-block px-4 py-1.5 rounded-full bg-accent/20 text-accent font-medium text-sm mb-4">
+                  Hadiah Transformasi
+                </span>
+                <h3 className="text-3xl font-bold text-foreground mb-4">
+                  Pahami Orang Terkasih Lebih Dalam
+                </h3>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  Human Design bukan hanya tentang dirimu. Bayangkan jika kamu bisa memahami cara komunikasi pasangan, bakat tersembunyi anak, atau potensi sahabatmu.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-10 text-left">
+                <div className="bg-secondary/30 p-5 rounded-2xl">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <span className="text-2xl">💑</span> Pasangan
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Pahami bahasa cinta dan konflik mereka. Bangun hubungan yang lebih harmonis tanpa salah paham.</p>
+                </div>
+                <div className="bg-secondary/30 p-5 rounded-2xl">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <span className="text-2xl">👶</span> Anak
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Kenali gaya belajar dan bakat unik mereka sejak dini. Pandu mereka sesuai desain sejatinya.</p>
+                </div>
+                <div className="bg-secondary/30 p-5 rounded-2xl">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <span className="text-2xl">🤝</span> Rekan Kerja
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Tingkatkan kolaborasi dengan memahami gaya kerja dan pengambilan keputusan mereka.</p>
+                </div>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={onReset}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 shadow-lg shadow-primary/20"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Buat Chart Baru Untuk Mereka
+              </Button>
+            </div>
+          </div>
+        )}
         <ProductPreviewModal
           isOpen={isProductModalOpen}
           onClose={() => setIsProductModalOpen(false)}
@@ -838,6 +919,8 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           userPhone={userPhone}
           chartId={chartId}
           userId={userId}
+          birthData={birthData}
+          chartData={data}
         />
 
         {/* Save Chart Dialog for Guest Users */}
@@ -914,10 +997,10 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up mt-8">
           <Button
-            onClick={handleResetClick}
+            onClick={onReset}
             variant="outline"
             size="lg"
-            className="border-primary text-primary-foreground bg-primary/20 hover:bg-primary/40 rounded-xl"
+            className="border-primary text-primary-foreground hover:text-primary-foreground bg-primary/20 hover:bg-primary/40 rounded-xl"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
             Buat Chart Baru
@@ -927,7 +1010,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             onClick={handleShare}
             variant="outline"
             size="lg"
-            className="border-primary text-primary hover:bg-primary/10 rounded-xl"
+            className="border-primary text-primary-foreground hover:text-primary-foreground bg-primary/20 hover:bg-primary/40 rounded-xl"
           >
             <Share2 className="w-4 h-4 mr-2" />
             Salin Link
@@ -939,7 +1022,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               onClick={() => setShowSaveDialog(true)}
               variant="outline"
               size="lg"
-              className="border-accent text-foreground hover:bg-accent/20 rounded-xl"
+              className="border-accent text-foreground hover:text-foreground hover:bg-accent/20 rounded-xl"
             >
               <Save className="w-4 h-4 mr-2" />
               Simpan Chart
@@ -949,8 +1032,9 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           <Button
             onClick={handleDownload}
             disabled={isDownloading}
+            variant="outline"
             size="lg"
-            className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl"
+            className="border-primary text-primary-foreground hover:text-primary-foreground bg-primary/20 hover:bg-primary/40 rounded-xl"
           >
             {isDownloading ? (
               <>
@@ -964,6 +1048,125 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               </>
             )}
           </Button>
+        </div>
+      </div>
+
+      {/* Hidden Export View for Image Generation */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <div
+          id="chart-export-view"
+          ref={exportRef}
+          className="w-[1200px] min-h-[1350px] bg-[#01170F] text-[#FDF9E2] p-16 flex flex-col items-center relative overflow-hidden font-sans"
+        >
+          {/* Background Decorative Elements - Forest & Fire Theme */}
+          <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none">
+            <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-[#BD590F]/20 rounded-full blur-[150px]" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#022c1e]/40 rounded-full blur-[150px]" />
+          </div>
+
+          {/* Header */}
+          <div className="w-full flex justify-between items-center border-b border-[#FDF9E2]/10 pb-6 mb-10 z-10 relative">
+            <div>
+              <p className="text-[#BD590F] font-bold tracking-widest text-lg uppercase mb-2">Human Design Chart</p>
+              <h1 className="text-5xl font-bold text-[#FDF9E2] tracking-tight">{userName}</h1>
+            </div>
+            <div className="flex flex-col items-center gap-3">
+              <img src="/favicon.png" alt="Teman Batin" className="w-20 h-20 rounded-xl shadow-xl" />
+              <h2 className="text-xl font-bold text-[#BD590F]">Teman Batin</h2>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 w-full flex gap-8 z-10 relative">
+
+            {/* Left: Bodygraph + Planets */}
+            <div className="flex-1 flex flex-row items-center justify-center bg-[#FDF9E2]/5 rounded-3xl p-6 border border-[#FDF9E2]/10 gap-4">
+              {/* Design Planets */}
+              <div className="transform scale-90 origin-right">
+                <PlanetColumn planets={designPlanets} title="Design" side="left" />
+              </div>
+
+              {/* Bodygraph */}
+              <div className="flex-shrink-0">
+                {bodygraphImage ? (
+                  <img
+                    src={bodygraphImage}
+                    alt="Bodygraph"
+                    className="w-auto h-[750px] object-contain"
+                  />
+                ) : (
+                  <div className="text-slate-500">Bodygraph not available</div>
+                )}
+              </div>
+
+              {/* Personality Planets */}
+              <div className="transform scale-90 origin-left">
+                <PlanetColumn planets={personalityPlanets} title="Personality" side="right" />
+              </div>
+            </div>
+
+            {/* Right: Compact Stats */}
+            <div className="w-64 flex flex-col gap-3">
+
+
+
+
+
+
+
+
+
+
+              <div className="p-3 rounded-lg bg-[#FDF9E2]/5 border border-[#FDF9E2]/10">
+                <p className="text-[#FDF9E2]/60 text-xs uppercase tracking-wide mb-0.5">Type</p>
+                <p className="text-lg font-bold text-[#BD590F]">{chartType}</p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#FDF9E2]/5 border border-[#FDF9E2]/10">
+                <p className="text-[#FDF9E2]/60 text-xs uppercase tracking-wide mb-0.5">Strategy</p>
+                <p className="text-base font-semibold text-[#FDF9E2]">{strategy}</p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#FDF9E2]/5 border border-[#FDF9E2]/10">
+                <p className="text-[#FDF9E2]/60 text-xs uppercase tracking-wide mb-0.5">Authority</p>
+                <p className="text-base font-semibold text-[#FDF9E2]">{authority}</p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#FDF9E2]/5 border border-[#FDF9E2]/10">
+                <p className="text-[#FDF9E2]/60 text-xs uppercase tracking-wide mb-0.5">Profile</p>
+                <p className="text-base font-semibold text-[#FDF9E2]">{profile}</p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#FDF9E2]/5 border border-[#FDF9E2]/10">
+                <p className="text-[#FDF9E2]/60 text-xs uppercase tracking-wide mb-0.5">Definition</p>
+                <p className="text-sm font-semibold text-[#FDF9E2]">{definition}</p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#FDF9E2]/5 border border-[#FDF9E2]/10">
+                <p className="text-[#FDF9E2]/60 text-xs uppercase tracking-wide mb-0.5">Incarnation Cross</p>
+                <p className="text-xs font-medium text-[#FDF9E2]/80 leading-tight">{incarnationCross}</p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#FDF9E2]/5 border border-[#FDF9E2]/10">
+                <p className="text-[#FDF9E2]/60 text-xs uppercase tracking-wide mb-0.5">Signature</p>
+                <p className="text-sm font-medium text-[#BD590F]">{signature || 'N/A'}</p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#FDF9E2]/5 border border-[#FDF9E2]/10">
+                <p className="text-[#FDF9E2]/60 text-xs uppercase tracking-wide mb-0.5">Not-Self</p>
+                <p className="text-xs font-medium text-[#FDF9E2]">{notSelf || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
+
+
+
+          {/* Footer */}
+          <div className="w-full mt-8 pt-6 border-t border-[#FDF9E2]/10 flex justify-between items-center text-[#FDF9E2]/50 z-10 relative">
+            <p className="text-sm">Generated on {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <p className="text-sm font-medium text-[#BD590F]">www.temanbatin.com</p>
+          </div>
         </div>
       </div>
     </section>

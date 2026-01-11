@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FloatingParticles } from '@/components/FloatingParticles';
 import { MainNavbar } from '@/components/MainNavbar';
@@ -13,6 +13,7 @@ import { ReportPreviewSection } from '@/components/ReportPreviewSection';
 import { NewsletterSection } from '@/components/NewsletterSection';
 import { Footer } from '@/components/Footer';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
+import { ChartGenerationModal } from '@/components/ChartGenerationModal';
 import { ExitIntentPopup } from '@/components/ExitIntentPopup';
 import { ScrollToTop } from '@/components/ScrollToTop';
 
@@ -21,6 +22,7 @@ import { useChartGenerator } from '@/hooks/useChartGenerator';
 
 const Index = () => {
   const calculatorRef = useRef<HTMLDivElement>(null);
+  const [isChartModalOpen, setIsChartModalOpen] = useState(false);
 
   // Custom Hooks
   const { user, loading: authLoading } = useAuthSession();
@@ -138,7 +140,7 @@ const Index = () => {
               />
             </div>
             <TestimonialsSection />
-            <ReportPreviewSection />
+            <ReportPreviewSection onOpenChartModal={() => setIsChartModalOpen(true)} />
             <FAQSection />
             <NewsletterSection />
           </>
@@ -156,6 +158,15 @@ const Index = () => {
         )}
         <Footer />
         <ExitIntentPopup />
+        <ChartGenerationModal
+          isOpen={isChartModalOpen}
+          onClose={() => setIsChartModalOpen(false)}
+          onSubmit={async (data) => {
+            await handleSubmit(data);
+            setIsChartModalOpen(false);
+          }}
+          isLoading={isLoading}
+        />
         <ScrollToTop />
       </main>
     </div>
