@@ -193,10 +193,10 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
     return (
         <section ref={ref} className="py-20 px-4" id="calculator">
             <div className="max-w-2xl mx-auto">
-                <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-gradient-fire my-px">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4 text-gradient-fire my-px">
                     Siap Melihat Siapa Dirimu yang Sebenarnya?
                 </h2>
-                <p className="text-muted-foreground text-center mb-8">
+                <p className="text-sm sm:text-base text-muted-foreground text-center mb-8">
                     Hanya butuh 1 menit untuk mendapatkan wawasan yang bisa mengubah caramu memandang hidup selamanya.
                 </p>
 
@@ -231,13 +231,13 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="glass-card rounded-3xl p-8 md:p-12">
+                <form onSubmit={handleSubmit} className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-12">
                     {/* Step Header */}
-                    <div className="text-center mb-8">
-                        <h3 className="text-2xl font-semibold text-foreground mb-2">
+                    <div className="text-center mb-6 sm:mb-8">
+                        <h3 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
                             {getStepTitle(currentStep)}
                         </h3>
-                        <p className="text-muted-foreground">
+                        <p className="text-sm sm:text-base text-muted-foreground">
                             {getStepDescription(currentStep)}
                         </p>
                     </div>
@@ -396,7 +396,7 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                     </div>
 
                     {/* Navigation Buttons */}
-                    <div className="flex justify-between mt-10">
+                    <div className="flex justify-between gap-3 mt-8 sm:mt-10">
                         {currentStep > 1 ? (
                             <Button
                                 type="button"
@@ -421,7 +421,7 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                                     (currentStep === 1 && !canProceedToStep2) ||
                                     (currentStep === 2 && !canProceedToStep3)
                                 }
-                                className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold"
+                                className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold text-sm sm:text-base px-4 sm:px-6"
                             >
                                 Lanjut
                                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -431,17 +431,17 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                                 type="submit"
                                 size="lg"
                                 disabled={isLoading || !canSubmit}
-                                className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-6 px-8 rounded-xl font-semibold disabled:opacity-50"
+                                className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground text-sm sm:text-base md:text-lg py-4 sm:py-5 md:py-6 px-4 sm:px-6 md:px-8 rounded-xl font-semibold disabled:opacity-50 w-auto"
                             >
                                 {isLoading ? (
                                     <>
-                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                        Menghitung...
+                                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+                                        <span className="whitespace-nowrap">Menghitung...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <Sparkles className="w-5 h-5 mr-2" />
-                                        Lihat Desainku
+                                        <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                                        <span className="whitespace-nowrap">Lihat Desainku</span>
                                     </>
                                 )}
                             </Button>

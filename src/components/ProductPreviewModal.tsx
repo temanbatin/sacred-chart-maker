@@ -311,33 +311,33 @@ export const ProductPreviewModal = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-2xl text-center text-foreground">
+            <DialogTitle className="text-lg sm:text-xl md:text-2xl text-center text-foreground">
               Laporan Analisis Mendalam Human Design
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col md:flex-row gap-6 mt-4">
+          <div className="flex flex-col md:flex-row gap-4 sm:gap-6 mt-4">
             {/* Product Cover Image */}
             <div className="flex-shrink-0 mx-auto md:mx-0">
               <div className="relative">
                 <img
                   src={ebookCover}
                   alt="Laporan Analisis Mendalam Human Design"
-                  className="w-64 h-auto rounded-lg shadow-xl"
+                  className="w-48 sm:w-56 md:w-64 h-auto rounded-lg shadow-xl"
                 />
-                <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold">
+                <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-semibold">
                   100+ Halaman
                 </div>
               </div>
             </div>
 
             {/* Product Details */}
-            <div className="flex-1 space-y-4">
-              <div className="bg-secondary/30 rounded-lg p-4 border border-border">
-                <p className="text-sm text-muted-foreground mb-1">Disusun Khusus Untuk:</p>
-                <p className="text-lg font-semibold text-accent">{userName}</p>
+            <div className="flex-1 space-y-3 sm:space-y-4">
+              <div className="bg-secondary/30 rounded-lg p-3 sm:p-4 border border-border">
+                <p className="text-xs sm:text-sm text-muted-foreground mb-1">Disusun Khusus Untuk:</p>
+                <p className="text-base sm:text-lg font-semibold text-accent">{userName}</p>
               </div>
 
               {/* ... Features List (Keep existing) ... */}
@@ -364,35 +364,35 @@ export const ProductPreviewModal = ({
               </div>
 
               {/* Billing Inputs */}
-              <div className="space-y-3 border-t border-border pt-4">
-                <h4 className="font-semibold text-foreground text-sm">Data Pemesan (Wajib Diisi):</h4>
+              <div className="space-y-2 sm:space-y-3 border-t border-border pt-3 sm:pt-4">
+                <h4 className="font-semibold text-foreground text-xs sm:text-sm">Data Pemesan (Wajib Diisi):</h4>
                 <div className="space-y-2">
                   <Label htmlFor="billing-name" className="text-xs">Nama Lengkap</Label>
-                  <Input id="billing-name" value={billingName} onChange={handleNameChange} placeholder="Nama Lengkap" className="h-9 text-sm" />
+                  <Input id="billing-name" value={billingName} onChange={handleNameChange} placeholder="Nama Lengkap" className="h-9 sm:h-10 text-sm" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="billing-email" className="text-xs">Email</Label>
-                  <Input id="billing-email" type="email" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} placeholder="email@contoh.com" className="h-9 text-sm" />
+                  <Input id="billing-email" type="email" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} placeholder="email@contoh.com" className="h-9 sm:h-10 text-sm" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="billing-phone" className="text-xs">WhatsApp</Label>
-                  <Input id="billing-phone" type="tel" value={billingPhone} onChange={(e) => setBillingPhone(e.target.value)} placeholder="+628..." className="h-9 text-sm" />
+                  <Input id="billing-phone" type="tel" value={billingPhone} onChange={(e) => setBillingPhone(e.target.value)} placeholder="+628..." className="h-9 sm:h-10 text-sm" />
                 </div>
               </div>
 
               {/* Coupon Input */}
-              <div className="space-y-3 border-t border-border pt-4">
+              <div className="space-y-2 sm:space-y-3 border-t border-border pt-3 sm:pt-4">
                 <Label className="text-xs font-semibold">Punya kode kupon?</Label>
                 <div className="flex gap-2">
                   <Input
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                     placeholder="Masukkan kode"
-                    className="h-9 text-sm uppercase"
+                    className="h-9 sm:h-10 text-sm uppercase"
                     disabled={!!appliedCoupon}
                   />
                   {appliedCoupon ? (
-                    <Button variant="outline" size="sm" onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} className="text-destructive border-destructive hover:bg-destructive/10">
+                    <Button variant="outline" size="sm" onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} className="text-destructive border-destructive hover:bg-destructive/10 text-xs sm:text-sm whitespace-nowrap">
                       Hapus
                     </Button>
                   ) : (
@@ -401,6 +401,7 @@ export const ProductPreviewModal = ({
                       size="sm"
                       onClick={checkCoupon}
                       disabled={isCheckingCoupon || !couponCode}
+                      className="text-xs sm:text-sm whitespace-nowrap"
                     >
                       {isCheckingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Cek'}
                     </Button>
@@ -462,17 +463,17 @@ export const ProductPreviewModal = ({
                   onClick={handleRedeemFree}
                   disabled={isLoading || !billingName || !billingEmail}
                   size="lg"
-                  className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl text-lg py-6 shadow-lg shadow-green-500/20"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm sm:text-base md:text-lg py-4 sm:py-5 md:py-6 shadow-lg shadow-green-500/20"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Memproses Klaim...
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+                      <span className="whitespace-nowrap">Memproses Klaim...</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="w-5 h-5 mr-2" />
-                      Klaim Report Gratis
+                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <span className="whitespace-nowrap">Klaim Report Gratis</span>
                     </>
                   )}
                 </Button>
@@ -481,19 +482,19 @@ export const ProductPreviewModal = ({
                   onClick={handleBuy}
                   disabled={isLoading || !billingName || !billingEmail}
                   size="lg"
-                  className="w-full fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg py-6"
+                  className="w-full fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-sm sm:text-base md:text-lg py-4 sm:py-5 md:py-6"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Memproses...
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+                      <span className="whitespace-nowrap">Memproses...</span>
                     </>
                   ) : (
                     <>
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Bayar {appliedCoupon?.discount_type === 'percentage'
+                      <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <span className="whitespace-nowrap">Bayar {appliedCoupon?.discount_type === 'percentage'
                         ? formatPrice(Math.round(PRICING_CONFIG.REPORT_PRICE * (1 - Number(appliedCoupon.discount_value) / 100)))
-                        : formatPrice(PRICING_CONFIG.REPORT_PRICE)}
+                        : formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
                     </>
                   )}
                 </Button>
