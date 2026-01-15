@@ -641,10 +641,9 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               </div>
             </div>
 
-            {/* MOBILE LAYOUT */}
             <div className="lg:hidden">
-              {/* Chart with Planet Columns - Centered */}
-              <div className="w-full flex justify-center items-start gap-1 mb-4">
+              {/* Chart with Planet Columns - Centered - Bottom Aligned */}
+              <div className="w-full flex justify-center items-end gap-1 mb-4">
                 {/* Design Column - fixed width */}
                 <div className="w-[70px] flex-shrink-0 self-start">
                   <PlanetColumn planets={designPlanets} title="DESIGN" side="left" />
@@ -1210,33 +1209,32 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             </div>
           </div>
 
-          {/* Desktop: Slim bottom bar */}
-          <div className="hidden lg:block bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 border-t border-emerald-700/50 py-4 px-6">
-            <div className="max-w-6xl mx-auto flex items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-amber-400" />
-                  <span className="text-amber-400 text-sm font-bold uppercase tracking-wide">Premium</span>
-                </div>
-                <div>
-                  <p className="text-white font-semibold">Kamu lebih dari sekadar chart...</p>
-                  <p className="text-emerald-100/70 text-sm">Chart ini hanya 5% — buka 100+ halaman untuk potensi penuhmu</p>
+          {/* Desktop: Slim bottom bar - Light Theme to match Mobile */}
+          <div className="hidden lg:block bg-white border-t border-gray-200 py-3 px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
+              {/* Left: Progress Info */}
+              <div className="flex items-center gap-4 flex-1">
+                <div className="flex flex-col w-full max-w-md">
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-gray-500 font-medium">Chart Analysis</span>
+                    <span className="text-emerald-700 font-bold">5%</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden w-full">
+                    <div className="h-full w-[5%] bg-emerald-500 rounded-full" />
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                {/* Progress indicator */}
-                <div className="hidden xl:flex items-center gap-2">
-                  <div className="w-24 h-2 bg-emerald-950/50 rounded-full overflow-hidden">
-                    <div className="h-full w-[5%] bg-amber-400 rounded-full" />
-                  </div>
-                  <span className="text-white text-xs font-medium">5%</span>
-                </div>
+
+              {/* Right: Button */}
+              <div className="flex-shrink-0">
                 <Button
-                  onClick={() => setIsProductModalOpen(true)}
-                  className="bg-amber-400 hover:bg-amber-500 text-emerald-900 font-bold px-6 py-5 rounded-xl"
+                  onClick={() => {
+                    document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-8 py-2.5 rounded-lg shadow-sm transition-all"
                 >
                   Buka Full Report
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </div>
