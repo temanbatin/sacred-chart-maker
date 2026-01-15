@@ -132,11 +132,31 @@ serve(async (req) => {
                     // Add other types if needed (fixed_amount)
 
                     // Increment Usage (Optimistic)
-                    // In real world, might wait for payment success webhook, but for MVP this secures the use
                     await supabase
                         .from('coupons')
                         .update({ current_uses: coupon.current_uses + 1 })
                         .eq('id', coupon.id);
+
+                    // SAVE COUPON TO ORDER METADATA
+                    if (referenceId) {
+                        // We need to fetch existing metadata first to not overwrite
+                        const { data: orderData } = await supabase
+                            .from('orders')
+                            .select('metadata')
+                            .eq('reference_id', referenceId)
+                            .single();
+
+                        const existingMeta = orderData?.metadata || {};
+
+                        await supabase.from('orders').update({
+                            metadata: {
+                                ...existingMeta,
+                                coupon_code: couponCode,
+                                discount_value: discountValue,
+                                discount_amount: discountAmount
+                            }
+                        }).eq('reference_id', referenceId);
+                    }
                 }
             }
         }

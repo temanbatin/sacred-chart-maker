@@ -12,6 +12,9 @@ import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { ChartResult } from '@/components/ChartResult';
 import { BirthData as BirthDataForChart } from '@/components/MultiStepForm';
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AffiliateDashboard } from "@/components/AffiliateDashboard";
+
 interface SavedChart {
   id: string;
   name: string;
@@ -500,136 +503,137 @@ const Account = () => {
             </Button>
           </div>
 
-          {/* Saved Charts */}
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-accent" />
-              Chart Tersimpan
-            </h2>
+          {/* Main Content Tabs */}
+          <Tabs defaultValue="charts" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsTrigger value="charts">Chart Saya</TabsTrigger>
+              <TabsTrigger value="orders">Laporan</TabsTrigger>
+              <TabsTrigger value="affiliate">Affiliate</TabsTrigger>
+            </TabsList>
 
-            {savedCharts.length === 0 ? (
-              <div className="glass-card rounded-xl p-8 text-center">
-                <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  Anda belum memiliki chart tersimpan
-                </p>
-                <Button asChild>
-                  <Link to="/">
-                    Buat Chart Pertama Anda
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {savedCharts.map((chart) => (
-                  <div key={chart.id} className="glass-card rounded-xl p-6 hover:border-accent/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <h3 className="font-semibold text-foreground text-lg">{chart.name}</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(chart.birth_date)}
-                          </span>
-                          {chart.birth_place && (
+            <TabsContent value="charts" className="space-y-6">
+              {savedCharts.length === 0 ? (
+                <div className="glass-card rounded-xl p-8 text-center animate-fade-up">
+                  <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Anda belum memiliki chart tersimpan
+                  </p>
+                  <Button asChild>
+                    <Link to="/">
+                      Buat Chart Pertama Anda
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4 animate-fade-up">
+                  {savedCharts.map((chart) => (
+                    <div key={chart.id} className="glass-card rounded-xl p-6 hover:border-accent/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <h3 className="font-semibold text-foreground text-lg">{chart.name}</h3>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              {chart.birth_place.split(',')[0]}
+                              <Calendar className="w-4 h-4" />
+                              {formatDate(chart.birth_date)}
                             </span>
+                            {chart.birth_place && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-4 h-4" />
+                                {chart.birth_place.split(',')[0]}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Dibuat: {formatDate(chart.created_at)}
+                          </p>
+                        </div>
+                        <Button onClick={() => handleViewChart(chart)} className="fire-glow">
+                          Lihat Chart
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="orders" className="space-y-6">
+              {orders.length === 0 ? (
+                <div className="glass-card rounded-xl p-8 text-center animate-fade-up">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Anda belum membeli laporan
+                  </p>
+                  <Button variant="outline" asChild>
+                    <Link to="/reports">
+                      Lihat Produk Kami
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4 animate-fade-up">
+                  {orders.map((order) => (
+                    <div key={order.id} className="glass-card rounded-xl p-6 border border-border">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        {/* Left: Order Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-foreground text-lg">
+                              {order.product_name || 'Laporan Human Design'}
+                            </h3>
+                            {getStatusBadge(order.status)}
+                          </div>
+                          <p className="text-sm text-muted-foreground">Order Ref: {order.reference_id}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {order.paid_at
+                              ? `Dibayar pada: ${new Date(order.paid_at).toLocaleString()}`
+                              : `Dipesan pada: ${new Date(order.created_at).toLocaleString()}`}
+                          </p>
+                        </div>
+
+                        {/* Right: Actions */}
+                        <div className="flex items-center gap-3">
+                          {/* PENDING: Show Pay Button */}
+                          {order.status === 'PENDING' && order.payment_url && (
+                            <Button asChild className="fire-glow">
+                              <a href={order.payment_url} target="_blank" rel="noopener noreferrer">
+                                Bayar Sekarang <ArrowRight className="w-4 h-4 ml-2" />
+                              </a>
+                            </Button>
+                          )}
+
+                          {/* PAID & NO REPORT: Show Processing */}
+                          {order.status === 'PAID' && !order.report_url && (
+                            <div className="bg-accent/10 text-accent px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Report sedang disusun oleh tim...
+                            </div>
+                          )}
+
+                          {/* PAID & REPORT READY: Show Download */}
+                          {order.status === 'PAID' && order.report_url && (
+                            <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent/10">
+                              <a href={order.report_url} target="_blank" rel="noopener noreferrer">
+                                <FileText className="w-4 h-4 mr-2" />
+                                Download PDF
+                              </a>
+                            </Button>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          Dibuat: {formatDate(chart.created_at)}
-                        </p>
-                      </div>
-                      <Button onClick={() => handleViewChart(chart)} className="fire-glow">
-                        Lihat Chart
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Purchased Reports */}
-          <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-accent" />
-              Laporan Saya
-            </h2>
-            {orders.length === 0 ? (
-              <div className="glass-card rounded-xl p-8 text-center">
-                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  Anda belum membeli laporan
-                </p>
-                <Button variant="outline" asChild>
-                  <Link to="/reports">
-                    Lihat Produk Kami
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {orders.map((order) => (
-                  <div key={order.id} className="glass-card rounded-xl p-6 border border-border">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-
-                      {/* Left: Order Info */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-foreground text-lg">
-                            {order.product_name || 'Laporan Human Design'}
-                          </h3>
-                          {getStatusBadge(order.status)}
-                        </div>
-                        <p className="text-sm text-muted-foreground">Order Ref: {order.reference_id}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {order.paid_at
-                            ? `Dibayar pada: ${new Date(order.paid_at).toLocaleString()}`
-                            : `Dipesan pada: ${new Date(order.created_at).toLocaleString()}`}
-                        </p>
-                      </div>
-
-                      {/* Right: Actions */}
-                      <div className="flex items-center gap-3">
-                        {/* PENDING: Show Pay Button */}
-                        {order.status === 'PENDING' && order.payment_url && (
-                          <Button asChild className="fire-glow">
-                            <a href={order.payment_url} target="_blank" rel="noopener noreferrer">
-                              Bayar Sekarang <ArrowRight className="w-4 h-4 ml-2" />
-                            </a>
-                          </Button>
-                        )}
-
-                        {/* PAID & NO REPORT: Show Processing */}
-                        {order.status === 'PAID' && !order.report_url && (
-                          <div className="bg-accent/10 text-accent px-4 py-2 rounded-lg text-sm flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Report sedang disusun oleh tim...
-                          </div>
-                        )}
-
-                        {/* PAID & REPORT READY: Show Download */}
-                        {order.status === 'PAID' && order.report_url && (
-                          <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent/10">
-                            <a href={order.report_url} target="_blank" rel="noopener noreferrer">
-                              <FileText className="w-4 h-4 mr-2" />
-                              Download PDF
-                            </a>
-                          </Button>
-                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="affiliate">
+              <AffiliateDashboard userId={user.id} email={user.email || ''} />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 

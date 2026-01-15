@@ -1,0 +1,3 @@
+- [ ] Check available UI components (`Tabs`, `Accordion`) <!-- id: 0 -->
+- [ ] Create `chart_result_redesign_plan.md` <!-- id: 1 -->
+- [ ] Notify user for approval <!-- id: 2 -->

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn, ChevronLeft, ChevronRight, Plus, ArrowRight } from "lucide-react";
+import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn, ChevronLeft, ChevronRight, Plus, ArrowRight, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
@@ -17,11 +17,39 @@ import reportSS2 from "@/assets/Report SS 2.jpg";
 import reportSS3 from "@/assets/Report SS 3.jpg";
 import { PRICING_CONFIG, formatPrice } from "@/config/pricing";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChevronDown, ChevronUp } from "lucide-react";
+
 const reportSlides = [
   { img: reportSS1, title: "Daftar Isi Lengkap", desc: "100+ halaman strukturnya jelas, mudah diikuti dari awal hingga akhir" },
   { img: reportSS2, title: "Langkah Praktis Sesuai Authority", desc: "Panduan spesifik berdasarkan cara kamu membuat keputusan terbaik" },
   { img: reportSS3, title: "Strategi Personal Kehidupan", desc: "Cara memanfaatkan kekuatan unikmu di karir, relasi, dan keseharian" },
 ];
+
+const ExpandableText = ({ text, limit = 150 }: { text: string; limit?: number }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!text) return null;
+  if (text.length <= limit) return <p className="text-muted-foreground">{text}</p>;
+
+  return (
+    <div className="flex flex-col items-start">
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        {isExpanded ? text : `${text.substring(0, limit)}...`}
+      </p>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center gap-1 text-xs font-medium text-primary mt-2 hover:underline"
+      >
+        {isExpanded ? (
+          <>Lebih Sedikit <ChevronUp className="w-3 h-3" /></>
+        ) : (
+          <>Baca Selengkapnya <ChevronDown className="w-3 h-3" /></>
+        )}
+      </button>
+    </div>
+  );
+};
 
 interface ChartResultProps {
   data: any;
@@ -121,38 +149,42 @@ const planetDescriptions: Record<string, { title: string; description: string }>
   },
 };
 
-// Planet column component with tooltips
+// Planet column - aligned properly for symmetry
 const PlanetColumn = ({ planets, title, side }: { planets: PlanetData[]; title: string; side: "left" | "right" }) => {
   const isDesign = side === "left";
 
   return (
-    <div className="flex flex-col gap-0.5 md:gap-1 lg:gap-1.5">
-      <div
-        className={`text-xs md:text-sm lg:text-base font-semibold mb-2 md:mb-3 pb-1 md:pb-2 border-b text-center ${isDesign ? "text-primary border-primary" : "text-foreground border-muted"}`}
-      >
-        {title}
+    <div className={`flex flex-col ${isDesign ? "items-end" : "items-start"}`}>
+      {/* Header with arrow */}
+      <div className={`flex items-center gap-1 mb-2 pb-1 border-b border-muted w-full ${isDesign ? "justify-end" : "justify-start"}`}>
+        {isDesign && <span className="text-primary text-xs">←</span>}
+        <span className={`text-[10px] font-bold uppercase tracking-wider ${isDesign ? "text-primary" : "text-muted-foreground"}`}>
+          {title}
+        </span>
+        {!isDesign && <span className="text-muted-foreground text-xs">→</span>}
       </div>
+      {/* Planet rows - aligned */}
       {planets.map((planet, index) => (
         <Popover key={index}>
           <PopoverTrigger asChild>
             <div
-              className={`flex items-center gap-1.5 md:gap-2 lg:gap-3 text-sm md:text-base lg:text-lg py-0.5 md:py-1 cursor-pointer hover:bg-muted/50 rounded px-1 md:px-2 transition-colors ${isDesign ? "flex-row" : "flex-row-reverse"}`}
+              className={`flex items-center gap-1.5 py-0.5 cursor-pointer hover:bg-muted/30 rounded px-1 transition-colors ${isDesign ? "flex-row-reverse" : "flex-row"}`}
             >
-              <span
-                className={`w-4 md:w-5 lg:w-6 text-center text-xs md:text-sm lg:text-base ${isDesign ? "text-primary" : "text-muted-foreground"}`}
-              >
-                {planetSymbols[planet.Planet] || planet.Planet[0]}
-              </span>
-              <span className="font-medium text-foreground text-xs md:text-sm lg:text-base">
+              {/* Gate.Line */}
+              <span className="text-xs font-medium text-foreground">
                 {planet.Gate}.{planet.Line}
+              </span>
+              {/* Planet symbol */}
+              <span className={`text-xs ${isDesign ? "text-primary" : "text-muted-foreground"}`}>
+                {planetSymbols[planet.Planet] || planet.Planet[0]}
               </span>
             </div>
           </PopoverTrigger>
           <PopoverContent side={isDesign ? "left" : "right"} className="max-w-xs p-3">
-            <p className="font-semibold">
+            <p className="font-semibold text-sm">
               {planetDescriptions[planet.Planet]?.title || formatPlanetName(planet.Planet)}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {planetDescriptions[planet.Planet]?.description || `Gate ${planet.Gate}, Line ${planet.Line}`}
             </p>
           </PopoverContent>
@@ -183,6 +215,106 @@ const variableDescriptions: Record<string, { title: string; description: string 
   },
 };
 
+// Properties sidebar component for desktop layout
+interface PropertiesSidebarProps {
+  userName: string;
+  birthData: BirthData | null;
+  chartType: string;
+  strategy: string;
+  authority: string;
+  profile: string;
+  definition: string;
+  incarnationCross: string;
+  signature: string;
+  notSelf: string;
+  variables?: {
+    top_left?: { value: string };
+    bottom_left?: { value: string };
+    top_right?: { value: string };
+    bottom_right?: { value: string };
+  };
+}
+
+const PropertiesSidebar = ({
+  userName,
+  birthData,
+  chartType,
+  strategy,
+  authority,
+  profile,
+  definition,
+  incarnationCross,
+  signature,
+  notSelf,
+  variables,
+}: PropertiesSidebarProps) => {
+  const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+  const formatDateTimeLocal = () => {
+    if (!birthData) return "—";
+    return `${birthData.day} ${monthNames[birthData.month - 1]} ${birthData.year}, ${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}`;
+  };
+
+  const getVariableString = () => {
+    if (!variables) return "—";
+    const tl = variables.top_left?.value === "left" ? "P" : "P";
+    const bl = variables.bottom_left?.value === "left" ? "R" : "L";
+    const tr = variables.top_right?.value === "left" ? "L" : "R";
+    const br = variables.bottom_right?.value === "left" ? "L" : "L";
+    return `${tl}${bl}${tr} ${br}LL`;
+  };
+
+  const Item = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
+    <div className="flex items-start gap-2 py-1.5">
+      <span className="text-muted-foreground mt-0.5 w-4 h-4 flex items-center justify-center">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide leading-tight">{label}</p>
+        <p className="text-xs font-semibold text-foreground leading-tight">{value}</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="w-full">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+          <span className="text-primary font-bold text-sm">{userName.charAt(0).toUpperCase()}</span>
+        </div>
+        <h2 className="text-base font-bold text-foreground uppercase tracking-wide">Properties</h2>
+      </div>
+
+      {/* Birth Data - 2 columns */}
+      <div className="mb-4">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Birth Data</p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-0">
+          <Item icon={<span className="text-xs">○</span>} label="Name" value={userName} />
+          <Item icon={<span className="text-xs">◎</span>} label="Date and Time (Local)" value={formatDateTimeLocal()} />
+          <Item icon={<span className="text-xs">◎</span>} label="Date and Time (UTC)" value={formatDateTimeLocal()} />
+          <Item icon={<span className="text-xs">◉</span>} label="Location" value={birthData?.place || "—"} />
+        </div>
+      </div>
+
+      {/* Properties - 2 columns */}
+      <div>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Properties</p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-0">
+          <Item icon={<span className="text-xs">◈</span>} label="Type" value={chartType} />
+          <Item icon={<span className="text-xs">⟡</span>} label="Strategy" value={strategy} />
+          <Item icon={<span className="text-xs">✧</span>} label="Signature" value={signature || "—"} />
+          <Item icon={<span className="text-xs">◆</span>} label="Not-Self Theme" value={notSelf || "—"} />
+          <Item icon={<span className="text-xs">△</span>} label="Authority" value={authority} />
+          <Item icon={<span className="text-xs">⊞</span>} label="Definition" value={definition} />
+          <Item icon={<span className="text-xs">✚</span>} label="Incarnation Cross" value={incarnationCross || "—"} />
+          <Item icon={<span className="text-xs">◯</span>} label="Profile" value={profile} />
+        </div>
+        <div className="mt-1">
+          <Item icon={<span className="text-xs">⇌</span>} label="Variable" value={getVariableString()} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, chartId, userId, onReset, isOrdered = false }: ChartResultProps) => {
   const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
@@ -422,22 +554,13 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       <div className="max-w-6xl mx-auto">
         {/* Downloadable Content Area */}
         <div ref={chartRef} className="bg-background p-4 md:p-8 rounded-3xl">
-          <div className="text-center mb-12 animate-fade-up">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-fire">Selamat, {userName}! 🌟</h2>
-            <p className="text-xl text-muted-foreground">Inilah cetak biru energi kosmikmu</p>
-            {birthData && (
-              <div className="flex items-center justify-center gap-2 mt-4 text-muted-foreground text-sm bg-secondary/30 py-2 px-4 rounded-full inline-block">
-                <span>{birthData.day} {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][birthData.month - 1]} {birthData.year}</span>
-                <span>•</span>
-                <span>{String(birthData.hour).padStart(2, '0')}:{String(birthData.minute).padStart(2, '0')}</span>
-                <span>•</span>
-                <span>{birthData.place}</span>
-              </div>
-            )}
+          <div className="text-center mb-8 animate-fade-up">
+            <h2 className="text-3xl md:text-4xl font-bold mb-2 text-gradient-fire">Selamat, {userName}! 🌟</h2>
+            <p className="text-lg text-muted-foreground">Inilah cetak biru energi kosmikmu</p>
 
             {/* Unsaved Chart Banner for Guest Users */}
             {isUnsaved && (
-              <div className="mt-6 bg-amber-500/10 border border-amber-500/30 rounded-xl py-3 px-4 flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up">
+              <div className="mt-4 bg-amber-500/10 border border-amber-500/30 rounded-xl py-3 px-4 flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up">
                 <span className="text-amber-200 text-sm">
                   ⚠️ Chart belum tersimpan — akan hilang jika halaman ditutup
                 </span>
@@ -453,303 +576,241 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             )}
           </div>
 
-          {/* Bodygraph with Planet Columns */}
-          <div className="glass-card rounded-3xl p-4 md:p-8 mb-8 animate-fade-up">
-            <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Bodygraph Chart</h3>
+          {/* Main Content Layout - Desktop: Sidebar + Chart | Mobile: Chart Only */}
+          <div className="animate-fade-up">
 
-            <div className="flex justify-center items-start gap-2 md:gap-6 lg:gap-8">
-              {/* Design Column (Left) */}
-              <div className="hidden md:block flex-shrink-0">
-                <PlanetColumn planets={designPlanets} title="Design" side="left" />
-              </div>
+            {/* DESKTOP LAYOUT: 50/50 Split - Properties | Chart+Planets */}
+            <div className="hidden lg:grid lg:grid-cols-2 gap-6 items-start">
+              {/* Left: Properties Sidebar */}
+              <PropertiesSidebar
+                userName={userName}
+                birthData={birthData}
+                chartType={chartType}
+                strategy={strategy}
+                authority={authority}
+                profile={profile}
+                definition={definition}
+                incarnationCross={incarnationCross}
+                signature={signature}
+                notSelf={notSelf}
+                variables={general.variables}
+              />
 
-              {/* Bodygraph Image (Center) */}
-              <div className="flex-shrink-0 relative">
-                {bodygraphLoading ? (
-                  <div className="w-64 md:w-96 lg:w-[480px] xl:w-[540px] h-96 md:h-[550px] lg:h-[650px] xl:h-[700px] rounded-2xl bg-secondary/30 flex flex-col items-center justify-center border-2 border-dashed border-muted animate-pulse">
-                    <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                    <p className="text-muted-foreground text-center px-4 font-medium animate-pulse">
-                      Sedang menggambar bodygraph anda...
-                    </p>
-                    <p className="text-xs text-muted-foreground/60 mt-2">
-                      (Mohon tunggu sebentar)
-                    </p>
+              {/* Right: Design + Variables + Bodygraph + Variables + Personality */}
+              {/* pt-12 to align with Birth Data section (after Properties header) */}
+              <div className="flex justify-center items-start pt-12 gap-1">
+                {/* Design Column - fixed width for symmetry */}
+                <div className="flex-shrink-0 self-start w-[80px]">
+                  <PlanetColumn planets={designPlanets} title="DESIGN" side="left" />
+                </div>
+
+                {/* Left Variable Arrows */}
+                {general.variables && (
+                  <div className="flex flex-col gap-8 self-center">
+                    <span className="text-sm font-bold text-primary">{general.variables.top_left?.value === "left" ? "←" : "→"}</span>
+                    <span className="text-sm font-bold text-primary">{general.variables.bottom_left?.value === "left" ? "←" : "→"}</span>
                   </div>
-                ) : bodygraphError ? (
-                  <div className="text-center text-muted-foreground py-12 w-64 md:w-96 lg:w-[480px] xl:w-[540px]">
-                    <p>{bodygraphError}</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-4"
-                      onClick={() => {
-                        if (birthData) {
-                          setBodygraphLoading(true);
-                          setBodygraphError(null);
-                          supabase.functions
-                            .invoke("get-bodygraph", { body: birthData })
-                            .then(({ data: result, error }) => {
-                              if (error) {
-                                setBodygraphError("Gagal memuat gambar bodygraph");
-                              } else if (result?.image) {
-                                setBodygraphImage(result.image);
-                              }
-                            })
-                            .finally(() => setBodygraphLoading(false));
-                        }
-                      }}
-                    >
-                      Coba Lagi
-                    </Button>
-                  </div>
-                ) : bodygraphImage ? (
-                  <img
-                    src={bodygraphImage}
-                    alt="Human Design Bodygraph"
-                    className="w-64 md:w-96 lg:w-[480px] xl:w-[540px] h-auto rounded-2xl shadow-lg"
-                  />
-                ) : null}
-              </div>
+                )}
 
-              {/* Personality Column (Right) */}
-              <div className="hidden md:block flex-shrink-0">
-                <PlanetColumn planets={personalityPlanets} title="Personality" side="right" />
+                {/* Bodygraph Chart */}
+                <div className="flex-shrink-0 self-start">
+                  {bodygraphLoading ? (
+                    <div className="w-[220px] xl:w-[260px] h-[300px] xl:h-[360px] rounded-xl bg-secondary/30 flex flex-col items-center justify-center border border-dashed border-muted animate-pulse">
+                      <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                      <p className="text-muted-foreground text-sm">Loading...</p>
+                    </div>
+                  ) : bodygraphImage ? (
+                    <img src={bodygraphImage} alt="Bodygraph" className="w-[220px] xl:w-[260px] h-auto" />
+                  ) : (
+                    <div className="w-[220px] xl:w-[260px] h-[300px] bg-secondary/20 rounded-xl flex items-center justify-center text-muted-foreground text-sm">Chart unavailable</div>
+                  )}
+                </div>
+
+                {/* Right Variable Arrows */}
+                {general.variables && (
+                  <div className="flex flex-col gap-8 self-center">
+                    <span className="text-sm font-bold text-muted-foreground">{general.variables.top_right?.value === "left" ? "←" : "→"}</span>
+                    <span className="text-sm font-bold text-muted-foreground">{general.variables.bottom_right?.value === "left" ? "←" : "→"}</span>
+                  </div>
+                )}
+
+                {/* Personality Column - fixed width for symmetry */}
+                <div className="flex-shrink-0 self-start w-[80px]">
+                  <PlanetColumn planets={personalityPlanets} title="PERSONALITY" side="right" />
+                </div>
               </div>
             </div>
 
-            {/* Variables/Four Arrows - shown below chart for all screens */}
-            {general.variables && (
-              <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-muted">
-                <div className="flex gap-4">
-                  {general.variables.top_left && (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <div className="text-center cursor-pointer hover:opacity-80 transition-opacity">
-                          <span className="text-xl font-bold text-primary">
-                            {general.variables.top_left.value === "left" ? "←" : "→"}
-                          </span>
-                          <p className="text-[10px] text-muted-foreground">{general.variables.top_left.name}</p>
-                        </div>
-                      </PopoverTrigger>
-                      <PopoverContent className="max-w-xs p-3">
-                        <p className="font-semibold">{variableDescriptions[general.variables.top_left.name]?.title}</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {variableDescriptions[general.variables.top_left.name]?.description}
-                        </p>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                  {general.variables.bottom_left && (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <div className="text-center cursor-pointer hover:opacity-80 transition-opacity">
-                          <span className="text-xl font-bold text-primary">
-                            {general.variables.bottom_left.value === "left" ? "←" : "→"}
-                          </span>
-                          <p className="text-[10px] text-muted-foreground">{general.variables.bottom_left.name}</p>
-                        </div>
-                      </PopoverTrigger>
-                      <PopoverContent className="max-w-xs p-3">
-                        <p className="font-semibold">
-                          {variableDescriptions[general.variables.bottom_left.name]?.title}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {variableDescriptions[general.variables.bottom_left.name]?.description}
-                        </p>
-                      </PopoverContent>
-                    </Popover>
+            {/* MOBILE LAYOUT */}
+            <div className="lg:hidden">
+              {/* Chart with Planet Columns - Centered */}
+              <div className="w-full flex justify-center items-start gap-1 mb-4">
+                {/* Design Column - fixed width */}
+                <div className="w-[70px] flex-shrink-0 self-start">
+                  <PlanetColumn planets={designPlanets} title="DESIGN" side="left" />
+                </div>
+
+                {/* Variable Arrows Left */}
+                {general.variables && (
+                  <div className="flex flex-col gap-6 self-center">
+                    <span className="text-xs font-bold text-primary">{general.variables.top_left?.value === "left" ? "←" : "→"}</span>
+                    <span className="text-xs font-bold text-primary">{general.variables.bottom_left?.value === "left" ? "←" : "→"}</span>
+                  </div>
+                )}
+
+                {/* Bodygraph Chart */}
+                <div className="flex-shrink-0">
+                  {bodygraphLoading ? (
+                    <div className="w-[160px] aspect-[3/4] rounded-xl bg-secondary/30 flex flex-col items-center justify-center animate-pulse">
+                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    </div>
+                  ) : bodygraphImage ? (
+                    <img src={bodygraphImage} alt="Bodygraph" className="w-[160px] h-auto" />
+                  ) : (
+                    <div className="w-[160px] aspect-[3/4] bg-secondary/20 rounded-xl flex items-center justify-center text-muted-foreground text-xs">Chart unavailable</div>
                   )}
                 </div>
-                <div className="flex gap-4">
-                  {general.variables.top_right && (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <div className="text-center cursor-pointer hover:opacity-80 transition-opacity">
-                          <span className="text-xl font-bold text-foreground">
-                            {general.variables.top_right.value === "left" ? "←" : "→"}
-                          </span>
-                          <p className="text-[10px] text-muted-foreground">{general.variables.top_right.name}</p>
-                        </div>
-                      </PopoverTrigger>
-                      <PopoverContent className="max-w-xs p-3">
-                        <p className="font-semibold">{variableDescriptions[general.variables.top_right.name]?.title}</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {variableDescriptions[general.variables.top_right.name]?.description}
-                        </p>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                  {general.variables.bottom_right && (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <div className="text-center cursor-pointer hover:opacity-80 transition-opacity">
-                          <span className="text-xl font-bold text-foreground">
-                            {general.variables.bottom_right.value === "left" ? "←" : "→"}
-                          </span>
-                          <p className="text-[10px] text-muted-foreground">{general.variables.bottom_right.name}</p>
-                        </div>
-                      </PopoverTrigger>
-                      <PopoverContent className="max-w-xs p-3">
-                        <p className="font-semibold">
-                          {variableDescriptions[general.variables.bottom_right.name]?.title}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {variableDescriptions[general.variables.bottom_right.name]?.description}
-                        </p>
-                      </PopoverContent>
-                    </Popover>
-                  )}
+
+                {/* Variable Arrows Right */}
+                {general.variables && (
+                  <div className="flex flex-col gap-6 self-center">
+                    <span className="text-xs font-bold text-muted-foreground">{general.variables.top_right?.value === "left" ? "←" : "→"}</span>
+                    <span className="text-xs font-bold text-muted-foreground">{general.variables.bottom_right?.value === "left" ? "←" : "→"}</span>
+                  </div>
+                )}
+
+                {/* Personality Column - fixed width */}
+                <div className="w-[70px] flex-shrink-0 self-start">
+                  <PlanetColumn planets={personalityPlanets} title="PERSONALITY" side="right" />
                 </div>
               </div>
-            )}
 
-            {/* Mobile: Show planets below chart */}
-            <div className="md:hidden mt-6 grid grid-cols-2 gap-4">
-              <PlanetColumn planets={designPlanets} title="Design" side="left" />
-              <PlanetColumn planets={personalityPlanets} title="Personality" side="right" />
+              {/* Properties Section for Mobile - Matching Desktop */}
+              <div className="mt-6 px-4">
+                {/* Birth Data */}
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Birth Data</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Name</p>
+                    <p className="text-xs font-semibold text-foreground truncate">{userName}</p>
+                  </div>
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Location</p>
+                    <p className="text-xs font-semibold text-foreground truncate">{birthData?.place || "—"}</p>
+                  </div>
+                </div>
+                <div className="py-1 mb-4 overflow-hidden">
+                  <p className="text-[10px] text-muted-foreground uppercase">Date & Time</p>
+                  <p className="text-xs font-semibold text-foreground">
+                    {birthData ? `${birthData.day}/${birthData.month}/${birthData.year}, ${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}` : "—"}
+                  </p>
+                </div>
+
+                {/* Properties */}
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Properties</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Type</p>
+                    <p className="text-xs font-semibold text-foreground">{chartType}</p>
+                  </div>
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Strategy</p>
+                    <p className="text-xs font-semibold text-foreground">{strategy}</p>
+                  </div>
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Signature</p>
+                    <p className="text-xs font-semibold text-foreground">{signature || "—"}</p>
+                  </div>
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Not-Self</p>
+                    <p className="text-xs font-semibold text-foreground">{notSelf || "—"}</p>
+                  </div>
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Authority</p>
+                    <p className="text-xs font-semibold text-foreground">{authority}</p>
+                  </div>
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Definition</p>
+                    <p className="text-xs font-semibold text-foreground">{definition}</p>
+                  </div>
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Profile</p>
+                    <p className="text-xs font-semibold text-foreground">{profile}</p>
+                  </div>
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Variable</p>
+                    <p className="text-xs font-semibold text-foreground">
+                      {general.variables ? `${general.variables.top_left?.value === "left" ? "P" : "P"}${general.variables.bottom_left?.value === "left" ? "R" : "L"}${general.variables.top_right?.value === "left" ? "L" : "R"} ${general.variables.bottom_right?.value === "left" ? "L" : "L"}LL` : "—"}
+                    </p>
+                  </div>
+                </div>
+                <div className="py-1 mt-2 overflow-hidden">
+                  <p className="text-[10px] text-muted-foreground uppercase">Incarnation Cross</p>
+                  <p className="text-xs font-semibold text-foreground">{incarnationCross || "—"}</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Main Type Card */}
-          <div className="glass-card rounded-3xl p-8 md:p-12 mb-8 animate-fade-up">
-            <div className="text-center mb-8">
-              <span className="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary text-sm font-medium mb-4">
-                Tipe Human Design
-              </span>
-              <h3 className="text-4xl md:text-5xl font-bold text-foreground mb-4">{chartType}</h3>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                {typeDescriptions[chartType] || "Tipe unik dengan karakteristik khusus."}
-              </p>
-            </div>
-
-            {/* Key Info Grid */}
-            <div className="grid md:grid-cols-2 gap-6 mt-8">
-              {/* Strategy */}
-              <div className="bg-secondary/50 rounded-2xl p-6">
-                <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Strategi</h4>
-                <p className="text-xl font-semibold text-foreground mb-2">{strategy}</p>
-                <p className="text-sm text-muted-foreground">
-                  {strategyDescriptions[strategy] || "Ikuti strategi unikmu untuk keselarasan."}
-                </p>
-              </div>
-
-              {/* Authority */}
-              <div className="bg-secondary/50 rounded-2xl p-6">
-                <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Otoritas</h4>
-                <p className="text-xl font-semibold text-foreground mb-2">{authority}</p>
-                <p className="text-sm text-muted-foreground">
-                  {authorityDescriptions[authority] || "Otoritas unikmu untuk pengambilan keputusan."}
-                </p>
-              </div>
-
-              {/* Profile */}
-              <div className="bg-secondary/50 rounded-2xl p-6">
-                <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Profil</h4>
-                <p className="text-xl font-semibold text-foreground mb-2">{profile}</p>
-                <p className="text-sm text-muted-foreground">
-                  Profilmu menunjukkan cara kamu berinteraksi dengan dunia
-                </p>
-              </div>
-
-              {/* Definition */}
-              <div className="bg-secondary/50 rounded-2xl p-6">
-                <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Definisi</h4>
-                <p className="text-xl font-semibold text-foreground mb-2">{definition}</p>
-                <p className="text-sm text-muted-foreground">Bagaimana energi mengalir dalam dirimu</p>
-              </div>
-            </div>
-
-            {/* Signature & Not-Self */}
-            {(signature || notSelf) && (
-              <div className="grid md:grid-cols-2 gap-6 mt-6">
-                {signature && (
-                  <div className="bg-primary/10 rounded-2xl p-6 text-center">
-                    <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Signature (Tanda Keselarasan)</h4>
-                    <p className="text-xl font-semibold text-foreground">{signature}</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Perasaan yang muncul saat kamu hidup selaras dengan desainmu
-                    </p>
-                  </div>
-                )}
-                {notSelf && (
-                  <div className="bg-destructive/10 rounded-2xl p-6 text-center">
-                    <h4 className="text-sm uppercase tracking-wide text-destructive mb-2">
-                      Not-Self (Tanda Tidak Selaras)
-                    </h4>
-                    <p className="text-xl font-semibold text-foreground">{notSelf}</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Perasaan yang muncul saat kamu tidak mengikuti desainmu
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Incarnation Cross */}
-            {incarnationCross && incarnationCross !== "Unknown" && (
-              <div className="mt-8">
-                <div className="bg-primary/10 rounded-2xl p-6 text-center">
-                  <h4 className="text-sm uppercase tracking-wide text-accent mb-2">Incarnation Cross</h4>
-                  <p className="text-lg font-semibold text-foreground">{incarnationCross}</p>
-                  <p className="text-sm text-muted-foreground mt-2">Misi hidupmu yang lebih besar</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Channels Section */}
-          {channels.length > 0 && (
-            <div className="glass-card rounded-3xl p-8 mb-8 animate-fade-up">
-              <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Channel Aktif</h3>
-              <div className="space-y-3">
-                {channels.map((ch: { channel: string }, index: number) => (
-                  <div key={index} className="bg-secondary/50 rounded-xl p-4">
-                    <p className="text-foreground">{ch.channel}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Centers Section */}
-          {(definedCenters.length > 0 || undefinedCenters.length > 0) && (
-            <div className="glass-card rounded-3xl p-8 mb-8 animate-fade-up">
-              <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Pusat Energi</h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                {definedCenters.length > 0 && (
-                  <div>
-                    <h4 className="text-sm uppercase tracking-wide text-accent mb-3">Defined (Konsisten)</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {definedCenters.map((center: string, index: number) => (
-                        <span key={index} className="px-3 py-1 bg-primary/20 text-foreground rounded-full text-sm">
-                          {center}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {undefinedCenters.length > 0 && (
-                  <div>
-                    <h4 className="text-sm uppercase tracking-wide text-muted-foreground mb-3">Undefined (Terbuka)</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {undefinedCenters.map((center: string, index: number) => (
-                        <span key={index} className="px-3 py-1 bg-secondary text-muted-foreground rounded-full text-sm">
-                          {center}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Minimal spacing before CTA sections */}
         </div>
         {/* End of Downloadable Content Area */}
+
+        {/* Action Buttons - Icon Only - Below Chart */}
+        <div className="flex gap-2 justify-center my-4">
+          <Button
+            onClick={onReset}
+            variant="ghost"
+            size="icon"
+            className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50"
+            title="Buat Chart Baru"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </Button>
+
+          <Button
+            onClick={handleShare}
+            variant="ghost"
+            size="icon"
+            className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50"
+            title="Salin Link"
+          >
+            <Share2 className="w-4 h-4" />
+          </Button>
+
+          {/* Save button for guest users */}
+          {!chartId && !userId && (
+            <Button
+              onClick={() => setShowSaveDialog(true)}
+              variant="ghost"
+              size="icon"
+              className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50"
+              title="Simpan Chart"
+            >
+              <Save className="w-4 h-4" />
+            </Button>
+          )}
+
+          <Button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            variant="ghost"
+            size="icon"
+            className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50"
+            title="Unduh Hasil"
+          >
+            {isDownloading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
 
         {/* Upsell CTA Section - Only Show if NOT Ordered */}
         {/* Upsell CTA Section - Only Show if NOT Ordered */}
         {!isOrdered ? (
-          <div className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
+          <div id="cta-section" className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
             <div className="text-center mb-6">
               <p className="text-amber-400 text-sm font-medium mb-2">🔥 Hanya 50 slot tersisa bulan ini</p>
               <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
@@ -998,62 +1059,6 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             </div>
           </DialogContent>
         </Dialog>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up mt-8">
-          <Button
-            onClick={onReset}
-            variant="outline"
-            size="lg"
-            className="border-primary text-primary-foreground hover:text-primary-foreground bg-primary/20 hover:bg-primary/40 rounded-xl"
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Buat Chart Baru
-          </Button>
-
-          <Button
-            onClick={handleShare}
-            variant="outline"
-            size="lg"
-            className="border-primary text-primary-foreground hover:text-primary-foreground bg-primary/20 hover:bg-primary/40 rounded-xl"
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            Salin Link
-          </Button>
-
-          {/* Show Save button only for guest users (no chartId means not saved) */}
-          {!chartId && !userId && (
-            <Button
-              onClick={() => setShowSaveDialog(true)}
-              variant="outline"
-              size="lg"
-              className="border-accent text-foreground hover:text-foreground hover:bg-accent/20 rounded-xl"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Simpan Chart
-            </Button>
-          )}
-
-          <Button
-            onClick={handleDownload}
-            disabled={isDownloading}
-            variant="outline"
-            size="lg"
-            className="border-primary text-primary-foreground hover:text-primary-foreground bg-primary/20 hover:bg-primary/40 rounded-xl"
-          >
-            {isDownloading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Mengunduh...
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 mr-2" />
-                Unduh Hasil
-              </>
-            )}
-          </Button>
-        </div>
       </div>
 
       {/* Hidden Export View for Image Generation */}
@@ -1174,6 +1179,70 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           </div>
         </div>
       </div>
-    </section>
+
+      {/* Floating Sticky CTA for Non-Purchased Users */}
+      {!isOrdered && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom duration-500">
+          {/* Mobile: Clean light floating bar */}
+          <div className="lg:hidden">
+            <div className="mx-3 mb-3 rounded-xl bg-white border border-gray-200 p-3 shadow-xl safe-area-bottom">
+              {/* Progress Bar */}
+              <div className="mb-2">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-500">Chart Analysis</span>
+                  <span className="text-emerald-700 font-semibold">5%</span>
+                </div>
+                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full w-[5%] bg-emerald-500 rounded-full" />
+                </div>
+              </div>
+
+              {/* CTA Button - Scrolls to main CTA */}
+              <Button
+                onClick={() => {
+                  document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 rounded-lg"
+              >
+                Buka Full Report
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Desktop: Slim bottom bar */}
+          <div className="hidden lg:block bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 border-t border-emerald-700/50 py-4 px-6">
+            <div className="max-w-6xl mx-auto flex items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-amber-400" />
+                  <span className="text-amber-400 text-sm font-bold uppercase tracking-wide">Premium</span>
+                </div>
+                <div>
+                  <p className="text-white font-semibold">Kamu lebih dari sekadar chart...</p>
+                  <p className="text-emerald-100/70 text-sm">Chart ini hanya 5% — buka 100+ halaman untuk potensi penuhmu</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                {/* Progress indicator */}
+                <div className="hidden xl:flex items-center gap-2">
+                  <div className="w-24 h-2 bg-emerald-950/50 rounded-full overflow-hidden">
+                    <div className="h-full w-[5%] bg-amber-400 rounded-full" />
+                  </div>
+                  <span className="text-white text-xs font-medium">5%</span>
+                </div>
+                <Button
+                  onClick={() => setIsProductModalOpen(true)}
+                  className="bg-amber-400 hover:bg-amber-500 text-emerald-900 font-bold px-6 py-5 rounded-xl"
+                >
+                  Buka Full Report
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section >
   );
 };

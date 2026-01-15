@@ -156,6 +156,55 @@ serve(async (req) => {
             } else {
                 console.log(`Order ${order_id} updated to PAID`);
 
+                // --- AFFILIATE COMMISSION TRACKING ---
+                try {
+                    // Get Order Metadata
+                    const { data: orderData } = await supabase
+                        .from('orders')
+                        .select('*') // Get full order to access metadata
+                        .eq('reference_id', order_id)
+                        .single();
+
+                    const couponCode = orderData?.metadata?.coupon_code;
+
+                    if (couponCode) {
+                        console.log(`Processing commission for coupon: ${couponCode}`);
+
+                        // Find Affiliate
+                        const { data: affiliate } = await supabase
+                            .from('affiliates')
+                            .select('*')
+                            .eq('coupon_code', couponCode)
+                            .single();
+
+                        if (affiliate) {
+                            // Commission Logic: 20% of Gross Amount (Paid Amount)
+                            const commissionAmount = Math.round(Number(gross_amount) * 0.20);
+
+                            // 1. Record Commission
+                            await supabase.from('commissions').insert({
+                                affiliate_id: affiliate.id,
+                                order_id: orderData.id,
+                                amount: commissionAmount,
+                                status: 'paid' // Since order is settled
+                            });
+
+                            // 2. Update Affiliate Balance
+                            await supabase.from('affiliates').update({
+                                balance: (Number(affiliate.balance) || 0) + commissionAmount,
+                                total_earnings: (Number(affiliate.total_earnings) || 0) + commissionAmount
+                            }).eq('id', affiliate.id);
+
+                            console.log(`Commission recorded: ${commissionAmount} for affiliate ${affiliate.id}`);
+                        }
+                    }
+
+                } catch (commError) {
+                    console.error('Error processing affiliate commission:', commError);
+                    // Do not fail the webhook, just log error
+                }
+                // --- END AFFILIATE LOGIC ---
+
                 // TRIGGER N8N WORKFLOW
                 try {
                     const N8N_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL') || 'https://n8n.indonetwork.or.id/webhook/hd-order-paid';

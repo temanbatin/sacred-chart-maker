@@ -299,7 +299,6 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                                         onChange={e => setBirthDate(e.target.value)}
                                         onKeyDown={handleKeyDown}
                                         className="hd-date relative bg-input border-border text-foreground h-14 rounded-xl pr-10 text-lg"
-                                        autoFocus
                                     />
                                     <Calendar className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground" />
                                 </div>
@@ -339,7 +338,7 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                                     <Input
                                         id="city"
                                         type="text"
-                                        placeholder="Ketik nama kota..."
+                                        placeholder="Ketik min. 3 huruf..."
                                         value={citySearch}
                                         onChange={e => {
                                             setCitySearch(e.target.value);
@@ -347,10 +346,14 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                                         }}
                                         onFocus={() => citySuggestions.length > 0 && setShowSuggestions(true)}
                                         className="bg-input border-border text-foreground placeholder:text-muted-foreground h-14 rounded-xl pl-10 text-lg"
-                                        autoFocus
                                     />
                                     {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground animate-spin" />}
                                 </div>
+                                <p className="text-xs text-muted-foreground pl-1">
+                                    {citySearch.length > 0 && citySearch.length < 3
+                                        ? "Ketikan minimal 3 huruf..."
+                                        : "Tunggu sebentar, daftar kota akan muncul otomatis."}
+                                </p>
 
                                 {/* Suggestions dropdown */}
                                 {showSuggestions && citySuggestions.length > 0 && (
