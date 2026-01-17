@@ -207,9 +207,14 @@ serve(async (req) => {
 
                 // TRIGGER N8N WORKFLOW
                 try {
-                    const N8N_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL') || 'https://n8n.indonetwork.or.id/webhook/hd-order-paid';
+                    const N8N_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL');
 
-                    console.log(`Triggering n8n workflow at ${N8N_WEBHOOK_URL}...`);
+                    if (!N8N_WEBHOOK_URL) {
+                        console.error('N8N_ORDER_PAID_WEBHOOK_URL is not set');
+                        throw new Error('N8N_ORDER_PAID_WEBHOOK_URL environment variable is missing');
+                    }
+
+                    console.log('Triggering n8n workflow...');
 
                     // Fetch order details to send complete data to n8n
                     const { data: orderData } = await supabase

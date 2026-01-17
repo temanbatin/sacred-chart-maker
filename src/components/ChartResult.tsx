@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn, ChevronLeft, ChevronRight, Plus, ArrowRight, Lock } from "lucide-react";
@@ -61,6 +62,7 @@ interface ChartResultProps {
   userId?: string;
   onReset: () => void;
   isOrdered?: boolean;
+  className?: string;
 }
 
 interface PlanetData {
@@ -316,7 +318,7 @@ const PropertiesSidebar = ({
   );
 };
 
-export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, chartId, userId, onReset, isOrdered = false }: ChartResultProps) => {
+export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, chartId, userId, onReset, isOrdered = false, className }: ChartResultProps) => {
   const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
   const [bodygraphLoading, setBodygraphLoading] = useState(false);
   const [bodygraphError, setBodygraphError] = useState<string | null>(null);
@@ -549,8 +551,18 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const designPlanets: PlanetData[] = data?.gates?.des?.Planets || [];
   const personalityPlanets: PlanetData[] = data?.gates?.prs?.Planets || [];
 
+  // Safety check to prevent white screen if data is missing
+  if (!data || !general) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+        <Loader2 className="w-8 h-8 animate-spin mb-4" />
+        <p>Memuat data chart...</p>
+      </div>
+    );
+  }
+
   return (
-    <section className="py-20 px-4">
+    <section className={cn("py-20 px-4", className)}>
       <div className="max-w-6xl mx-auto">
         {/* Downloadable Content Area */}
         <div ref={chartRef} className="bg-background p-4 md:p-8 rounded-3xl">

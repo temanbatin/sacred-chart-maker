@@ -456,6 +456,7 @@ const Account = () => {
             chartId={selectedChart.id}
             userId={user.id}
             onReset={handleBackToList}
+            className="pt-4"
           />
         </main>
 

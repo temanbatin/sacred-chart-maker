@@ -11,7 +11,7 @@ export const HeroSection = ({
   onScrollToCalculator,
   userName
 }: HeroSectionProps) => {
-  return <section className="relative min-h-screen flex items-center justify-center px-4 py-20">
+  return <section className="relative pt-32 pb-16 px-4">
     <div className="max-w-4xl mx-auto text-center animate-fade-up">
       {/* Decorative element */}
       <div className="flex justify-center mb-8">
