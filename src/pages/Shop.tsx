@@ -18,7 +18,7 @@ const products = [
   {
     id: 'essential-report',
     title: PRODUCTS.ESSENTIAL_REPORT.name,
-    description: 'Ringkasan fundamental desain Anda + Synthesis',
+    description: 'Analisis fundamental Human Desain',
     price: formatPrice(PRODUCTS.ESSENTIAL_REPORT.price),
     icon: Zap,
     featured: false,
@@ -140,7 +140,7 @@ const Shop = () => {
           <div className="bg-gradient-to-r from-secondary/30 to-background border border-accent/20 rounded-2xl p-8 md:p-12 mb-16">
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center shrink-0">
-                 <Building2 className="w-10 h-10 text-accent" />
+                <Building2 className="w-10 h-10 text-accent" />
               </div>
               <div className="flex-1 text-center md:text-left">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">

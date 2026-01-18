@@ -11,6 +11,7 @@ import {
 
 export const MainNavbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -139,20 +140,34 @@ export const MainNavbar = () => {
                 <ShoppingBag className="w-4 h-4" />
                 Shop
               </Link>
-              <Link
-                to="/tentang-kami"
-                className="text-sm text-muted-foreground hover:text-accent transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Our Story
-              </Link>
-              <Link
-                to="/methodology"
-                className="text-sm text-muted-foreground hover:text-accent transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Methodology
-              </Link>
+              <div className="border-b border-border/10 pb-2 mb-2">
+                <button
+                  onClick={() => setMobileAboutOpen(!mobileAboutOpen)}
+                  className="w-full flex items-center justify-between text-sm text-muted-foreground hover:text-accent transition-colors py-2"
+                >
+                  <span className="flex items-center gap-2">About</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${mobileAboutOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {mobileAboutOpen && (
+                  <div className="pl-4 flex flex-col gap-2 mt-1 animate-fade-in">
+                    <Link
+                      to="/tentang-kami"
+                      className="text-sm text-muted-foreground hover:text-accent transition-colors py-2 block"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Our Story
+                    </Link>
+                    <Link
+                      to="/methodology"
+                      className="text-sm text-muted-foreground hover:text-accent transition-colors py-2 block"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Methodology
+                    </Link>
+                  </div>
+                )}
+              </div>
               <Link
                 to="/account"
                 className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"

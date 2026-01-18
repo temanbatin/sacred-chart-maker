@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Sparkles, Image as ImageIcon, Save, Trash2, Edit } from 'lucide-react';
+import { Plus, Sparkles, Image as ImageIcon, Save, Trash2, Edit, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Mock data until DB table is ready
@@ -26,6 +26,7 @@ const AdminArticles = () => {
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -42,6 +43,35 @@ const AdminArticles = () => {
       toast.error('Gagal mengambil artikel: ' + error.message);
     } else {
       setArticles(data || []);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('article_images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('article_images')
+        .getPublicUrl(filePath);
+
+      setCurrentArticle({ ...currentArticle, image_url: data.publicUrl });
+      toast.success('Gambar berhasil diupload');
+    } catch (error: any) {
+      toast.error('Gagal upload: ' + error.message);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -209,7 +239,31 @@ const AdminArticles = () => {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="image-upload"
+                    onChange={handleImageUpload}
+                    disabled={isUploading}
+                  />
+                  <label htmlFor="image-upload">
+                    <Button
+                      variant="outline"
+                      className="cursor-pointer bg-secondary"
+                      asChild
+                      disabled={isUploading}
+                      type="button"
+                    >
+                      <span className="pointer-events-none">
+                        <Upload className="w-4 h-4 mr-2" />
+                        {isUploading ? 'Uploading...' : 'Upload Foto'}
+                      </span>
+                    </Button>
+                  </label>
+                </div>
                 <Button
                   variant="secondary"
                   className="w-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-pink-500/20 text-pink-400 hover:text-pink-300"

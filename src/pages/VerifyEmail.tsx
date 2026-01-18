@@ -26,9 +26,9 @@ const VerifyEmail = () => {
             // For now, if we use Supabase's native token, we can use verifyOtp
             // But if we use a fully custom token, we'd call an Edge Function
 
+            // Link verification uses token_hash
             const { error } = await supabase.auth.verifyOtp({
-                email,
-                token,
+                token_hash: token,
                 type: 'signup',
             });
 

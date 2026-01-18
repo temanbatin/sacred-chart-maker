@@ -578,21 +578,6 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             <p className="text-lg text-muted-foreground">Inilah cetak biru energi kosmikmu</p>
 
             {/* Unsaved Chart Banner for Guest Users */}
-            {isUnsaved && (
-              <div className="mt-4 bg-amber-500/10 border border-amber-500/30 rounded-xl py-3 px-4 flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up">
-                <span className="text-amber-200 text-sm">
-                  ⚠️ Chart belum tersimpan — akan hilang jika halaman ditutup
-                </span>
-                <Button
-                  size="sm"
-                  onClick={() => setShowSaveDialog(true)}
-                  className="bg-amber-500 hover:bg-amber-600 text-black font-medium rounded-lg"
-                >
-                  <Save className="w-4 h-4 mr-1" />
-                  Simpan Sekarang
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* Main Content Layout - Desktop: Sidebar + Chart | Mobile: Chart Only */}

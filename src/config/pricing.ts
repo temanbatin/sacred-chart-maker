@@ -24,7 +24,7 @@ export const PRODUCTS = {
     },
     ESSENTIAL_REPORT: {
         id: 'essential_report',
-        name: 'Essential Human Design + Synthesis',
+        name: 'Essential Human Design Report',
         price: 89000,
         original_price: 250000,
         features: [
