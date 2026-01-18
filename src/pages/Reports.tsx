@@ -89,7 +89,7 @@ const testimonials = [
   },
 ];
 
-import { PRICING_CONFIG, formatPrice } from '@/config/pricing';
+import { PRICING_CONFIG, PRODUCTS, formatPrice } from '@/config/pricing';
 
 const reportFeatures = [
   'Analisis mendalam 100+ halaman',
@@ -203,7 +203,7 @@ const Reports = () => {
       .single();
 
     if (profileData) {
-      setUserProfile(profileData);
+      setUserProfile(profileData as any);
     }
 
     setIsLoading(false);
@@ -249,11 +249,11 @@ const Reports = () => {
   };
 
   const getTotalPrice = () => {
-    return selectedCharts.length * PRICING_CONFIG.REPORT_PRICE;
+    return selectedCharts.length * PRODUCTS.FULL_REPORT.price;
   };
 
   const getOriginalTotalPrice = () => {
-    return selectedCharts.length * PRICING_CONFIG.ORIGINAL_PRICE;
+    return selectedCharts.length * PRODUCTS.FULL_REPORT.original_price;
   };
 
   const getSelectedChartDetails = () => {
@@ -540,9 +540,10 @@ const Reports = () => {
         // Still close modal
         setShowLeadCapture(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
-      toast.error('Terjadi kesalahan saat membuat chart.');
+      const errorMessage = error.message || error.toString();
+      toast.error(`Terjadi kesalahan saat membuat chart: ${errorMessage}`);
     } finally {
       setIsGeneratingChart(false);
     }
@@ -562,7 +563,7 @@ const Reports = () => {
         <section className="px-4 py-16 text-center">
           <div className="max-w-4xl mx-auto">
             <span className="inline-block text-accent text-sm font-semibold mb-4 uppercase tracking-wider">
-              Full Personalized Report
+              Personal Report
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
               Temukan <span className="text-gradient-fire">Cetak Biru</span> Kehidupan Anda
@@ -686,10 +687,10 @@ const Reports = () => {
                 Laporan 100+ halaman yang dipersonalisasi berdasarkan data kelahiran Anda.
               </p>
               <div className="flex items-center justify-center gap-3">
-                <span className="text-2xl font-bold text-accent">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
-                <span className="text-lg text-muted-foreground line-through">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
+                <span className="text-2xl font-bold text-accent">Mulai {formatPrice(PRODUCTS.ESSENTIAL_REPORT.price)}</span>
+                <span className="text-lg text-muted-foreground line-through">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
                 <span className="bg-accent/20 text-accent text-xs font-semibold px-2 py-1 rounded">
-                  HEMAT {Math.round(((PRICING_CONFIG.ORIGINAL_PRICE - PRICING_CONFIG.REPORT_PRICE) / PRICING_CONFIG.ORIGINAL_PRICE) * 100)}%
+                  HEMAT {Math.round(((PRODUCTS.ESSENTIAL_REPORT.original_price - PRODUCTS.ESSENTIAL_REPORT.price) / PRODUCTS.ESSENTIAL_REPORT.original_price) * 100)}%
                 </span>
               </div>
             </div>
@@ -894,11 +895,11 @@ const Reports = () => {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="font-semibold text-foreground">{chart.name}</p>
-                      <p className="text-sm text-accent">Full Foundation Report</p>
+                      <p className="text-sm text-accent">Personal Report (Mulai)</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-semibold text-foreground">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
-                      <span className="text-xs text-muted-foreground line-through ml-1">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
+                      <span className="font-semibold text-foreground">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.price)}</span>
+                      <span className="text-xs text-muted-foreground line-through ml-1">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground space-y-1 mt-3 pt-3 border-t border-border">

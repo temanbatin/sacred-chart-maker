@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import reportSS1 from "@/assets/Report SS.jpg";
 import reportSS2 from "@/assets/Report SS 2.jpg";
 import reportSS3 from "@/assets/Report SS 3.jpg";
-import { PRICING_CONFIG, formatPrice } from "@/config/pricing";
+import { PRODUCTS, formatPrice } from "@/config/pricing";
 
 const reportSlides = [
     {
@@ -117,10 +117,10 @@ export const ReportPreviewSection = ({ onOpenChartModal, hideCta = false }: Repo
                         </div>
 
                         <div className="pt-4 flex flex-wrap items-center gap-4">
-                            <span className="text-3xl font-bold text-accent">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
-                            <span className="text-muted-foreground line-through">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
+                            <span className="text-3xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
+                            <span className="text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
                             <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-sm font-medium">
-                                -{Math.round(((PRICING_CONFIG.ORIGINAL_PRICE - PRICING_CONFIG.REPORT_PRICE) / PRICING_CONFIG.ORIGINAL_PRICE) * 100)}%
+                                -{Math.round(((PRODUCTS.FULL_REPORT.original_price - PRODUCTS.FULL_REPORT.price) / PRODUCTS.FULL_REPORT.original_price) * 100)}%
                             </span>
                         </div>
 

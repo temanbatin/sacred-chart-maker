@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import reportSS1 from "@/assets/Report SS.jpg";
 import reportSS2 from "@/assets/Report SS 2.jpg";
 import reportSS3 from "@/assets/Report SS 3.jpg";
-import { PRICING_CONFIG, formatPrice } from "@/config/pricing";
+import { PRICING_CONFIG, PRODUCTS, formatPrice } from "@/config/pricing";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -235,6 +235,7 @@ interface PropertiesSidebarProps {
     top_right?: { value: string };
     bottom_right?: { value: string };
   };
+  utcDateTime?: string;
 }
 
 const PropertiesSidebar = ({
@@ -249,12 +250,18 @@ const PropertiesSidebar = ({
   signature,
   notSelf,
   variables,
+  utcDateTime,
 }: PropertiesSidebarProps) => {
   const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
   const formatDateTimeLocal = () => {
     if (!birthData) return "—";
     return `${birthData.day} ${monthNames[birthData.month - 1]} ${birthData.year}, ${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}`;
+  };
+
+  const formatDateTimeUTC = () => {
+    if (utcDateTime) return utcDateTime;
+    return "—";
   };
 
   const getVariableString = () => {
@@ -292,7 +299,7 @@ const PropertiesSidebar = ({
         <div className="grid grid-cols-2 gap-x-4 gap-y-0">
           <Item icon={<span className="text-xs">○</span>} label="Name" value={userName} />
           <Item icon={<span className="text-xs">◎</span>} label="Date and Time (Local)" value={formatDateTimeLocal()} />
-          <Item icon={<span className="text-xs">◎</span>} label="Date and Time (UTC)" value={formatDateTimeLocal()} />
+          <Item icon={<span className="text-xs">◎</span>} label="Date and Time (UTC)" value={formatDateTimeUTC()} />
           <Item icon={<span className="text-xs">◉</span>} label="Location" value={birthData?.place || "—"} />
         </div>
       </div>
@@ -606,6 +613,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 signature={signature}
                 notSelf={notSelf}
                 variables={general.variables}
+                utcDateTime={general.utc_datetime || (general.utc_date && general.utc_time ? `${general.utc_date} ${general.utc_time}` : (data.utc || undefined))}
               />
 
               {/* Right: Design + Variables + Bodygraph + Variables + Personality */}
@@ -710,11 +718,19 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                     <p className="text-xs font-semibold text-foreground truncate">{birthData?.place || "—"}</p>
                   </div>
                 </div>
-                <div className="py-1 mb-4 overflow-hidden">
-                  <p className="text-[10px] text-muted-foreground uppercase">Date & Time</p>
-                  <p className="text-xs font-semibold text-foreground">
-                    {birthData ? `${birthData.day}/${birthData.month}/${birthData.year}, ${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}` : "—"}
-                  </p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Date & Time (Local)</p>
+                    <p className="text-xs font-semibold text-foreground">
+                      {birthData ? `${birthData.day}/${birthData.month}/${birthData.year}, ${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}` : "—"}
+                    </p>
+                  </div>
+                  <div className="py-1 overflow-hidden">
+                    <p className="text-[10px] text-muted-foreground uppercase">Date & Time (UTC)</p>
+                    <p className="text-xs font-semibold text-foreground">
+                      {general.utc_datetime || (general.utc_date && general.utc_time ? `${general.utc_date} ${general.utc_time}` : (data.utc || "—"))}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Properties */}
@@ -818,7 +834,36 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           </Button>
         </div>
 
-        {/* Upsell CTA Section - Only Show if NOT Ordered */}
+        {/* Save to Account CTA - Only for Guest Users */}
+        {isUnsaved && (
+          <div className="bg-gradient-to-r from-primary/20 via-accent/10 to-primary/20 border border-primary/30 rounded-2xl p-6 md:p-8 mb-8 mt-6 animate-fade-up">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-shrink-0 w-16 h-16 rounded-full bg-primary/30 flex items-center justify-center">
+                <Save className="w-8 h-8 text-primary" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  Simpan Chart ke Akun Kamu
+                </h3>
+                <p className="text-muted-foreground">
+                  Buat akun gratis untuk menyimpan chart ini dan akses kapan saja dari perangkat manapun. Chart yang tidak disimpan akan hilang jika halaman ditutup.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  asChild
+                  className="fire-glow h-12 px-6 rounded-xl font-semibold"
+                >
+                  <Link to="/account">
+                    <LogIn className="w-5 h-5 mr-2" />
+                    Daftar / Masuk
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Upsell CTA Section - Only Show if NOT Ordered */}
         {!isOrdered ? (
           <div id="cta-section" className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
@@ -911,10 +956,10 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
               <div className="flex items-center justify-center gap-3 mt-4">
-                <span className="text-amber-300 font-bold text-xl">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
-                <span className="text-white/60 line-through text-base">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
+                <span className="text-amber-300 font-bold text-xl">Mulai {formatPrice(PRODUCTS.ESSENTIAL_REPORT.price)}</span>
+                <span className="text-white/60 line-through text-base">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
               </div>
-              <p className="text-center text-white/60 text-sm mt-2">⚡ Dikirim ke email dalam 24 jam</p>
+              <p className="text-center text-white/60 text-sm mt-2">⚡ Tersedia Paket Essential & Full Report</p>
             </div>
           </div>
         ) : (

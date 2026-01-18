@@ -99,6 +99,8 @@ serve(async (req) => {
         // --- Discount Logic Start ---
         let finalAmount = amount;
         let discountInfo = null;
+        let discountValue = 0;
+        let discountAmount = 0;
 
         if (couponCode) {
             // Validate Coupon Server-side
@@ -118,8 +120,8 @@ serve(async (req) => {
                 } else {
                     // Apply Discount
                     if (coupon.discount_type === 'percentage') {
-                        const discountValue = Number(coupon.discount_value) || 0;
-                        const discountAmount = Math.round((amount * discountValue) / 100);
+                        discountValue = Number(coupon.discount_value) || 0;
+                        discountAmount = Math.round((amount * discountValue) / 100);
                         finalAmount = Math.max(0, amount - discountAmount); // Ensure no negative
 
                         discountInfo = {
@@ -179,6 +181,9 @@ serve(async (req) => {
         const FINISH_URL = `${origin}/payment-result?ref=${refId}`;
 
         // Prepare Midtrans Snap request body
+        // Midtrans has a 50-char limit for item name
+        const truncatedProductName = (productName || 'Laporan Analisis Human Design').substring(0, 50);
+
         const snapRequest = {
             transaction_details: {
                 order_id: refId,
@@ -189,7 +194,7 @@ serve(async (req) => {
                     id: 'full-report',
                     price: finalAmount, // Use Final Discounted Amount
                     quantity: 1,
-                    name: productName || 'Laporan Analisis Mendalam Human Design'
+                    name: truncatedProductName
                 }
             ],
             customer_details: {
@@ -252,6 +257,20 @@ serve(async (req) => {
         }
 
         console.log('Snap token generated successfully');
+
+        // Save payment_url to database
+        if (redirectUrl && referenceId) {
+            const { error: updateError } = await supabase
+                .from('orders')
+                .update({ payment_url: redirectUrl })
+                .eq('reference_id', referenceId);
+
+            if (updateError) {
+                console.error('Error saving payment_url:', updateError);
+            } else {
+                console.log('Payment URL saved to order:', referenceId);
+            }
+        }
 
         return new Response(JSON.stringify({
             success: true,

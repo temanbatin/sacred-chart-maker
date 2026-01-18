@@ -207,7 +207,7 @@ serve(async (req) => {
 
                 // TRIGGER N8N WORKFLOW
                 try {
-                    const N8N_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL');
+                    const N8N_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL') || 'https://flow.otomasi.click/webhook/hd-order-paid';
 
                     if (!N8N_WEBHOOK_URL) {
                         console.error('N8N_ORDER_PAID_WEBHOOK_URL is not set');

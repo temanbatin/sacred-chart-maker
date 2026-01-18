@@ -123,7 +123,9 @@ export const useChartGenerator = (user: User | null) => {
 
             if (error) {
                 console.error('Error calculating chart:', error);
-                toast.error('Terjadi kesalahan saat menghitung chart. Silakan coba lagi.');
+                // Show more specific error message if available
+                const errorMessage = error.message || error.toString();
+                toast.error(`Terjadi kesalahan: ${errorMessage}. Silakan coba lagi.`);
                 setIsLoading(false);
                 return;
             }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { User, FileText, Clock, ArrowRight, LogIn, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, Calendar, MapPin } from 'lucide-react';
+import { User, FileText, Clock, ArrowRight, LogIn, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, Calendar, MapPin, CreditCard } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,12 +40,28 @@ const Account = () => {
   const urlEmail = searchParams.get('email') || '';
   const urlRef = searchParams.get('ref') || '';
 
+  const checkAdminRole = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+
+    if (!error && data?.role === 'admin') {
+      toast.success('Selamat datang, Admin!');
+      navigate('/admin');
+    }
+  };
+
   /* Purchased Reports - fetch by user_id OR email */
   const fetchOrders = async (userEmail?: string) => {
+    if (!userEmail && !user?.id) return;
+
     // Fetch orders where user_id matches OR customer_email matches
     const { data, error } = await supabase
       .from('orders')
       .select('*')
+      .or(`user_id.eq.${user?.id},customer_email.eq.${userEmail}`)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -84,8 +100,8 @@ const Account = () => {
 
     try {
       const chart = JSON.parse(pendingChartData);
-      const { error } = await supabase
-        .from('saved_charts')
+      const { error } = await (supabase
+        .from('saved_charts') as any)
         .insert({
           user_id: userId,
           name: chart.name,
@@ -136,7 +152,9 @@ const Account = () => {
       setUser(session?.user ?? null);
       setIsLoading(false);
 
+      // Admin Redirect Logic
       if (session?.user) {
+        checkAdminRole(session.user.id);
         // Claim guest data on initial load too
         supabase.rpc('claim_guest_data').then(() => {
           fetchSavedCharts();
@@ -197,6 +215,21 @@ const Account = () => {
     setAuthLoading(false);
   };
 
+  const handleGoogleLogin = async () => {
+    setAuthLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/account',
+      },
+    });
+
+    if (error) {
+      toast.error('Gagal login dengan Google: ' + error.message);
+      setAuthLoading(false);
+    }
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
@@ -207,43 +240,15 @@ const Account = () => {
       return;
     }
 
-    const redirectUrl = `${window.location.origin}/`;
-
-    const { data: authData, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-      },
+    const { data: authData, error } = await supabase.functions.invoke('register-user', {
+      body: { email, password }
     });
 
     if (error) {
-      if (error.message.includes('User already registered')) {
-        setIsLoginMode(true);
-        setSignupMessage('Email ini sudah terdaftar. Silakan masuk dengan password kamu.');
-        // Keep email, just switch to login
-      } else {
-        toast.error(error.message);
-      }
-    } else if (authData.user) {
-      // Create profile for new user
-      await supabase
-        .from('profiles')
-        .upsert({
-          user_id: authData.user.id,
-          email: email,
-          name: '', // Will be updated when they save a chart
-        });
-
-      // Link existing orders by email to this new user
-      await supabase
-        .from('orders')
-        .update({ user_id: authData.user.id })
-        .eq('customer_email', email)
-        .is('user_id', null);
-
+      toast.error('Gagal daftar: ' + error.message);
+    } else {
       toast.success('Akun berhasil dibuat! Silakan cek email untuk verifikasi.');
-      setSignupMessage('');
+      setSignupMessage('Silakan cek email Anda untuk mengaktifkan akun.');
     }
 
     setAuthLoading(false);
@@ -399,18 +404,62 @@ const Account = () => {
                 </Button>
               </form>
 
-              <div className="mt-6 text-center">
-                <button
-                  onClick={() => setIsLoginMode(!isLoginMode)}
-                  className="text-accent hover:underline text-sm"
-                >
-                  {isLoginMode
-                    ? 'Belum punya akun? Daftar'
-                    : 'Sudah punya akun? Masuk'}
-                </button>
+              <div className="relative mt-6">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground px-2">Atau lanjut dengan</span>
+                </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full mt-4 h-12 rounded-xl border-border hover:bg-accent/50 group transition-all duration-200"
+                onClick={handleGoogleLogin}
+                disabled={authLoading}
+              >
+                {authLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <svg className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-1 .67-2.28 1.07-3.71 1.07-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                    Google
+                  </>
+                )}
+              </Button>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {isLoginMode ? 'Belum punya akun? ' : 'Sudah punya akun? '}
+                  <button
+                    onClick={() => setIsLoginMode(!isLoginMode)}
+                    className="text-accent hover:underline font-medium"
+                  >
+                    {isLoginMode ? 'Daftar sekarang' : 'Masuk disini'}
+                  </button>
+                </p>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-border">
                 <p className="text-sm text-muted-foreground mb-4 text-center">
                   Belum punya chart?
                 </p>
@@ -424,10 +473,10 @@ const Account = () => {
               </div>
             </div>
           </div>
-        </main>
+        </main >
 
         <Footer />
-      </div>
+      </div >
     );
   }
 
@@ -467,7 +516,14 @@ const Account = () => {
 
 
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, createdAt: string) => {
+    // Check for expiration (24 hours)
+    const isExpired = status === 'PENDING' && (new Date().getTime() - new Date(createdAt).getTime() > 24 * 60 * 60 * 1000);
+
+    if (isExpired || status === 'EXPIRED') {
+      return <span className="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">Kedaluwarsa</span>;
+    }
+
     switch (status) {
       case 'PAID':
         return <span className="px-2 py-1 bg-green-500/20 text-green-500 text-xs rounded-full">Lunas</span>;
@@ -475,8 +531,6 @@ const Account = () => {
         return <span className="px-2 py-1 bg-yellow-500/20 text-yellow-500 text-xs rounded-full">Menunggu Pembayaran</span>;
       case 'FAILED':
         return <span className="px-2 py-1 bg-red-500/20 text-red-500 text-xs rounded-full">Gagal</span>;
-      case 'EXPIRED':
-        return <span className="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">Kedaluwarsa</span>;
       default:
         return <span className="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">{status}</span>;
     }
@@ -585,7 +639,7 @@ const Account = () => {
                             <h3 className="font-semibold text-foreground text-lg">
                               {order.product_name || 'Laporan Human Design'}
                             </h3>
-                            {getStatusBadge(order.status)}
+                            {getStatusBadge(order.status, order.created_at)}
                           </div>
                           <p className="text-sm text-muted-foreground">Order Ref: {order.reference_id}</p>
                           <p className="text-sm text-muted-foreground">
@@ -595,12 +649,12 @@ const Account = () => {
                           </p>
                         </div>
 
-                        {/* Right: Actions */}
                         <div className="flex items-center gap-3">
-                          {/* PENDING: Show Pay Button */}
-                          {order.status === 'PENDING' && order.payment_url && (
-                            <Button asChild className="fire-glow">
+                          {/* PENDING & NOT EXPIRED: Show Pay Button */}
+                          {order.status === 'PENDING' && order.payment_url && (new Date().getTime() - new Date(order.created_at).getTime() <= 24 * 60 * 60 * 1000) && (
+                            <Button asChild className="fire-glow" size="sm">
                               <a href={order.payment_url} target="_blank" rel="noopener noreferrer">
+                                <CreditCard className="w-4 h-4 mr-2" />
                                 Bayar Sekarang <ArrowRight className="w-4 h-4 ml-2" />
                               </a>
                             </Button>

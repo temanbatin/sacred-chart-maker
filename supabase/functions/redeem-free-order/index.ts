@@ -101,8 +101,11 @@ serve(async (req) => {
         }
 
         // 4. TRIGGER N8N WORKFLOW (Simulate Paid Order)
+        let n8nResponse;
+        let responseText;
+        const N8N_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL') || 'https://flow.otomasi.click/webhook/hd-order-paid';
+
         try {
-            const N8N_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL') || 'https://n8n.indonetwork.or.id/webhook/hd-order-paid';
             console.log(`Triggering n8n workflow at ${N8N_WEBHOOK_URL}...`);
 
             // Fetch created order details
@@ -125,7 +128,7 @@ serve(async (req) => {
             }
 
             // Send to N8N
-            const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+            n8nResponse = await fetch(N8N_WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -141,7 +144,7 @@ serve(async (req) => {
                 })
             });
 
-            const responseText = await n8nResponse.text();
+            responseText = await n8nResponse.text();
             console.log(`N8N Response Status: ${n8nResponse.status}`);
             console.log(`N8N Response Body: ${responseText}`);
 

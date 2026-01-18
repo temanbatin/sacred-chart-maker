@@ -21,7 +21,7 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-const N8N_WEBHOOK_URL = Deno.env.get('N8N_BODYGRAPH_WEBHOOK_URL') || 'https://n8n.indonetwork.or.id/webhook/hd-bodygraph';
+const N8N_WEBHOOK_URL = Deno.env.get('N8N_BODYGRAPH_WEBHOOK_URL') || 'https://flow.otomasi.click/webhook/hd-bodygraph';
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);

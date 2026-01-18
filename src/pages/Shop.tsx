@@ -1,19 +1,46 @@
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { FileText, Users, Heart, Briefcase, ArrowRight } from 'lucide-react';
+import { FileText, Users, Heart, Briefcase, ArrowRight, Zap, MessageSquare, Building2, ScrollText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PRICING_CONFIG, formatPrice } from '@/config/pricing';
+import { PRICING_CONFIG, PRODUCTS, formatPrice } from '@/config/pricing';
 
 const products = [
   {
     id: 'full-report',
-    title: 'Full Personalized Report',
+    title: PRODUCTS.FULL_REPORT.name,
     description: 'Laporan komprehensif 100+ halaman tentang Human Design Anda',
-    price: formatPrice(PRICING_CONFIG.REPORT_PRICE),
+    price: formatPrice(PRODUCTS.FULL_REPORT.price),
     icon: FileText,
     featured: true,
-    href: '/reports',
+    href: '/personal-report',
+  },
+  {
+    id: 'essential-report',
+    title: PRODUCTS.ESSENTIAL_REPORT.name,
+    description: 'Ringkasan fundamental desain Anda + Synthesis',
+    price: formatPrice(PRODUCTS.ESSENTIAL_REPORT.price),
+    icon: Zap,
+    featured: false,
+    href: '/personal-report',
+  },
+  {
+    id: 'bazi-addon',
+    title: 'Bazi Report Add-on',
+    description: 'Analisis elemen keberuntungan tahunan (Day Master & Luck Cycle)',
+    price: formatPrice(PRODUCTS.BAZI_ADDON.price),
+    icon: ScrollText,
+    comingSoon: true,
+    href: '#',
+  },
+  {
+    id: 'teman-ai',
+    title: '24/7 Teman AI',
+    description: 'Personal Assistant via WhatsApp yang paham Human Design & Bazi Anda',
+    price: 'Rp 49.000/bln',
+    icon: MessageSquare,
+    comingSoon: true,
+    href: '#',
   },
   {
     id: 'relationship-report',
@@ -25,15 +52,6 @@ const products = [
     href: '#',
   },
   {
-    id: 'career-guide',
-    title: 'Career & Business Guide',
-    description: 'Panduan karir dan bisnis berdasarkan desain unik Anda',
-    price: 'Rp 249.000',
-    icon: Briefcase,
-    comingSoon: true,
-    href: '#',
-  },
-  {
     id: 'parenting-guide',
     title: 'Parenting by Design',
     description: 'Panduan memahami dan mendukung anak sesuai Human Design mereka',
@@ -41,7 +59,7 @@ const products = [
     icon: Users,
     comingSoon: true,
     href: '#',
-  },
+  }
 ];
 
 const Shop = () => {
@@ -62,7 +80,7 @@ const Shop = () => {
           </div>
 
           {/* Products Grid */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 mb-16">
             {products.map((product) => {
               const Icon = product.icon;
               return (
@@ -118,8 +136,31 @@ const Shop = () => {
             })}
           </div>
 
+          {/* Inquiry Section */}
+          <div className="bg-gradient-to-r from-secondary/30 to-background border border-accent/20 rounded-2xl p-8 md:p-12 mb-16">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center shrink-0">
+                 <Building2 className="w-10 h-10 text-accent" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                  Untuk Instansi & Perusahaan
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  Tertarik menggunakan Human Design untuk pemetaan tim, rekrutmen, atau pengembangan SDM di perusahaan Anda? Kami menyediakan layanan konsultasi dan workshop khusus korporat.
+                </p>
+                <Button size="lg" variant="outline" className="border-accent text-accent hover:bg-accent hover:text-black" asChild>
+                  <a href="https://wa.me/628123456789?text=Halo%20Teman%20Batin,%20saya%20tertarik%20untuk%20inquiry%20instansi" target="_blank" rel="noopener noreferrer">
+                    Hubungi Kami
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* CTA */}
-          <div className="mt-16 text-center glass-card rounded-xl p-8">
+          <div className="text-center glass-card rounded-xl p-8">
             <h2 className="text-2xl font-bold text-foreground mb-4">
               Belum yakin produk mana yang cocok?
             </h2>

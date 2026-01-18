@@ -70,14 +70,6 @@ export const MainNavbar = () => {
             </Link>
 
             <Link
-              to="/reports"
-              className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
-            >
-              <FileText className="w-4 h-4" />
-              Premium Report
-            </Link>
-
-            <Link
               to="/shop"
               className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
             >
@@ -138,14 +130,6 @@ export const MainNavbar = () => {
               >
                 <BookOpen className="w-4 h-4" />
                 Learn
-              </Link>
-              <Link
-                to="/reports"
-                className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <FileText className="w-4 h-4" />
-                Premium Report
               </Link>
               <Link
                 to="/shop"

@@ -8,14 +8,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, ShoppingCart, Loader2, User as UserIcon, Mail, Phone, AlertCircle, Shield, CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, ShoppingCart, Loader2, User as UserIcon, Mail, Phone, AlertCircle, Shield, CreditCard, Check, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ebookCover from "@/assets/cover_ebook_sample.jpg";
-import reportSS1 from "@/assets/Report SS.jpg";
-import reportSS2 from "@/assets/Report SS 2.jpg";
-import reportSS3 from "@/assets/Report SS 3.jpg";
-import { PRICING_CONFIG, formatPrice } from "@/config/pricing";
+import { PRICING_CONFIG, PRODUCTS, formatPrice } from "@/config/pricing";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 interface ProductPreviewModalProps {
   isOpen: boolean;
@@ -43,11 +42,63 @@ export const ProductPreviewModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
 
+  // Product Selection State
+  const [selectedTier, setSelectedTier] = useState<'essential' | 'full'>('full');
+  const [includeBazi, setIncludeBazi] = useState(false);
 
   // Coupon State
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
+
+  // Billing state
+  const [billingName, setBillingName] = useState(userName);
+  const [billingEmail, setBillingEmail] = useState(userEmail);
+  const [billingPhone, setBillingPhone] = useState(userPhone);
+
+  // Update state when props change
+  useEffect(() => {
+    if (isOpen) {
+      setBillingName(userName);
+      setBillingEmail(userEmail);
+      setBillingPhone(userPhone);
+      // Reset selections
+      setSelectedTier('full');
+      setIncludeBazi(false);
+
+      // Track Initiate Checkout
+      if (window.fbq) {
+        window.fbq('track', 'InitiateCheckout');
+      }
+    }
+  }, [isOpen, userName, userEmail, userPhone]);
+
+  // Calculate Totals
+  const selectedProduct = selectedTier === 'full' ? PRODUCTS.FULL_REPORT : PRODUCTS.ESSENTIAL_REPORT;
+  
+  const getSubtotal = () => {
+    let total = selectedProduct.price;
+    if (includeBazi) total += PRODUCTS.BAZI_ADDON.price;
+    return total;
+  };
+
+  const getTotalWithDiscount = () => {
+    let total = getSubtotal();
+    if (appliedCoupon) {
+      if (appliedCoupon.discount_type === 'full_free') return 0;
+      if (appliedCoupon.discount_type === 'percentage') {
+        return Math.round(total * (1 - Number(appliedCoupon.discount_value) / 100));
+      }
+    }
+    return total;
+  };
+
+  const getSavings = () => {
+      const originalTotal = (selectedTier === 'full' ? PRODUCTS.FULL_REPORT.original_price : PRODUCTS.ESSENTIAL_REPORT.original_price) 
+        + (includeBazi ? PRODUCTS.BAZI_ADDON.original_price : 0);
+      const currentTotal = getSubtotal();
+      return Math.round(((originalTotal - currentTotal) / originalTotal) * 100);
+  };
 
   const checkCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -75,80 +126,6 @@ export const ProductPreviewModal = ({
     }
   };
 
-  const handleRedeemFree = async () => {
-    setIsLoading(true);
-    try {
-      // ... Reuse same pre-save chart logic as handleBuy if needed ...
-      // For brevity, assuming chartId is handled or we use the unified flow
-
-      // 0. Handle Buyer Guest (Copy-Paste from handleBuy or extract to function in refactor)
-      let finalChartIds = chartId ? [chartId] : [];
-      if (!chartId && birthData && chartData) {
-        const newChartId = crypto.randomUUID();
-        const { error: saveError } = await supabase.from('saved_charts').insert({
-          id: newChartId,
-          user_id: userId || null,
-          name: birthData.name,
-          birth_date: `${birthData.year}-${String(birthData.month).padStart(2, '0')}-${String(birthData.day).padStart(2, '0')}`,
-          birth_time: `${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}:00`,
-          birth_place: birthData.place,
-          chart_data: chartData,
-        });
-        if (!saveError) finalChartIds = [newChartId];
-      }
-
-      const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-
-      const { data, error } = await supabase.functions.invoke('redeem-free-order', {
-        body: {
-          couponCode: couponCode.trim(),
-          referenceId,
-          customerName: billingName,
-          customerEmail: billingEmail,
-          customerPhone: billingPhone,
-          productName: `Full Report Human Design: ${userName}`,
-          chartIds: finalChartIds,
-          birthData,
-          userId
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.success && data?.redirect_url) {
-        toast.success('Kupon berhasil digunakan! Mengarahkan...');
-        window.location.href = data.redirect_url;
-      } else {
-        throw new Error(data?.error || 'Redeem gagal');
-      }
-
-    } catch (err: any) {
-      console.error('Redeem error:', err);
-      toast.error(err.message || 'Gagal klaim kupon');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Billing state
-  const [billingName, setBillingName] = useState(userName);
-  const [billingEmail, setBillingEmail] = useState(userEmail);
-  const [billingPhone, setBillingPhone] = useState(userPhone);
-
-  // Update state when props change
-  useEffect(() => {
-    if (isOpen) {
-      setBillingName(userName);
-      setBillingEmail(userEmail);
-      setBillingPhone(userPhone);
-
-      // Track Initiate Checkout
-      if (window.fbq) {
-        window.fbq('track', 'InitiateCheckout');
-      }
-    }
-  }, [isOpen, userName, userEmail, userPhone]);
-
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // Capitalize first letter of each word
@@ -162,41 +139,6 @@ export const ProductPreviewModal = ({
       return;
     }
 
-    // Check for duplicate purchase (Prevent re-ordering same chart)
-    // We check based on CONTENT (birthData) + Identity (UserId or Email)
-    if (birthData) {
-      let query = supabase
-        .from('orders')
-        .select('id')
-        .eq('status', 'PAID')
-        .contains('metadata', {
-          birth_data: {
-            name: birthData.name,
-            year: birthData.year,
-            month: birthData.month,
-            day: birthData.day,
-            hour: birthData.hour,
-            minute: birthData.minute
-            // We exclude 'place' and 'gender' to be more lenient on minor variations, 
-            // or include them if strict required. Name+Time is usually unique enough.
-          }
-        });
-
-      if (userId) {
-        query = query.eq('user_id', userId);
-      } else {
-        query = query.eq('customer_email', billingEmail);
-      }
-
-      const { data: existingOrder } = await query.maybeSingle();
-
-      if (existingOrder) {
-        setShowDuplicateAlert(true);
-        setIsLoading(false); // Stop loading!
-        return;
-      }
-    }
-
     setIsLoading(true);
 
     try {
@@ -208,7 +150,7 @@ export const ProductPreviewModal = ({
           const birthDateStr = `${birthData.year}-${String(birthData.month).padStart(2, '0')}-${String(birthData.day).padStart(2, '0')}`;
           const birthTimeStr = `${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}:00`;
 
-          // Generate ID client-side to avoid "select" permission issues from strict RLS
+          // Generate ID client-side
           const newChartId = crypto.randomUUID();
 
           // Insert with the pre-generated ID
@@ -226,9 +168,7 @@ export const ProductPreviewModal = ({
 
           if (saveError) {
             console.error('Auto-save chart error:', saveError);
-            // Continue without ID if save fails (will use birthData in metadata)
           } else {
-            // Success - use the pre-generated ID
             finalChartIds = [newChartId];
           }
         } catch (err) {
@@ -238,6 +178,12 @@ export const ProductPreviewModal = ({
 
       // Generate Reference ID uniquely
       const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      
+      const productItems = [selectedProduct.id];
+      if (includeBazi) productItems.push(PRODUCTS.BAZI_ADDON.id);
+      
+      const productNameFull = `${selectedProduct.name}${includeBazi ? ' + Bazi Addon' : ''}: ${userName}`;
+      const finalAmount = getTotalWithDiscount();
 
       // 1. Save order to database first
       const { error: orderError } = await supabase
@@ -248,13 +194,15 @@ export const ProductPreviewModal = ({
           customer_name: billingName,
           customer_email: billingEmail,
           customer_phone: billingPhone,
-          product_name: `Full Report Human Design: ${userName}`,
-          amount: PRICING_CONFIG.REPORT_PRICE,
+          product_name: productNameFull,
+          amount: finalAmount,
           status: 'PENDING',
           metadata: {
             chart_ids: finalChartIds,
             birth_data: birthData,
-            coupon_code: couponCode // Save coupon code in metadata for N8N tracking
+            coupon_code: couponCode,
+            products: productItems,
+            tier: selectedTier
           }
         });
 
@@ -272,11 +220,12 @@ export const ProductPreviewModal = ({
           customerName: billingName,
           customerEmail: billingEmail,
           customerPhone: billingPhone,
-          amount: PRICING_CONFIG.REPORT_PRICE,
-          productName: `Full Report Human Design: ${userName}`,
+          amount: finalAmount,
+          productName: productNameFull,
           chartIds: finalChartIds,
           birthData: birthData,
-          couponCode: couponCode // Pass coupon code to backend
+          couponCode: couponCode,
+          products: productItems // Pass product list to backend
         }
       });
 
@@ -289,13 +238,8 @@ export const ProductPreviewModal = ({
       if (data?.success && data?.redirect_url) {
         // Save referenceId to sessionStorage for callback persistence
         sessionStorage.setItem('paymentRefId', referenceId);
-
-        // Close our modal
         onClose();
-
         toast.success('Mengarahkan ke halaman pembayaran...');
-
-        // Use Redirect Mode (More reliable for Production)
         window.location.href = data.redirect_url;
       } else {
         toast.error(data?.error || 'Gagal mendapatkan link pembayaran');
@@ -308,217 +252,299 @@ export const ProductPreviewModal = ({
     }
   };
 
+  const handleRedeemFree = async () => {
+      // Reuse logic similar to handleBuy but calling redeem endpoint
+      // Keeping it simple here, usually coupons apply to the base price
+      // For free coupons, we probably want to support the Full Report
+      // Logic would be similar to existing, just ensuring charts are saved
+      
+      // ... (Implementation similar to original but using new params if needed)
+      // For now, assuming redeem-free-order backend handles it based on coupon config
+       setIsLoading(true);
+        try {
+          let finalChartIds = chartId ? [chartId] : [];
+          if (!chartId && birthData && chartData) {
+             const newChartId = crypto.randomUUID();
+            // ... saving logic ...
+             const { error: saveError } = await supabase.from('saved_charts').insert({
+               id: newChartId,
+               user_id: userId || null,
+               name: birthData.name,
+               birth_date: `${birthData.year}-${String(birthData.month).padStart(2, '0')}-${String(birthData.day).padStart(2, '0')}`,
+               birth_time: `${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}:00`,
+               birth_place: birthData.place,
+               chart_data: chartData,
+             });
+            if (!saveError) finalChartIds = [newChartId];
+          }
+    
+          const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    
+          const { data, error } = await supabase.functions.invoke('redeem-free-order', {
+            body: {
+              couponCode: couponCode.trim(),
+              referenceId,
+              customerName: billingName,
+              customerEmail: billingEmail,
+              customerPhone: billingPhone,
+              productName: `Full Report Human Design (Free): ${userName}`,
+              chartIds: finalChartIds,
+              birthData,
+              userId
+            }
+          });
+    
+          if (error) throw error;
+    
+          if (data?.success && data?.redirect_url) {
+            toast.success('Kupon berhasil digunakan! Mengarahkan...');
+            window.location.href = data.redirect_url;
+          } else {
+            throw new Error(data?.error || 'Redeem gagal');
+          }
+    
+        } catch (err: any) {
+          console.error('Redeem error:', err);
+          toast.error(err.message || 'Gagal klaim kupon');
+        } finally {
+          setIsLoading(false);
+        }
+  };
+
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl md:text-2xl text-center text-foreground">
-              Laporan Analisis Mendalam Human Design
+              Pilih Paket Laporan Human Design
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col md:flex-row gap-4 sm:gap-6 mt-4">
-            {/* Product Cover Image */}
-            <div className="flex-shrink-0 mx-auto md:mx-0">
-              <div className="relative">
-                <img
-                  src={ebookCover}
-                  alt="Laporan Analisis Mendalam Human Design"
-                  className="w-48 sm:w-56 md:w-64 h-auto rounded-lg shadow-xl"
-                />
-                <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-semibold">
-                  100+ Halaman
-                </div>
-              </div>
-            </div>
-
-            {/* Product Details */}
-            <div className="flex-1 space-y-3 sm:space-y-4">
-              <div className="bg-secondary/30 rounded-lg p-3 sm:p-4 border border-border">
-                <p className="text-xs sm:text-sm text-muted-foreground mb-1">Disusun Khusus Untuk:</p>
-                <p className="text-base sm:text-lg font-semibold text-accent">{userName}</p>
-              </div>
-
-              {/* ... Features List (Keep existing) ... */}
-              <div className="space-y-3">
-                <h4 className="font-semibold text-foreground">Apa yang kamu dapatkan:</h4>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground"><span className="text-foreground font-medium">Analisis Mendalam</span> tentang Tipe, Strategi, Otoritas, Profil</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground"><span className="text-foreground font-medium">Penjelasan Detail Incarnation Cross</span> (Misi Hidup)</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground"><span className="text-foreground font-medium">Penjelasan detail Gate & Center</span></p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground"><span className="text-foreground font-medium">Panduan Strategi Karir & Relasi</span></p>
+          <div className="flex flex-col gap-6 mt-4">
+            
+            {/* Product Tier Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Essential Package */}
+              <div 
+                className={cn(
+                  "border rounded-xl p-4 cursor-pointer transition-all relative",
+                  selectedTier === 'essential' 
+                    ? "border-primary bg-primary/10 ring-1 ring-primary" 
+                    : "border-border bg-card hover:border-primary/50"
+                )}
+                onClick={() => setSelectedTier('essential')}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-bold text-lg">Essential</h3>
+                  <div className="text-right">
+                    <span className="block text-xl font-bold text-primary">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.price)}</span>
+                    <span className="block text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Billing Inputs */}
-              <div className="space-y-2 sm:space-y-3 border-t border-border pt-3 sm:pt-4">
-                <h4 className="font-semibold text-foreground text-xs sm:text-sm">Data Pemesan (Wajib Diisi):</h4>
-                <div className="space-y-2">
-                  <Label htmlFor="billing-name" className="text-xs">Nama Lengkap</Label>
-                  <Input id="billing-name" value={billingName} onChange={handleNameChange} placeholder="Nama Lengkap" className="h-9 sm:h-10 text-sm" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="billing-email" className="text-xs">Email</Label>
-                  <Input id="billing-email" type="email" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} placeholder="email@contoh.com" className="h-9 sm:h-10 text-sm" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="billing-phone" className="text-xs">WhatsApp</Label>
-                  <Input id="billing-phone" type="tel" value={billingPhone} onChange={(e) => setBillingPhone(e.target.value)} placeholder="+628..." className="h-9 sm:h-10 text-sm" />
-                </div>
-              </div>
-
-              {/* Coupon Input */}
-              <div className="space-y-2 sm:space-y-3 border-t border-border pt-3 sm:pt-4">
-                <Label className="text-xs font-semibold">Punya kode kupon?</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    placeholder="Masukkan kode"
-                    className="h-9 sm:h-10 text-sm uppercase"
-                    disabled={!!appliedCoupon}
-                  />
-                  {appliedCoupon ? (
-                    <Button variant="outline" size="sm" onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} className="text-destructive border-destructive hover:bg-destructive/10 text-xs sm:text-sm whitespace-nowrap">
-                      Hapus
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={checkCoupon}
-                      disabled={isCheckingCoupon || !couponCode}
-                      className="text-xs sm:text-sm whitespace-nowrap"
-                    >
-                      {isCheckingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Cek'}
-                    </Button>
-                  )}
-                </div>
-                {appliedCoupon && (
-                  <p className="text-xs text-green-500 font-medium flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Kupon berhasil dipasang!
-                  </p>
+                <p className="text-xs text-muted-foreground mb-3">Ringkasan fundamental desain Anda.</p>
+                <ul className="space-y-1.5 mb-4">
+                  {PRODUCTS.ESSENTIAL_REPORT.features.slice(0, 4).map((feat, idx) => (
+                    <li key={idx} className="text-xs flex items-start gap-2">
+                      <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+                 {selectedTier === 'essential' && (
+                  <div className="absolute -top-3 -right-3 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-full">
+                    Dipilih
+                  </div>
                 )}
               </div>
 
-              {/* Order Summary */}
-              <div className="bg-secondary/30 rounded-xl p-4 border border-border space-y-3">
-                <h4 className="font-semibold text-foreground text-sm flex items-center gap-2">
-                  <ShoppingCart className="w-4 h-4" />
-                  Ringkasan Pesanan
-                </h4>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Produk</span>
-                    <span className="text-foreground">Laporan Human Design Lengkap</span>
+              {/* Full Package */}
+              <div 
+                className={cn(
+                  "border rounded-xl p-4 cursor-pointer transition-all relative overflow-hidden",
+                  selectedTier === 'full' 
+                    ? "border-accent bg-accent/10 ring-1 ring-accent" 
+                    : "border-border bg-card hover:border-accent/50"
+                )}
+                onClick={() => setSelectedTier('full')}
+              >
+                <div className="absolute top-0 right-0 bg-accent text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg">
+                  TERLARIS
+                </div>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-bold text-lg">Full Report</h3>
+                   <div className="text-right mt-1">
+                    <span className="block text-xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
+                    <span className="block text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
                   </div>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">Analisis 100+ halaman super lengkap.</p>
+                <ul className="space-y-1.5">
+                   {PRODUCTS.FULL_REPORT.features.slice(0, 5).map((feat, idx) => (
+                    <li key={idx} className="text-xs flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                  <li className="text-xs flex items-start gap-2 font-semibold text-accent">
+                     <Plus className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                     <span>Semua fitur Essential</span>
+                  </li>
+                </ul>
+                {selectedTier === 'full' && (
+                  <div className="absolute bottom-2 right-2 text-accent opacity-20">
+                     <CheckCircle2 className="w-16 h-16" />
+                  </div>
+                )}
+              </div>
+            </div>
 
-                  {appliedCoupon?.discount_type === 'full_free' ? (
-                    <div className="flex justify-between items-baseline border-t border-border pt-2 mt-2">
-                      <span className="text-muted-foreground">Total</span>
-                      <div className="text-right">
-                        <span className="line-through text-muted-foreground text-sm mr-2">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
-                        <span className="text-xl font-bold text-green-500">GRATIS</span>
-                      </div>
-                    </div>
-                  ) : appliedCoupon?.discount_type === 'percentage' ? (
-                    <div className="flex justify-between items-baseline border-t border-border pt-2 mt-2">
-                      <span className="text-muted-foreground">
-                        <span className="line-through mr-2">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
-                        <span className="bg-green-500/20 text-green-400 text-xs px-1.5 py-0.5 rounded">-{Math.round(Number(appliedCoupon.discount_value))}%</span>
-                      </span>
-                      <span className="text-2xl font-bold text-primary">
-                        {formatPrice(Math.round(PRICING_CONFIG.REPORT_PRICE * (1 - Number(appliedCoupon.discount_value) / 100)))}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex justify-between items-baseline border-t border-border pt-2 mt-2">
-                      <span className="text-muted-foreground">
-                        <span className="line-through mr-2">{formatPrice(PRICING_CONFIG.ORIGINAL_PRICE)}</span>
-                        <span className="bg-green-500/20 text-green-400 text-xs px-1.5 py-0.5 rounded">-{Math.round(((PRICING_CONFIG.ORIGINAL_PRICE - PRICING_CONFIG.REPORT_PRICE) / PRICING_CONFIG.ORIGINAL_PRICE) * 100)}%</span>
-                      </span>
-                      <span className="text-2xl font-bold text-primary">{formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
-                    </div>
-                  )}
+            {/* Add-on Selection */}
+            <div className="bg-secondary/20 border border-amber-500/30 rounded-xl p-4 flex items-center gap-4">
+              <Checkbox 
+                id="bazi-addon" 
+                checked={includeBazi} 
+                onCheckedChange={(checked) => setIncludeBazi(checked as boolean)}
+                className="w-5 h-5 border-amber-500 data-[state=checked]:bg-amber-500 data-[state=checked]:text-black"
+              />
+              <div className="flex-1">
+                <Label htmlFor="bazi-addon" className="font-semibold text-sm cursor-pointer block text-amber-500">
+                  Tambah Bazi Report Add-on (+{formatPrice(PRODUCTS.BAZI_ADDON.price)})
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Analisis elemen keberuntungan tahunan berdasarkan astrologi Cina.
+                </p>
+              </div>
+            </div>
+
+            {/* Billing Inputs */}
+            <div className="space-y-3 border-t border-border pt-4">
+              <h4 className="font-semibold text-foreground text-sm">Data Penerima Report:</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                 <div className="space-y-1.5">
+                  <Label htmlFor="billing-name" className="text-xs">Nama Lengkap</Label>
+                  <Input id="billing-name" value={billingName} onChange={handleNameChange} placeholder="Nama Lengkap" className="h-9 text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="billing-email" className="text-xs">Email</Label>
+                  <Input id="billing-email" type="email" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} placeholder="email@contoh.com" className="h-9 text-sm" />
                 </div>
               </div>
+               <div className="space-y-1.5">
+                  <Label htmlFor="billing-phone" className="text-xs">WhatsApp</Label>
+                  <Input id="billing-phone" type="tel" value={billingPhone} onChange={(e) => setBillingPhone(e.target.value)} placeholder="+628..." className="h-9 text-sm" />
+                </div>
+            </div>
 
-              {/* CTA Button */}
+            {/* Coupon Input */}
+            <div className="space-y-2 border-t border-border pt-4">
+               <div className="flex justify-between items-center">
+                  <Label className="text-xs font-semibold">Kode Kupon</Label>
+                  {appliedCoupon && (
+                     <span className="text-xs text-green-500 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Hemat {appliedCoupon.discount_value}%
+                    </span>
+                  )}
+               </div>
+              <div className="flex gap-2">
+                <Input
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="Masukkan kode promo"
+                  className="h-9 text-sm uppercase"
+                  disabled={!!appliedCoupon}
+                />
+                {appliedCoupon ? (
+                  <Button variant="outline" size="sm" onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} className="text-destructive border-destructive hover:bg-destructive/10 h-9">
+                    Hapus
+                  </Button>
+                ) : (
+                  <Button variant="secondary" size="sm" onClick={checkCoupon} disabled={isCheckingCoupon || !couponCode} className="h-9">
+                    {isCheckingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Cek'}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Order Summary & CTA */}
+            <div className="bg-secondary/30 rounded-xl p-4 border border-border space-y-3">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                   <span className="text-muted-foreground">{selectedProduct.name}</span>
+                   <span>{formatPrice(selectedProduct.price)}</span>
+                </div>
+                {includeBazi && (
+                  <div className="flex justify-between">
+                     <span className="text-muted-foreground">Bazi Report Add-on</span>
+                     <span>{formatPrice(PRODUCTS.BAZI_ADDON.price)}</span>
+                  </div>
+                )}
+                 {appliedCoupon && appliedCoupon.discount_type !== 'full_free' && (
+                    <div className="flex justify-between text-green-500">
+                      <span>Diskon ({appliedCoupon.discount_value}%)</span>
+                      <span>- {formatPrice(getSubtotal() - getTotalWithDiscount())}</span>
+                    </div>
+                 )}
+                
+                <div className="flex justify-between items-end border-t border-border pt-2 mt-2">
+                  <span className="font-semibold text-lg">Total</span>
+                  <div className="text-right">
+                     {appliedCoupon?.discount_type === 'full_free' ? (
+                        <span className="text-xl font-bold text-green-500">GRATIS</span>
+                     ) : (
+                       <>
+                        <span className="text-xs text-muted-foreground line-through mr-2">
+                          {formatPrice((selectedTier === 'full' ? PRODUCTS.FULL_REPORT.original_price : PRODUCTS.ESSENTIAL_REPORT.original_price) + (includeBazi ? PRODUCTS.BAZI_ADDON.original_price : 0))}
+                        </span>
+                        <span className="text-xl font-bold text-primary">{formatPrice(getTotalWithDiscount())}</span>
+                       </>
+                     )}
+                  </div>
+                </div>
+                 <div className="flex justify-end">
+                    <span className="bg-green-500/20 text-green-400 text-[10px] px-2 py-0.5 rounded-full">
+                       Hemat {getSavings()}%
+                    </span>
+                 </div>
+              </div>
+
+               {/* CTA Button */}
               {appliedCoupon?.discount_type === 'full_free' ? (
                 <Button
                   onClick={handleRedeemFree}
                   disabled={isLoading || !billingName || !billingEmail}
                   size="lg"
-                  className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm sm:text-base md:text-lg py-4 sm:py-5 md:py-6 shadow-lg shadow-green-500/20"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-6"
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
-                      <span className="whitespace-nowrap">Memproses Klaim...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                      <span className="whitespace-nowrap">Klaim Report Gratis</span>
-                    </>
-                  )}
+                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                   Klaim Report Gratis
                 </Button>
               ) : (
                 <Button
                   onClick={handleBuy}
                   disabled={isLoading || !billingName || !billingEmail}
                   size="lg"
-                  className="w-full fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-sm sm:text-base md:text-lg py-4 sm:py-5 md:py-6"
+                  className="w-full fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6 text-base"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
-                      <span className="whitespace-nowrap">Memproses...</span>
+                      Memproses...
                     </>
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                      <span className="whitespace-nowrap">Bayar {appliedCoupon?.discount_type === 'percentage'
-                        ? formatPrice(Math.round(PRICING_CONFIG.REPORT_PRICE * (1 - Number(appliedCoupon.discount_value) / 100)))
-                        : formatPrice(PRICING_CONFIG.REPORT_PRICE)}</span>
+                      Bayar {formatPrice(getTotalWithDiscount())}
                     </>
                   )}
                 </Button>
               )}
-
-
-
-              <div className="text-center space-y-2 pt-2">
-                <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Shield className="w-3.5 h-3.5" />
-                    Garansi Uang Kembali
-                  </span>
-                  <span>•</span>
-                  <span>1500+ Chart Dibuat</span>
-                </div>
-                <p className="text-xs text-muted-foreground font-medium">
-                  Pembayaran Aman via Midtrans (QRIS, VA, E-Wallet)
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  ⚡ Laporan dikirim dalam 24 jam ke email Anda
-                </p>
-              </div>
+               <p className="text-center text-[10px] text-muted-foreground">
+                  Garansi uang kembali 30 hari. Transaksi aman & terenkripsi.
+               </p>
             </div>
+
           </div>
         </DialogContent>
       </Dialog>
@@ -535,9 +561,6 @@ export const ProductPreviewModal = ({
           <div className="space-y-4">
             <p className="text-foreground">
               Chart ini sudah pernah dibeli dan dibayar sebelumnya (status LUNAS).
-            </p>
-            <p className="text-muted-foreground text-sm">
-              Silakan generate chart baru atau cek menu "Laporan Saya" untuk melihat chart yang sudah Anda beli.
             </p>
             <div className="flex justify-end">
               <Button onClick={() => setShowDuplicateAlert(false)}>
