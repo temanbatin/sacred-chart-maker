@@ -26,7 +26,7 @@ const steps = [
 
 export const HowItWorksSection = () => {
   return (
-    <section className="py-20 px-4">
+    <section className="pt-20 pb-0 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
           <span className="inline-block bg-primary/20 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
@@ -82,7 +82,7 @@ export const HowItWorksSection = () => {
         </div>
 
         {/* Animated Arrow Down */}
-        <div className="flex flex-col items-center mt-16">
+        <div className="flex flex-col items-center mt-10">
           <p className="text-muted-foreground text-sm mb-4">Mulai Sekarang ↓</p>
           <div className="relative">
             {/* Pulsing glow ring */}
