@@ -119,7 +119,7 @@ const HubungiKami = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-foreground mb-1">PT Karia Nata Group</h3>
-                    <p className="text-muted-foreground">Dukuh Runting, Pati, Jawa Tengah</p>
+                    <p className="text-muted-foreground">Kediri, Indonesia 64111</p>
                   </div>
                 </div>
               </div>
