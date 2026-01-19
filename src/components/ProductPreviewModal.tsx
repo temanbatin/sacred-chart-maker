@@ -570,13 +570,14 @@ export const ProductPreviewModal = ({
                       </>
                     )}
                   </Button>
-              )}
                   <p className="text-center text-[10px] text-muted-foreground">
                     Garansi uang kembali 30 hari. Transaksi aman & terenkripsi.
                   </p>
-                </div>
-
+                </>
+              )}
             </div>
+
+          </div>
         </DialogContent>
       </Dialog>
 
