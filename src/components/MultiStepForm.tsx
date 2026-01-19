@@ -65,11 +65,15 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
         setIsSearching(true);
         try {
             const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`);
+            if (!response.ok) {
+                throw new Error('Gagal mengambil data kota');
+            }
             const data = await response.json();
             setCitySuggestions(data);
             setShowSuggestions(true);
         } catch (error) {
             console.error('Error searching cities:', error);
+            toast.error("Gagal mencari kota. Silakan periksa koneksi internet Anda.");
         } finally {
             setIsSearching(false);
         }

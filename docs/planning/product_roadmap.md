@@ -69,3 +69,25 @@ Roadmap ini menggabungkan ekspansi produk (Horizontal) dan kedalaman fitur (Vert
 *   **Fokus**: B2B & International Market.
 *   **Goal**: Revenue Stream baru dari lisensi/white label.
 *   *Task*: translate seluruh UI & Report ke Bahasa Inggris.
+
+---
+
+## 3. Web Silo & Architecture (Planned for Bazi Integration)
+*Strategy to integrate BaZi logically without confusing the "Human Design" core.*
+
+### Concept: The "Two Pillars"
+- **Lensa 1: Human Design (The "Who")** - E.g. `/human-design`
+- **Lensa 2: BaZi (The "When")** - E.g. `/bazi`
+
+### Proposed URL Structure
+1.  **Landing Pages**:
+    *   `/` (Home Hub): Choose path (HD or BaZi).
+    *   `/human-design`: Current main page.
+    *   `/bazi`: New landing page for BaZi education & calculator.
+2.  **Calculators**:
+    *   `/apps/hd-chart`: Existing generator.
+    *   `/apps/bazi-chart`: Simple 4-Pillars generator.
+
+### User Journey Strategy
+1.  **Flow A (Standard):** User enters via HD -> Upsell BaZi at checkout (Bundle).
+2.  **Flow B (Retention):** Existing user targeted via email for "Annual Forecast" -> Lands on `/bazi` -> Buys single report.

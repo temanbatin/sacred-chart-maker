@@ -52,8 +52,42 @@ const ExpandableText = ({ text, limit = 150 }: { text: string; limit?: number })
   );
 };
 
+interface ChartData {
+  general: {
+    energy_type?: string;
+    strategy?: string;
+    inner_authority?: string;
+    profile?: string;
+    definition?: string;
+    inc_cross?: string;
+    aura?: string;
+    signature?: string;
+    not_self?: string;
+    defined_centers?: any[];
+    undefined_centers?: any[];
+    utc_datetime?: string;
+    utc_date?: string;
+    utc_time?: string;
+    variables?: {
+      top_left?: { value: string };
+      bottom_left?: { value: string };
+      top_right?: { value: string };
+      bottom_right?: { value: string };
+    };
+  };
+  channels?: {
+    Channels?: any[];
+  };
+  gates?: {
+    des?: { Planets: PlanetData[] };
+    prs?: { Planets: PlanetData[] };
+  };
+  utc?: string;
+  [key: string]: any; // Allow other properties
+}
+
 interface ChartResultProps {
-  data: any;
+  data: ChartData;
   userName: string;
   userEmail?: string;
   userPhone?: string;
@@ -152,19 +186,21 @@ const planetDescriptions: Record<string, { title: string; description: string }>
 };
 
 // Planet column - aligned properly for symmetry
-const PlanetColumn = ({ planets, title, side }: { planets: PlanetData[]; title: string; side: "left" | "right" }) => {
+const PlanetColumn = ({ planets, title, side, hideHeader = false }: { planets: PlanetData[]; title: string; side: "left" | "right"; hideHeader?: boolean }) => {
   const isDesign = side === "left";
 
   return (
     <div className={`flex flex-col ${isDesign ? "items-end" : "items-start"}`}>
-      {/* Header with arrow */}
-      <div className={`flex items-center gap-1 mb-2 pb-1 border-b border-muted w-full ${isDesign ? "justify-end" : "justify-start"}`}>
-        {isDesign && <span className="text-primary text-xs">←</span>}
-        <span className={`text-[10px] font-bold uppercase tracking-wider ${isDesign ? "text-primary" : "text-muted-foreground"}`}>
-          {title}
-        </span>
-        {!isDesign && <span className="text-muted-foreground text-xs">→</span>}
-      </div>
+      {/* Header with arrow - Conditionally Rendered */}
+      {!hideHeader && (
+        <div className={`flex items-center gap-1 mb-2 pb-1 border-b border-muted w-full ${isDesign ? "justify-end" : "justify-start"}`}>
+          {isDesign && <span className="text-primary text-xs">←</span>}
+          <span className={`text-[10px] font-bold uppercase tracking-wider ${isDesign ? "text-primary" : "text-muted-foreground"}`}>
+            {title}
+          </span>
+          {!isDesign && <span className="text-muted-foreground text-xs">→</span>}
+        </div>
+      )}
       {/* Planet rows - aligned */}
       {planets.map((planet, index) => (
         <Popover key={index}>
@@ -336,6 +372,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const [slideIndex, setSlideIndex] = useState(0);
   const chartRef = useRef<HTMLDivElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
+  const instagramExportRef = useRef<HTMLDivElement>(null);
 
   // Warning saat user mau tutup tab (hanya untuk guest yang belum save)
   const isUnsaved = !chartId && !userId;
@@ -450,6 +487,8 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       "Biarkan waktu yang memberikan jawaban. Berikan dirimu jeda satu siklus bulan penuh (28 hari) untuk mendapatkan kejernihan total sebelum mengambil komitmen besar.",
   };
 
+  const birthDataString = JSON.stringify(birthData);
+
   // Fetch bodygraph image when component mounts
   useEffect(() => {
     // Track Lead Event when chart is viewed
@@ -486,28 +525,24 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
     };
 
     fetchBodygraph();
-  }, [JSON.stringify(birthData)]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [birthDataString]);
 
-  // Download chart as PNG image
-  // Download chart as PNG image
-  const handleDownload = async () => {
-    if (!exportRef.current) return;
+  // Download chart as Instagram Story-friendly portrait image
+  const handleDownloadInstagram = async () => {
+    if (!instagramExportRef.current) return;
 
     setIsDownloading(true);
 
     try {
-      const canvas = await html2canvas(exportRef.current, {
+      const canvas = await html2canvas(instagramExportRef.current, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: "#030712", // dark background
+        backgroundColor: null,
         logging: false,
-        onclone: (clonedDoc) => {
-          const exportEl = clonedDoc.getElementById('chart-export-view');
-          if (exportEl) {
-            exportEl.style.display = 'block';
-          }
-        }
+        width: 1080,
+        height: 1920,
       });
 
       canvas.toBlob((blob) => {
@@ -515,7 +550,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
-          link.download = `temanbatin-chart-${userName.replace(/\s+/g, "-").toLowerCase()}.png`;
+          link.download = `temanbatin-${userName.replace(/\s+/g, "-").toLowerCase()}-story.png`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -523,12 +558,12 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
 
           toast({
             title: "Berhasil!",
-            description: "Chart berhasil diunduh.",
+            description: "Chart siap dibagikan ke Instagram Story.",
           });
         }
       }, "image/png");
     } catch (error) {
-      console.error("Error downloading chart:", error);
+      console.error("Error downloading Instagram Story:", error);
       toast({
         title: "Gagal mengunduh",
         description: "Terjadi kesalahan saat mengunduh chart.",
@@ -609,35 +644,50 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                   <PlanetColumn planets={designPlanets} title="DESIGN" side="left" />
                 </div>
 
-                {/* Left Variable Arrows */}
-                {general.variables && (
-                  <div className="flex flex-col gap-8 self-center">
-                    <span className="text-sm font-bold text-primary">{general.variables.top_left?.value === "left" ? "←" : "→"}</span>
-                    <span className="text-sm font-bold text-primary">{general.variables.bottom_left?.value === "left" ? "←" : "→"}</span>
-                  </div>
-                )}
-
                 {/* Bodygraph Chart */}
-                <div className="flex-shrink-0 self-start">
+                <div className="flex-shrink-0 self-start relative mx-8">
+                  {/* Variable Arrows Overlay - Desktop */}
+                  {general.variables && (
+                    <>
+                      {/* Left Arrows (Design) */}
+                      <div className="absolute top-[60px] left-[30px] flex flex-col gap-8 z-30">
+                        <span className="text-sm font-bold text-amber-500 drop-shadow-md transform scale-125">
+                          {general.variables.top_left?.value === "left" ? "←" : "→"}
+                        </span>
+                        <span className="text-sm font-bold text-amber-500 drop-shadow-md transform scale-125">
+                          {general.variables.bottom_left?.value === "left" ? "←" : "→"}
+                        </span>
+                      </div>
+
+                      {/* Right Arrows (Personality) */}
+                      <div className="absolute top-[60px] right-[30px] flex flex-col gap-8 z-30">
+                        <span className="text-sm font-bold text-foreground drop-shadow-md transform scale-125">
+                          {general.variables.top_right?.value === "left" ? "←" : "→"}
+                        </span>
+                        <span className="text-sm font-bold text-foreground drop-shadow-md transform scale-125">
+                          {general.variables.bottom_right?.value === "left" ? "←" : "→"}
+                        </span>
+                      </div>
+                    </>
+                  )}
+
                   {bodygraphLoading ? (
                     <div className="w-[220px] xl:w-[260px] h-[300px] xl:h-[360px] rounded-xl bg-secondary/30 flex flex-col items-center justify-center border border-dashed border-muted animate-pulse">
                       <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
                       <p className="text-muted-foreground text-sm">Loading...</p>
                     </div>
                   ) : bodygraphImage ? (
-                    <img src={bodygraphImage} alt="Bodygraph" className="w-[220px] xl:w-[260px] h-auto" />
+                    <img
+                      src={bodygraphImage}
+                      alt="Bodygraph"
+                      className="w-[220px] xl:w-[260px] h-auto relative z-10"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
                     <div className="w-[220px] xl:w-[260px] h-[300px] bg-secondary/20 rounded-xl flex items-center justify-center text-muted-foreground text-sm">Chart unavailable</div>
                   )}
                 </div>
-
-                {/* Right Variable Arrows */}
-                {general.variables && (
-                  <div className="flex flex-col gap-8 self-center">
-                    <span className="text-sm font-bold text-muted-foreground">{general.variables.top_right?.value === "left" ? "←" : "→"}</span>
-                    <span className="text-sm font-bold text-muted-foreground">{general.variables.bottom_right?.value === "left" ? "←" : "→"}</span>
-                  </div>
-                )}
 
                 {/* Personality Column - fixed width for symmetry */}
                 <div className="flex-shrink-0 self-start w-[80px]">
@@ -646,46 +696,56 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               </div>
             </div>
 
-            <div className="lg:hidden">
+            <div className="lg:hidden relative mt-8 mb-8">
               {/* Chart with Planet Columns - Centered - Bottom Aligned */}
-              <div className="w-full flex justify-center items-end gap-1 mb-4">
+              <div className="w-full flex justify-center items-start gap-0 relative">
+
                 {/* Design Column - fixed width */}
-                <div className="w-[70px] flex-shrink-0 self-start">
-                  <PlanetColumn planets={designPlanets} title="DESIGN" side="left" />
+                <div className="w-[70px] flex-shrink-0 self-start mt-12 relative z-20 text-right">
+                  <PlanetColumn planets={designPlanets} title="DESIGN" side="left" hideHeader={false} />
                 </div>
 
-                {/* Variable Arrows Left */}
-                {general.variables && (
-                  <div className="flex flex-col gap-6 self-center">
-                    <span className="text-xs font-bold text-primary">{general.variables.top_left?.value === "left" ? "←" : "→"}</span>
-                    <span className="text-xs font-bold text-primary">{general.variables.bottom_left?.value === "left" ? "←" : "→"}</span>
-                  </div>
-                )}
+                {/* Bodygraph Container with Overlay Variables */}
+                <div className="flex-shrink-0 relative z-10 mt-[75px]">
+                  {/* Variable Arrows Overlay - Positioned specifically around the head */}
+                  {general.variables && (
+                    <>
+                      {/* Left Arrows (Design) */}
+                      <div className="absolute top-[45px] left-[25px] flex flex-col gap-6 z-30">
+                        <span className="text-xs font-bold text-amber-500 drop-shadow-md transform scale-125">
+                          {general.variables.top_left?.value === "left" ? "←" : "→"}
+                        </span>
+                        <span className="text-xs font-bold text-amber-500 drop-shadow-md transform scale-125">
+                          {general.variables.bottom_left?.value === "left" ? "←" : "→"}
+                        </span>
+                      </div>
 
-                {/* Bodygraph Chart */}
-                <div className="flex-shrink-0">
+                      {/* Right Arrows (Personality) */}
+                      <div className="absolute top-[45px] right-[25px] flex flex-col gap-6 z-30">
+                        <span className="text-xs font-bold text-foreground drop-shadow-md transform scale-125">
+                          {general.variables.top_right?.value === "left" ? "←" : "→"}
+                        </span>
+                        <span className="text-xs font-bold text-foreground drop-shadow-md transform scale-125">
+                          {general.variables.bottom_right?.value === "left" ? "←" : "→"}
+                        </span>
+                      </div>
+                    </>
+                  )}
+
                   {bodygraphLoading ? (
-                    <div className="w-[160px] aspect-[3/4] rounded-xl bg-secondary/30 flex flex-col items-center justify-center animate-pulse">
+                    <div className="w-[200px] aspect-[3/4] rounded-xl bg-secondary/30 flex flex-col items-center justify-center animate-pulse">
                       <Loader2 className="w-8 h-8 text-primary animate-spin" />
                     </div>
                   ) : bodygraphImage ? (
-                    <img src={bodygraphImage} alt="Bodygraph" className="w-[160px] h-auto" />
+                    <img src={bodygraphImage} alt="Bodygraph" className="w-[200px] h-auto relative z-10" />
                   ) : (
-                    <div className="w-[160px] aspect-[3/4] bg-secondary/20 rounded-xl flex items-center justify-center text-muted-foreground text-xs">Chart unavailable</div>
+                    <div className="w-[200px] aspect-[3/4] bg-secondary/20 rounded-xl flex items-center justify-center text-muted-foreground text-xs">Chart unavailable</div>
                   )}
                 </div>
 
-                {/* Variable Arrows Right */}
-                {general.variables && (
-                  <div className="flex flex-col gap-6 self-center">
-                    <span className="text-xs font-bold text-muted-foreground">{general.variables.top_right?.value === "left" ? "←" : "→"}</span>
-                    <span className="text-xs font-bold text-muted-foreground">{general.variables.bottom_right?.value === "left" ? "←" : "→"}</span>
-                  </div>
-                )}
-
                 {/* Personality Column - fixed width */}
-                <div className="w-[70px] flex-shrink-0 self-start">
-                  <PlanetColumn planets={personalityPlanets} title="PERSONALITY" side="right" />
+                <div className="w-[70px] flex-shrink-0 self-start mt-12 relative z-20 text-left">
+                  <PlanetColumn planets={personalityPlanets} title="PERSONALITY" side="right" hideHeader={false} />
                 </div>
               </div>
 
@@ -774,20 +834,10 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             onClick={onReset}
             variant="ghost"
             size="icon"
-            className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50"
+            className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50 transition-all hover:text-amber-400 group"
             title="Buat Chart Baru"
           >
-            <RotateCcw className="w-4 h-4" />
-          </Button>
-
-          <Button
-            onClick={handleShare}
-            variant="ghost"
-            size="icon"
-            className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50"
-            title="Salin Link"
-          >
-            <Share2 className="w-4 h-4" />
+            <RotateCcw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
           </Button>
 
           {/* Save button for guest users */}
@@ -796,25 +846,25 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               onClick={() => setShowSaveDialog(true)}
               variant="ghost"
               size="icon"
-              className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50"
+              className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50 transition-colors hover:text-amber-400"
               title="Simpan Chart"
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-5 h-5" />
             </Button>
           )}
 
           <Button
-            onClick={handleDownload}
+            onClick={handleDownloadInstagram}
             disabled={isDownloading}
             variant="ghost"
             size="icon"
-            className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50"
-            title="Unduh Hasil"
+            className="w-10 h-10 rounded-full bg-muted/30 hover:bg-muted/50 transition-colors hover:text-amber-400"
+            title="Bagikan ke Instagram"
           >
             {isDownloading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              <Download className="w-4 h-4" />
+              <Share2 className="w-5 h-5" />
             )}
           </Button>
         </div>
@@ -1102,6 +1152,319 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         </Dialog>
       </div>
 
+      {/* Hidden Instagram Story Export View - Luxury Edition 1080x1920 */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <div
+          id="instagram-story-export-view"
+          ref={instagramExportRef}
+          style={{
+            width: '1080px',
+            height: '1920px',
+            background: '#FDF9E2',
+            position: 'relative',
+            overflow: 'hidden',
+            fontFamily: "'Playfair Display', serif",
+            color: '#052820',
+          }}
+        >
+          {/* Decorative Background Elements - Soft Glows */}
+          <div style={{
+            position: 'absolute',
+            top: '-10%',
+            right: '-10%',
+            width: '800px',
+            height: '800px',
+            background: 'radial-gradient(circle, rgba(189, 89, 15, 0.08) 0%, transparent 70%)',
+            filter: 'blur(100px)',
+          }} />
+
+          {/* Artistic Bodygraph - Straight & Clean with Planets */}
+          <div style={{
+            position: 'absolute',
+            top: '19%', // Tweaked for perfect optical center
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start', // Top align columns to chart shoulders
+            opacity: 1,
+            zIndex: 1,
+            gap: '0px', // Removed gap for overlay effect
+          }}
+          >
+            {/* Design Planets (Left) */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              gap: '10px', // Consistent rhythm
+              marginTop: '60px', // Align with chart head/shoulders visually
+              marginRight: '-60px', // Pull into bodygraph
+              zIndex: 10, // Text on top of image
+              position: 'relative',
+            }}>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: '11px', fontWeight: '700', letterSpacing: '3px', color: '#BD590F', marginBottom: '12px' }}>DESIGN</div>
+              {designPlanets.map((p, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '14px', fontWeight: '600', color: '#052820' }}>{p.Gate}.{p.Line}</span>
+                  <span style={{ fontFamily: "'serif'", fontSize: '18px', color: '#BD590F', lineHeight: 1 }}>
+                    {planetSymbols[p.Planet] || p.Planet.charAt(0)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Bodygraph Image */}
+            {bodygraphImage && (
+              <img
+                src={bodygraphImage}
+                alt="Bodygraph"
+                crossOrigin="anonymous" // Critical for html2canvas
+                style={{
+                  maxWidth: '580px', // Perfect size relative to 1080px width
+                  height: 'auto',
+                  objectFit: 'contain',
+                  marginTop: '0px',
+                }}
+              />
+            )}
+
+            {/* Personality Planets (Right) */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '10px',
+              marginTop: '60px', // Align with chart head/shoulders visually
+              marginLeft: '-60px', // Pull into bodygraph
+              zIndex: 10,
+              position: 'relative',
+            }}>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: '11px', fontWeight: '700', letterSpacing: '3px', color: '#052820', marginBottom: '12px' }}>PERSONALITY</div>
+              {personalityPlanets.map((p, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontFamily: "'serif'", fontSize: '18px', color: '#052820', lineHeight: 1 }}>
+                    {planetSymbols[p.Planet] || p.Planet.charAt(0)}
+                  </span>
+                  <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '14px', fontWeight: '600', color: '#052820' }}>{p.Gate}.{p.Line}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Content Container - Z-Index above chart */}
+          <div style={{
+            position: 'relative',
+            zIndex: 10,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: '70px 70px 50px 70px', // Optimized padding
+          }}>
+
+            {/* Header - Editorial Style */}
+            <div style={{ textAlign: 'center' }}>
+              <p style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontSize: '18px',
+                fontWeight: '600',
+                letterSpacing: '5px', // Wider tracking for elegance
+                color: '#BD590F',
+                textTransform: 'uppercase',
+                marginBottom: '20px',
+              }}>
+                Human Design Chart
+              </p>
+              <h1 style={{
+                fontSize: '100px', // Slightly larger impact
+                fontWeight: '700',
+                fontStyle: 'italic',
+                lineHeight: '0.85',
+                marginBottom: '24px',
+                letterSpacing: '-3px',
+              }}>
+                {userName.split(' ')[0]}
+                {userName.split(' ').length > 1 && (
+                  <span style={{ display: 'block', fontSize: '0.5em', fontStyle: 'normal', fontWeight: '400', marginTop: '12px', letterSpacing: '0px' }}>
+                    {userName.split(' ').slice(1).join(' ')}
+                  </span>
+                )}
+              </h1>
+
+              <div style={{
+                width: '40px', // Subtle divider
+                height: '3px',
+                background: '#052820',
+                margin: '0 auto',
+                borderRadius: '100px',
+                opacity: 0.8,
+              }} />
+            </div>
+
+            {/* Middle Section - Spacer */}
+            <div style={{ flex: 1 }}></div>
+
+            {/* Bottom Section - Attributes List (No Boxes, Clean Spacing) */}
+            <div style={{
+              background: '#FDF9E2',
+              paddingTop: '40px',
+              paddingBottom: '30px',
+              position: 'relative',
+              marginTop: '-40px',
+            }}>
+              {/* Chart Type - Highlighted */}
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '50px',
+              }}>
+                <p style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: '15px',
+                  letterSpacing: '3px',
+                  textTransform: 'uppercase',
+                  color: 'rgba(5, 40, 32, 0.6)',
+                  marginBottom: '10px',
+                }}>
+                  Energy Type
+                </p>
+                <p style={{
+                  fontSize: '52px', // Larger hero text
+                  fontWeight: '800', // Bolder
+                  letterSpacing: '-1.5px',
+                  color: '#052820',
+                }}>
+                  {chartType}
+                </p>
+              </div>
+
+              {/* Attributes Grid - Clean Typography & More Breathing Room */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '60px 40px', // Generous spacing
+                borderTop: '1px solid rgba(5, 40, 32, 0.08)',
+                paddingTop: '50px',
+                marginBottom: '70px',
+              }}>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    color: '#BD590F',
+                    marginBottom: '10px',
+                  }}>
+                    Strategy
+                  </p>
+                  <p style={{ fontSize: '26px', fontWeight: '600', lineHeight: '1.2' }}>
+                    {strategy}
+                  </p>
+                </div>
+
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    color: '#BD590F',
+                    marginBottom: '10px',
+                  }}>
+                    Authority
+                  </p>
+                  <p style={{ fontSize: '26px', fontWeight: '600', lineHeight: '1.2' }}>
+                    {authority}
+                  </p>
+                </div>
+
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    color: '#BD590F',
+                    marginBottom: '10px',
+                  }}>
+                    Profile
+                  </p>
+                  <p style={{ fontSize: '26px', fontWeight: '600', lineHeight: '1.2' }}>
+                    {profile}
+                  </p>
+                </div>
+
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    color: '#BD590F',
+                    marginBottom: '10px',
+                  }}>
+                    Definition
+                  </p>
+                  <p style={{ fontSize: '26px', fontWeight: '600', lineHeight: '1.2' }}>
+                    {definition}
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer Branding - Perfectly Integrated */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px', // Tighter spacing
+                marginTop: 'auto',
+              }}>
+                <img
+                  src="/favicon.png"
+                  alt="Logo"
+                  style={{
+                    width: '64px', // Slightly more subtle
+                    height: '64px',
+                    borderRadius: '50%',
+                    boxShadow: '0 4px 16px rgba(5, 40, 32, 0.1)', // Premium soft shadow
+                    marginBottom: '4px',
+                  }}
+                />
+
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontStyle: 'italic',
+                    fontSize: '16px', // Larger, readable
+                    color: 'rgba(5, 40, 32, 0.7)',
+                    marginBottom: '2px',
+                  }}>
+                    Create your free chart at
+                  </p>
+                  <p style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    letterSpacing: '1px',
+                    color: '#052820',
+                  }}>
+                    temanbatin.com
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Hidden Export View for Image Generation */}
       <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
         <div
@@ -1222,67 +1585,69 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       </div>
 
       {/* Floating Sticky CTA for Non-Purchased Users */}
-      {!isOrdered && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom duration-500">
-          {/* Mobile: Clean light floating bar */}
-          <div className="lg:hidden">
-            <div className="mx-3 mb-3 rounded-xl bg-white border border-gray-200 p-3 shadow-xl safe-area-bottom">
-              {/* Progress Bar */}
-              <div className="mb-2">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-500">Chart Analysis</span>
-                  <span className="text-emerald-700 font-semibold">5%</span>
-                </div>
-                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full w-[5%] bg-emerald-500 rounded-full" />
-                </div>
-              </div>
-
-              {/* CTA Button - Scrolls to main CTA */}
-              <Button
-                onClick={() => {
-                  document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 rounded-lg"
-              >
-                Buka Full Report
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Desktop: Slim bottom bar - Light Theme to match Mobile */}
-          <div className="hidden lg:block bg-white border-t border-gray-200 py-3 px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-            <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
-              {/* Left: Progress Info */}
-              <div className="flex items-center gap-4 flex-1">
-                <div className="flex flex-col w-full max-w-md">
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-gray-500 font-medium">Chart Analysis</span>
-                    <span className="text-emerald-700 font-bold">5%</span>
+      {
+        !isOrdered && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom duration-500">
+            {/* Mobile: Clean light floating bar */}
+            <div className="lg:hidden">
+              <div className="mx-3 mb-3 rounded-xl bg-white border border-gray-200 p-3 shadow-xl safe-area-bottom">
+                {/* Progress Bar */}
+                <div className="mb-2">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-500">Chart Analysis</span>
+                    <span className="text-emerald-700 font-semibold">5%</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden w-full">
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                     <div className="h-full w-[5%] bg-emerald-500 rounded-full" />
                   </div>
                 </div>
-              </div>
 
-              {/* Right: Button */}
-              <div className="flex-shrink-0">
+                {/* CTA Button - Scrolls to main CTA */}
                 <Button
                   onClick={() => {
                     document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-8 py-2.5 rounded-lg shadow-sm transition-all"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 rounded-lg"
                 >
                   Buka Full Report
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </div>
+
+            {/* Desktop: Slim bottom bar - Light Theme to match Mobile */}
+            <div className="hidden lg:block bg-white border-t border-gray-200 py-3 px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+              <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
+                {/* Left: Progress Info */}
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex flex-col w-full max-w-md">
+                    <div className="flex justify-between text-xs mb-1.5">
+                      <span className="text-gray-500 font-medium">Chart Analysis</span>
+                      <span className="text-emerald-700 font-bold">5%</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden w-full">
+                      <div className="h-full w-[5%] bg-emerald-500 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Button */}
+                <div className="flex-shrink-0">
+                  <Button
+                    onClick={() => {
+                      document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-8 py-2.5 rounded-lg shadow-sm transition-all"
+                  >
+                    Buka Full Report
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </section >
   );
 };

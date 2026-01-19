@@ -235,12 +235,32 @@ serve(async (req) => {
                         chartsData = fetchedCharts || [];
                     }
 
+                    // Determine report_type based on product_name
+                    let report_type = 'personal-comprehensive'; // Default
+                    const productName = (orderData?.product_name || '').toLowerCase();
+
+                    // Priority 1: Check for Bundles (Contain both 'bazi' AND 'human design')
+                    if (productName.includes('bazi') && productName.includes('human design')) {
+                        if (productName.includes('essential')) {
+                            report_type = 'bundle-essential-bazi';
+                        } else {
+                            report_type = 'bundle-full-bazi';
+                        }
+                    }
+                    // Priority 2: Check for Single Reports
+                    else if (productName.includes('essential')) {
+                        report_type = 'personal-essential';
+                    } else if (productName.includes('bazi')) {
+                        report_type = 'bazi';
+                    }
+
                     const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             order: orderData,
                             charts: chartsData,
+                            report_type: report_type,
                             transaction: {
                                 transaction_id,
                                 payment_type,
