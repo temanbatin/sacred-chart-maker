@@ -6,6 +6,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+/**
+ * Robust way to get the site URL.
+ * Priority: Header Origin -> Environment Variable -> Default Production URL
+ */
+function getSiteUrl(req: Request): string {
+  const origin = req.headers.get('origin');
+
+  // If it's a valid production origin, use it
+  if (origin && (origin.includes('temanbatin.com') || origin.includes('www.temanbatin.com'))) {
+    return origin;
+  }
+
+  // Fallback to hardcoded production if no origin (e.g. server-to-server) or localhost
+  return 'https://temanbatin.com';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -13,6 +29,7 @@ serve(async (req) => {
 
   try {
     const { email, password } = await req.json();
+    const siteUrl = getSiteUrl(req);
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -23,7 +40,7 @@ serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
     if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY not configured');
 
-    // 1. Create user (without auto-confirm)
+    // 1. Create user
     const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -33,23 +50,19 @@ serve(async (req) => {
     if (createError) throw createError;
 
     // 2. Generate confirmation link
-    // We use type 'signup' which will generate a token hash
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
       email,
-      options: { redirectTo: `${req.headers.get('origin')}/account` }
+      options: { redirectTo: `${siteUrl}/account` }
     });
 
     if (linkError) throw linkError;
 
-    // The link looks like: .../auth/v1/verify?token=HASH&type=signup&redirect_to=...
-    // We want to reconstruct it for our /verify page
     const url = new URL(linkData.properties.action_link);
     const tokenHash = url.searchParams.get('token');
+    const customVerifyUrl = `${siteUrl}/verify?token=${tokenHash}&email=${email}`;
 
-    const customVerifyUrl = `${req.headers.get('origin')}/verify?token=${tokenHash}&email=${email}`;
-
-    // 3. Send email via Resend
+    // 3. Send email
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -64,7 +77,9 @@ serve(async (req) => {
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2>Selamat Datang!</h2>
             <p>Klik tombol di bawah untuk memverifikasi email Anda:</p>
-            <a href="${customVerifyUrl}" style="background: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verifikasi Sekarang</a>
+            <div style="margin: 30px 0;">
+              <a href="${customVerifyUrl}" style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verifikasi Sekarang</a>
+            </div>
             <p style="margin-top: 20px; font-size: 12px; color: #666;">Atau salin link ini: ${customVerifyUrl}</p>
           </div>
         `,

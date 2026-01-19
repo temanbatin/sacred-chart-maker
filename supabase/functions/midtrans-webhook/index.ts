@@ -2,6 +2,22 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createHash, createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 
+/**
+ * Validates and sanitizes the n8n webhook URL.
+ * Prevents "Url scheme 'warning' not supported" or similar errors.
+ */
+function getValidWebhookUrl(): string {
+    const envUrl = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL');
+    const defaultUrl = 'https://flow.otomasi.click/webhook/hd-order-paid';
+
+    if (!envUrl) return defaultUrl;
+    if (!envUrl.startsWith('http')) {
+        console.warn('N8N_ORDER_PAID_WEBHOOK_URL seems invalid, using default. Value:', envUrl);
+        return defaultUrl;
+    }
+    return envUrl;
+}
+
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
     'https://temanbatin.com',
@@ -47,12 +63,10 @@ function verifySignature(
     serverKey: string,
     signatureKey: string
 ): boolean {
-    // Signature formula: SHA512(order_id+status_code+gross_amount+ServerKey)
     const rawString = orderId + statusCode + grossAmount + serverKey;
     const hash = createHash('sha512');
     hash.update(rawString);
     const expectedSignature = hash.digest('hex');
-
     return expectedSignature === signatureKey;
 }
 
@@ -65,82 +79,38 @@ serve(async (req) => {
 
     try {
         const MIDTRANS_SERVER_KEY = Deno.env.get('MIDTRANS_SERVER_KEY');
-
         if (!MIDTRANS_SERVER_KEY) {
             throw new Error('Midtrans server key not configured');
         }
 
-        // Parse webhook notification from Midtrans
         const notification: MidtransNotification = await req.json();
-
         console.log('Midtrans webhook received:', JSON.stringify(notification));
 
         const {
-            order_id,
-            transaction_status,
-            fraud_status,
-            status_code,
-            gross_amount,
-            signature_key,
-            payment_type,
-            settlement_time,
-            transaction_id
+            order_id, transaction_status, fraud_status, status_code,
+            gross_amount, signature_key, payment_type, settlement_time, transaction_id
         } = notification;
 
         // Verify signature
-        const isValidSignature = verifySignature(
-            order_id,
-            status_code,
-            gross_amount,
-            MIDTRANS_SERVER_KEY,
-            signature_key
-        );
-
-        if (!isValidSignature) {
+        if (!verifySignature(order_id, status_code, gross_amount, MIDTRANS_SERVER_KEY, signature_key)) {
             console.error('Invalid signature for order:', order_id);
-            return new Response(
-                JSON.stringify({ success: false, error: 'Invalid signature' }),
-                { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+            return new Response(JSON.stringify({ success: false, error: 'Invalid signature' }), {
+                status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
         }
 
-        console.log(`Transaction ${order_id} status: ${transaction_status}`);
-        console.log(`Payment type: ${payment_type}`);
-        console.log(`Gross amount: ${gross_amount}`);
-
-        // Initialize Supabase client
         const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        // Determine order status based on transaction_status
-        // capture: Card payment completed
-        // settlement: Non-card payment completed
-        // pending: Waiting for payment
-        // deny: Payment denied
-        // cancel: Payment cancelled
-        // expire: Payment expired
-        // failure: Payment failed
-
-        const isSuccess =
-            transaction_status === 'capture' ||
-            transaction_status === 'settlement';
-
+        const isSuccess = transaction_status === 'capture' || transaction_status === 'settlement';
         const isPending = transaction_status === 'pending';
-
-        const isFailed =
-            transaction_status === 'deny' ||
-            transaction_status === 'cancel' ||
-            transaction_status === 'expire' ||
-            transaction_status === 'failure';
-
-        // Also check fraud_status for card transactions
+        const isFailed = ['deny', 'cancel', 'expire', 'failure'].includes(transaction_status);
         const isFraud = fraud_status === 'deny';
 
         if (isSuccess && !isFraud) {
             console.log('Payment successful! Processing order...');
 
-            // Update order status to PAID
             const { error: updateError } = await supabase
                 .from('orders')
                 .update({
@@ -151,198 +121,79 @@ serve(async (req) => {
                 })
                 .eq('reference_id', order_id);
 
-            if (updateError) {
-                console.error('Error updating order status:', updateError);
-            } else {
+            if (!updateError) {
                 console.log(`Order ${order_id} updated to PAID`);
 
-                // --- AFFILIATE COMMISSION TRACKING ---
+                // Affiliate logic
                 try {
-                    // Get Order Metadata
-                    const { data: orderData } = await supabase
-                        .from('orders')
-                        .select('*') // Get full order to access metadata
-                        .eq('reference_id', order_id)
-                        .single();
-
+                    const { data: orderData } = await supabase.from('orders').select('*').eq('reference_id', order_id).single();
                     const couponCode = orderData?.metadata?.coupon_code;
-
                     if (couponCode) {
-                        console.log(`Processing commission for coupon: ${couponCode}`);
-
-                        // Find Affiliate
-                        const { data: affiliate } = await supabase
-                            .from('affiliates')
-                            .select('*')
-                            .eq('coupon_code', couponCode)
-                            .single();
-
+                        const { data: affiliate } = await supabase.from('affiliates').select('*').eq('coupon_code', couponCode).single();
                         if (affiliate) {
-                            // Commission Logic: 20% of Gross Amount (Paid Amount)
                             const commissionAmount = Math.round(Number(gross_amount) * 0.20);
-
-                            // 1. Record Commission
                             await supabase.from('commissions').insert({
-                                affiliate_id: affiliate.id,
-                                order_id: orderData.id,
-                                amount: commissionAmount,
-                                status: 'paid' // Since order is settled
+                                affiliate_id: affiliate.id, order_id: orderData.id, amount: commissionAmount, status: 'paid'
                             });
-
-                            // 2. Update Affiliate Balance
                             await supabase.from('affiliates').update({
                                 balance: (Number(affiliate.balance) || 0) + commissionAmount,
                                 total_earnings: (Number(affiliate.total_earnings) || 0) + commissionAmount
                             }).eq('id', affiliate.id);
-
-                            console.log(`Commission recorded: ${commissionAmount} for affiliate ${affiliate.id}`);
                         }
                     }
+                } catch (e) { console.error('Affiliate error:', e); }
 
-                } catch (commError) {
-                    console.error('Error processing affiliate commission:', commError);
-                    // Do not fail the webhook, just log error
-                }
-                // --- END AFFILIATE LOGIC ---
-
-                // TRIGGER N8N WORKFLOW
+                // Trigger n8n
                 try {
-                    const N8N_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL') || 'https://flow.otomasi.click/webhook/hd-order-paid';
-
-                    if (!N8N_WEBHOOK_URL) {
-                        console.error('N8N_ORDER_PAID_WEBHOOK_URL is not set');
-                        throw new Error('N8N_ORDER_PAID_WEBHOOK_URL environment variable is missing');
-                    }
-
-                    console.log('Triggering n8n workflow...');
-
-                    // Fetch order details to send complete data to n8n
-                    const { data: orderData } = await supabase
-                        .from('orders')
-                        .select('*')
-                        .eq('reference_id', order_id)
-                        .single();
-
-                    // Fetch related charts data
+                    const N8N_WEBHOOK_URL = getValidWebhookUrl();
+                    const { data: orderData } = await supabase.from('orders').select('*').eq('reference_id', order_id).single();
                     const chartIds = orderData?.metadata?.chart_ids || [];
                     let chartsData: any[] = [];
-
                     if (Array.isArray(chartIds) && chartIds.length > 0) {
-                        const { data: fetchedCharts } = await supabase
-                            .from('saved_charts')
-                            .select('*')
-                            .in('id', chartIds);
+                        const { data: fetchedCharts } = await supabase.from('saved_charts').select('*').in('id', chartIds);
                         chartsData = fetchedCharts || [];
                     }
 
-                    // Determine report_type based on product_name
-                    let report_type = 'personal-comprehensive'; // Default
+                    let report_type = 'personal-comprehensive';
                     const productName = (orderData?.product_name || '').toLowerCase();
-
-                    // Priority 1: Check for Bundles (Contain both 'bazi' AND 'human design')
                     if (productName.includes('bazi') && productName.includes('human design')) {
-                        if (productName.includes('essential')) {
-                            report_type = 'bundle-essential-bazi';
-                        } else {
-                            report_type = 'bundle-full-bazi';
-                        }
-                    }
-                    // Priority 2: Check for Single Reports
-                    else if (productName.includes('essential')) {
+                        report_type = productName.includes('essential') ? 'bundle-essential-bazi' : 'bundle-full-bazi';
+                    } else if (productName.includes('essential')) {
                         report_type = 'personal-essential';
                     } else if (productName.includes('bazi')) {
                         report_type = 'bazi';
                     }
 
-                    let n8n_debug = {};
+                    let n8n_debug: any = {};
                     try {
-                        const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+                        const n8nResp = await fetch(N8N_WEBHOOK_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                order: orderData,
-                                charts: chartsData,
-                                report_type: report_type,
-                                transaction: {
-                                    transaction_id,
-                                    payment_type,
-                                    settlement_time,
-                                    gross_amount
-                                }
+                                order: orderData, charts: chartsData, report_type,
+                                transaction: { transaction_id, payment_type, settlement_time, gross_amount }
                             })
                         });
+                        const text = await n8nResp.text();
+                        n8n_debug = { status: n8nResp.status, ok: n8nResp.ok, response: text.substring(0, 500) };
+                    } catch (e: any) { n8n_debug = { error: e.message }; }
 
-                        const responseText = await n8nResponse.text();
-                        n8n_debug = {
-                            status: n8nResponse.status,
-                            ok: n8nResponse.ok,
-                            response: responseText.substring(0, 500)
-                        };
-
-                        if (n8nResponse.ok) {
-                            console.log('n8n workflow triggered successfully');
-                        } else {
-                            console.error('Failed to trigger n8n workflow:', n8nResponse.status);
-                        }
-                    } catch (n8nErr: any) {
-                        console.error('Error calling n8n webhook:', n8nErr);
-                        n8n_debug = { error: n8nErr.message };
-                    }
-
-                    // Log n8n result to order metadata for troubleshooting
-                    await supabase
-                        .from('orders')
-                        .update({
-                            metadata: {
-                                ...(orderData?.metadata || {}),
-                                n8n_webhook_debug: n8n_debug
-                            }
-                        })
-                        .eq('reference_id', order_id);
-                } catch (n8nError) {
-                    console.error('Error in n8n execution block:', n8nError);
-                }
-
+                    await supabase.from('orders').update({
+                        metadata: { ...(orderData?.metadata || {}), n8n_webhook_debug: n8n_debug, triggered_url: N8N_WEBHOOK_URL }
+                    }).eq('reference_id', order_id);
+                } catch (e) { console.error('n8n block error:', e); }
             }
-
-        } else if (isPending) {
-            console.log('Payment pending...');
-            // Order is already in PENDING status by default
-
         } else if (isFailed || isFraud) {
-            console.log('Payment failed or denied.');
-
-            const { error: updateError } = await supabase
-                .from('orders')
-                .update({
-                    status: 'FAILED',
-                    updated_at: new Date().toISOString()
-                })
-                .eq('reference_id', order_id);
-
-            if (updateError) {
-                console.error('Error updating order status for failure:', updateError);
-            }
+            await supabase.from('orders').update({ status: 'FAILED', updated_at: new Date().toISOString() }).eq('reference_id', order_id);
         }
 
-        // Return success response to Midtrans
-        return new Response(JSON.stringify({
-            success: true,
-            message: 'Notification received',
-            order_id: order_id,
-            status: transaction_status
-        }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        return new Response(JSON.stringify({ success: true, message: 'Notification received', order_id, status: transaction_status }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
-
     } catch (error) {
-        console.error('Error processing Midtrans webhook:', error);
-        return new Response(
-            JSON.stringify({
-                success: false,
-                error: error instanceof Error ? error.message : 'Unknown error'
-            }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        console.error('Webhook processing error:', error);
+        return new Response(JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }), {
+            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
     }
 });

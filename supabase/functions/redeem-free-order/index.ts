@@ -12,6 +12,25 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+/**
+ * Validates and sanitizes the n8n webhook URL.
+ * Prevents "Url scheme 'warning' not supported" or similar errors.
+ */
+function getValidWebhookUrl(): string {
+    const envUrl = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL');
+    const defaultUrl = 'https://flow.otomasi.click/webhook/hd-order-paid';
+
+    if (!envUrl) return defaultUrl;
+
+    // If it doesn't start with http, it's likely corrupted (e.g. contains a CLI warning)
+    if (!envUrl.startsWith('http')) {
+        console.warn('N8N_ORDER_PAID_WEBHOOK_URL seems invalid, using default. Value:', envUrl);
+        return defaultUrl;
+    }
+
+    return envUrl;
+}
+
 interface RedeemRequest {
     couponCode: string;
     referenceId: string;
@@ -101,8 +120,8 @@ serve(async (req) => {
         // 4. TRIGGER N8N WORKFLOW (Simulate Paid Order)
         let n8nResponse;
         let responseText;
-        let n8n_debug = {};
-        const N8N_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL') || 'https://flow.otomasi.click/webhook/hd-order-paid';
+        let n8n_debug: any = {};
+        const N8N_WEBHOOK_URL = getValidWebhookUrl();
 
         try {
             console.log(`Triggering n8n workflow at ${N8N_WEBHOOK_URL}...`);
@@ -189,7 +208,8 @@ serve(async (req) => {
                     ...(birthData ? { birth_data: birthData } : {}),
                     chart_ids: chartIds,
                     coupon_code: couponCode,
-                    n8n_webhook_debug: n8n_debug
+                    n8n_webhook_debug: n8n_debug,
+                    triggered_url: N8N_WEBHOOK_URL
                 }
             })
             .eq('reference_id', referenceId);
