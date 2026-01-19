@@ -373,6 +373,43 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const chartRef = useRef<HTMLDivElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
   const instagramExportRef = useRef<HTMLDivElement>(null);
+  // ===== DYNAMIC SLOT CONFIGURATION =====
+  // Ubah angka ini untuk update otomatis jumlah slot yang tersisa
+  const TOTAL_SLOTS = 80; // Total slot tersedia bulan ini
+  const MANUAL_SOLD_COUNT = 12; // MANUAL: Jumlah orang yang sudah membeli (ubah angka ini)
+
+  // Future Usage: Set this to true to use Real DB Data
+  const USE_REAL_DATA = false;
+
+  const [soldCount, setSoldCount] = useState(MANUAL_SOLD_COUNT);
+  const remainingSlots = TOTAL_SLOTS - soldCount;
+
+  // ===== FUTURE: REAL-TIME DATA FETCHING =====
+  /* 
+  useEffect(() => {
+    if (!USE_REAL_DATA) return;
+
+    const fetchRealOrderCount = async () => {
+      // Hitung order 'PAID' di bulan ini
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count, error } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'PAID')
+        .gte('created_at', startOfMonth.toISOString());
+
+      if (!error && count !== null) {
+        setSoldCount(count + MANUAL_SOLD_COUNT); // Bisa ditambah base count jika perlu
+      }
+    };
+
+    fetchRealOrderCount();
+  }, []);
+  */
+  // ==========================================
 
   // Warning saat user mau tutup tab (hanya untuk guest yang belum save)
   const isUnsaved = !chartId && !userId;
@@ -933,7 +970,8 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         {!isOrdered ? (
           <div id="cta-section" className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
             <div className="text-center mb-6">
-              <p className="text-amber-400 text-sm font-medium mb-2">🔥 Hanya 50 slot tersisa bulan ini</p>
+              <p className="text-amber-400 text-sm font-medium mb-1">🔥 Hanya {remainingSlots} slot tersisa bulan ini</p>
+              <p className="text-white/60 text-xs mb-3">{soldCount} orang telah memesan minggu ini</p>
               <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
                 Siap Menyelami Potensi Terbesarmu?
               </h3>
