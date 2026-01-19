@@ -545,28 +545,58 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         height: 1920,
       });
 
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `temanbatin-${userName.replace(/\s+/g, "-").toLowerCase()}-story.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png")
+      );
 
-          toast({
-            title: "Berhasil!",
-            description: "Chart siap dibagikan ke Instagram Story.",
-          });
+      if (blob) {
+        const fileName = `temanbatin-${userName.replace(/\s+/g, "-").toLowerCase()}-story.png`;
+        const file = new File([blob], fileName, { type: "image/png" });
+        const canShare = navigator.canShare && navigator.canShare({ files: [file] });
+
+        // Try Web Share API first (Mobile Support)
+        if (navigator.share && canShare) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "Chart Teman Batin",
+              text: `Cek chart Human Design saya!`,
+            });
+            toast({
+              title: "Berhasil!",
+              description: "Chart berhasil dibagikan.",
+            });
+            return; // Stop here if shared successfully
+          } catch (shareError: any) {
+            // Context: AbortError means user cancelled the share sheet
+            if (shareError.name === 'AbortError') {
+              return;
+            }
+            console.warn("Share API failed, falling back to download:", shareError);
+            // Fallthrough to download logic
+          }
         }
-      }, "image/png");
+
+        // Fallback: Download Image (Desktop / Unsuccessful Share)
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: "Berhasil Diunduh!",
+          description: "Chart tersimpan di perangkat kamu.",
+        });
+      }
     } catch (error) {
-      console.error("Error downloading Instagram Story:", error);
+      console.error("Error generating/sharing chart:", error);
       toast({
-        title: "Gagal mengunduh",
-        description: "Terjadi kesalahan saat mengunduh chart.",
+        title: "Gagal memproses chart",
+        description: "Terjadi kesalahan saat membuat gambar.",
         variant: "destructive",
       });
     } finally {
