@@ -720,7 +720,7 @@ const Reports = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Shield className="w-4 h-4 text-accent" />
-                    Jaminan uang kembali 30 hari
+                    Garansi pembuatan report ulang
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="w-4 h-4 text-accent" />
@@ -1041,7 +1041,7 @@ const Reports = () => {
               2. <strong>Waktu Layanan:</strong> Report akan dikirimkan ke email Anda dalam waktu maksimal 24 jam setelah pembayaran dikonfirmasi.
             </p>
             <p>
-              3. <strong>Kebijakan Refund:</strong> Kami memberikan garansi uang kembali 30 hari jika Anda tidak mendapatkan manfaat dari report ini, dengan syarat Anda telah membaca dan mempelajarinya.
+              3. <strong>Kebijakan Garansi:</strong> Kami memberikan garansi 100% pembuatan report ulang jika ada kesalahan dalam perhitungan atau report tidak sesuai dengan data yang Anda berikan.
             </p>
             <p>
               4. <strong>Privasi:</strong> Data kelahiran Anda hanya digunakan untuk pembuatan chart dan tidak akan disebarluaskan.

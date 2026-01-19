@@ -18,7 +18,7 @@ const faqs = [
   },
   {
     question: 'Bagaimana jika laporan tidak sesuai harapan?',
-    answer: 'Kami memberikan garansi 100% uang kembali dalam 7 hari jika kamu merasa laporan tidak bermanfaat. Cukup hubungi support kami via WhatsApp, dan kami akan memproses refund tanpa pertanyaan.',
+    answer: 'Kami memberikan garansi 100% pembuatan report ulang jika ada kesalahan atau jika report tidak sesuai dengan data yang kamu berikan. Cukup hubungi support kami via WhatsApp dengan bukti kesalahan.',
   },
   {
     question: 'Berapa lama laporan dikirim?',

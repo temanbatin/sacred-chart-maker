@@ -976,7 +976,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 Siap Menyelami Potensi Terbesarmu?
               </h3>
               <p className="text-white/90 text-lg">
-                Apa yang kamu lihat di sini hanyalah permukaan. Buka Full Foundation Analysis untuk mengungkap misi hidup dan bakat terpendammu.
+                Apa yang kamu lihat di sini hanyalah permukaan. Pesan In-depth Analysis untuk mengungkap misi hidup dan bakat terpendammu.
               </p>
             </div>
 
@@ -1044,7 +1044,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                 <p className="text-white/90">
-                  <span className="font-semibold">Garansi 100% Uang Kembali</span> — Jika tidak puas dalam 7 hari
+                  <span className="font-semibold">Garansi 100% Pembuatan Report Ulang</span> — Jika ada kesalahan data
                 </p>
               </div>
             </div>
@@ -1677,7 +1677,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                   }}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 rounded-lg"
                 >
-                  Buka Full Report
+                  Pesan In-Dept Analysis Desain Sejatimu
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
@@ -1707,7 +1707,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                     }}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-8 py-2.5 rounded-lg shadow-sm transition-all"
                   >
-                    Buka Full Report
+                    Pesan In-Dept Analysis Desain Sejatimu
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
