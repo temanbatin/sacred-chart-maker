@@ -30,11 +30,13 @@
   <link rel="icon" type="image/png"
     href="https://storage.googleapis.com/gpt-engineer-file-uploads/brEcArQF50WBqEkSGvIOI7xpmgC2/uploads/1767555357944-favicon.png">
   <link rel="canonical" href="https://temanbatin.com/" />
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Poppins:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
 
   <!-- FAQ Schema Markup -->
   <script type="application/ld+json">
@@ -109,8 +111,7 @@
       s.parentNode.insertBefore(t, s)
     }(window, document, 'script',
       'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '%VITE_FACEBOOK_PIXEL_ID%');
-    fbq('track', 'PageView');
+    // Init handled in main.tsx
   </script>
   <!-- End Meta Pixel Code -->
 
@@ -122,10 +123,7 @@
 </head>
 
 <body>
-  <!-- Meta Pixel Noscript Fallback -->
-  <noscript><img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=%VITE_FACEBOOK_PIXEL_ID%&ev=PageView&noscript=1" /></noscript>
-
+  <!-- Meta Pixel Noscript Fallback removed to prevent build error -->
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
