@@ -47,7 +47,7 @@ const faqs = [
   },
   {
     question: "Bagaimana cara menghubungi tim Teman Batin?",
-    answer: "Anda dapat menghubungi kami melalui halaman Hubungi Kami, email ke support@temanbatin.com, atau WhatsApp di nomor yang tertera di website. Tim kami siap membantu pada jam kerja."
+    answer: "Anda dapat menghubungi kami melalui halaman Hubungi Kami, email ke Hei@temanbatin.com, atau WhatsApp di nomor yang tertera di website. Tim kami siap membantu pada jam kerja."
   },
   {
     question: "Apakah data saya aman di Teman Batin?",
@@ -63,7 +63,7 @@ const FAQ = () => {
   return (
     <div className="min-h-screen bg-background">
       <MainNavbar />
-      
+
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
@@ -72,11 +72,11 @@ const FAQ = () => {
               Temukan jawaban untuk pertanyaan umum seputar Human Design dan layanan Teman Batin
             </p>
           </div>
-          
+
           <Accordion type="single" collapsible className="space-y-4">
             {faqs.map((faq, index) => (
-              <AccordionItem 
-                key={index} 
+              <AccordionItem
+                key={index}
                 value={`item-${index}`}
                 className="border border-border rounded-lg px-6 bg-card"
               >
@@ -95,8 +95,8 @@ const FAQ = () => {
             <p className="text-muted-foreground mb-4">
               Jika Anda tidak menemukan jawaban yang dicari, jangan ragu untuk menghubungi tim kami.
             </p>
-            <Link 
-              to="/hubungi-kami" 
+            <Link
+              to="/hubungi-kami"
               className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-accent text-accent-foreground font-medium hover:bg-accent/90 transition-colors"
             >
               Hubungi Kami

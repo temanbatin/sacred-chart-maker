@@ -360,7 +360,7 @@ export const ProductPreviewModal = ({
                     <span className="block text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mb-3">Ringkasan fundamental desain Anda.</p>
+                <p className="text-xs text-muted-foreground mb-3">Ringkasan fundamental desain Anda (20-30 halaman).</p>
                 <ul className="space-y-1.5 mb-4">
                   {PRODUCTS.ESSENTIAL_REPORT.features.slice(0, 4).map((feat, idx) => (
                     <li key={idx} className="text-xs flex items-start gap-2">
@@ -575,7 +575,10 @@ export const ProductPreviewModal = ({
                     )}
                   </Button>
                   <p className="text-center text-[10px] text-muted-foreground">
-                    Garansi pembuatan report ulang jika ada kesalahan. Transaksi aman & terenkripsi.
+                    <a href="/kebijakan-pengembalian-dana#human-design-report" target="_blank" className="text-primary hover:underline">
+                      Garansi 100%
+                    </a>
+                    {' '}jika ada kesalahan. Transaksi aman & terenkripsi.
                   </p>
                 </>
               )}

@@ -1,6 +1,6 @@
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { Mail, MapPin, Clock } from 'lucide-react';
+import { Mail, MapPin, Clock, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,10 +19,10 @@ const HubungiKami = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     toast.success('Pesan Anda telah terkirim! Kami akan segera menghubungi Anda.');
     setFormData({ name: '', email: '', subject: '', message: '' });
     setIsSubmitting(false);
@@ -31,13 +31,13 @@ const HubungiKami = () => {
   return (
     <div className="min-h-screen bg-background">
       <MainNavbar />
-      
+
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 text-center">
             Hubungi <span className="text-accent">Kami</span>
           </h1>
-          
+
           <p className="text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
             Punya pertanyaan atau masukan? Kami senang mendengar dari Anda.
           </p>
@@ -46,7 +46,7 @@ const HubungiKami = () => {
             {/* Contact Form */}
             <div className="bg-secondary/30 rounded-2xl p-8 border border-border">
               <h2 className="text-2xl font-semibold text-foreground mb-6">Kirim Pesan</h2>
-              
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
@@ -100,8 +100,8 @@ const HubungiKami = () => {
                   />
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
                   disabled={isSubmitting}
                 >
@@ -132,6 +132,25 @@ const HubungiKami = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-foreground mb-1">Email</h3>
                     <p className="text-muted-foreground">Hei@temanbatin.com</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-secondary/30 rounded-2xl p-6 border border-border">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-1">WhatsApp</h3>
+                    <a
+                      href="https://wa.me/6285710493939"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-accent transition-colors"
+                    >
+                      +62 857-1049-3939
+                    </a>
                   </div>
                 </div>
               </div>
