@@ -55,6 +55,19 @@ export const ProductPreviewModal = ({
   const [billingName, setBillingName] = useState(userName);
   const [billingEmail, setBillingEmail] = useState(userEmail);
   const [billingPhone, setBillingPhone] = useState(userPhone);
+  const [isEmailVerified, setIsEmailVerified] = useState(true); // Default true for guest users
+
+  //Check email verification status
+  useEffect(() => {
+    const checkEmailVerification = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      // Guest users or verified users can purchase
+      setIsEmailVerified(!user || user.email_confirmed_at !== null);
+    };
+    if (isOpen) {
+      checkEmailVerification();
+    }
+  }, [isOpen]);
 
   // Update state when props change
   useEffect(() => {
@@ -521,31 +534,49 @@ export const ProductPreviewModal = ({
                   Klaim Report Gratis
                 </Button>
               ) : (
-                <Button
-                  onClick={handleBuy}
-                  disabled={isLoading || !billingName || !billingEmail}
-                  size="lg"
-                  className="w-full fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6 text-base"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
-                      Memproses...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                      Bayar {formatPrice(getTotalWithDiscount())}
-                    </>
+                <>
+                  {/* Email Verification Warning */}
+                  {!isEmailVerified && (
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-4">
+                      <div className="flex items-start gap-2">
+                        <span className="text-amber-500 mt-0.5">⚠️</span>
+                        <div>
+                          <p className="text-sm font-semibold text-amber-500 mb-1">
+                            Konfirmasi Email Diperlukan
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Silakan konfirmasi email Anda terlebih dahulu untuk melakukan pembelian. Cek inbox atau halaman akun untuk kirim ulang email verifikasi.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </Button>
-              )}
-              <p className="text-center text-[10px] text-muted-foreground">
-                Garansi uang kembali 30 hari. Transaksi aman & terenkripsi.
-              </p>
-            </div>
 
-          </div>
+                  <Button
+                    onClick={handleBuy}
+                    disabled={isLoading || !billingName || !billingEmail || !isEmailVerified}
+                    size="lg"
+                    className="w-full fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+                        Memproses...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                        Bayar {formatPrice(getTotalWithDiscount())}
+                      </>
+                    )}
+                  </Button>
+              )}
+                  <p className="text-center text-[10px] text-muted-foreground">
+                    Garansi uang kembali 30 hari. Transaksi aman & terenkripsi.
+                  </p>
+                </div>
+
+            </div>
         </DialogContent>
       </Dialog>
 

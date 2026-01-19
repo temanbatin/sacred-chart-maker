@@ -83,6 +83,10 @@ const Account = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [signupMessage, setSignupMessage] = useState('');
+  const [resendingEmail, setResendingEmail] = useState(false);
+
+  // Check if email is verified
+  const isEmailVerified = user?.email_confirmed_at !== null;
 
   // If URL has email param from payment, show helpful message
   useEffect(() => {
@@ -253,6 +257,22 @@ const Account = () => {
 
     setAuthLoading(false);
   };
+
+  const handleResendEmail = async () => {
+    if (!user?.email) return;
+
+    setResendingEmail(true);
+    const { error } = await supabase.functions.invoke('send-auth-email', {
+      body: { email: user.email, type: 'verification' }
+    });
+
+    if (error) {
+      toast.error('Gagal mengirim email: ' + error.message);
+    } else {
+      toast.success('Email verifikasi telah dikirim! Silakan cek inbox Anda.');
+    }
+    setResendingEmail(false);
+  };;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -557,6 +577,39 @@ const Account = () => {
               Keluar
             </Button>
           </div>
+
+          {/* Email Verification Banner - Only show if email not confirmed */}
+          {user && !isEmailVerified && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-8 animate-fade-up">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">⚠️</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-amber-500 mb-1">
+                    Konfirmasi Email untuk Akses Penuh
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Anda belum mengkonfirmasi email. Fitur pembelian laporan tidak tersedia sampai email dikonfirmasi.
+                  </p>
+                  <Button
+                    onClick={handleResendEmail}
+                    disabled={resendingEmail}
+                    size="sm"
+                    variant="outline"
+                    className="border-amber-500 text-amber-500 hover:bg-amber-500/10"
+                  >
+                    {resendingEmail ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Mengirim...
+                      </>
+                    ) : (
+                      'Kirim Ulang Email Verifikasi'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="charts" className="w-full">
