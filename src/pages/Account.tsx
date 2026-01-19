@@ -220,7 +220,7 @@ const Account = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/account',
+        redirectTo: 'https://temanbatin.com/account',
       },
     });
 

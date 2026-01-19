@@ -58,7 +58,7 @@ export const HeroSection = ({
       {/* Trust indicator */}
       <p className="mt-8 text-sm text-muted-foreground/60 flex items-center justify-center gap-2">
         <Star className="w-4 h-4 fill-accent text-accent" />
-        Bergabunglah dengan 1500+ pencari jati diri lainnya hari ini.
+        Bergabunglah dengan 230 orang yang sudah membaca desain tubuh, jiwa dan pikiran mereka.
       </p>
     </div>
   </section>;

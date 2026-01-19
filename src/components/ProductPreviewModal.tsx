@@ -75,7 +75,7 @@ export const ProductPreviewModal = ({
 
   // Calculate Totals
   const selectedProduct = selectedTier === 'full' ? PRODUCTS.FULL_REPORT : PRODUCTS.ESSENTIAL_REPORT;
-  
+
   const getSubtotal = () => {
     let total = selectedProduct.price;
     if (includeBazi) total += PRODUCTS.BAZI_ADDON.price;
@@ -94,10 +94,10 @@ export const ProductPreviewModal = ({
   };
 
   const getSavings = () => {
-      const originalTotal = (selectedTier === 'full' ? PRODUCTS.FULL_REPORT.original_price : PRODUCTS.ESSENTIAL_REPORT.original_price) 
-        + (includeBazi ? PRODUCTS.BAZI_ADDON.original_price : 0);
-      const currentTotal = getSubtotal();
-      return Math.round(((originalTotal - currentTotal) / originalTotal) * 100);
+    const originalTotal = (selectedTier === 'full' ? PRODUCTS.FULL_REPORT.original_price : PRODUCTS.ESSENTIAL_REPORT.original_price)
+      + (includeBazi ? PRODUCTS.BAZI_ADDON.original_price : 0);
+    const currentTotal = getSubtotal();
+    return Math.round(((originalTotal - currentTotal) / originalTotal) * 100);
   };
 
   const checkCoupon = async () => {
@@ -178,10 +178,10 @@ export const ProductPreviewModal = ({
 
       // Generate Reference ID uniquely
       const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-      
+
       const productItems = [selectedProduct.id];
       if (includeBazi) productItems.push(PRODUCTS.BAZI_ADDON.id);
-      
+
       const productNameFull = `${selectedProduct.name}${includeBazi ? ' + Bazi Addon' : ''}: ${userName}`;
       const finalAmount = getTotalWithDiscount();
 
@@ -253,62 +253,62 @@ export const ProductPreviewModal = ({
   };
 
   const handleRedeemFree = async () => {
-      // Reuse logic similar to handleBuy but calling redeem endpoint
-      // Keeping it simple here, usually coupons apply to the base price
-      // For free coupons, we probably want to support the Full Report
-      // Logic would be similar to existing, just ensuring charts are saved
-      
-      // ... (Implementation similar to original but using new params if needed)
-      // For now, assuming redeem-free-order backend handles it based on coupon config
-       setIsLoading(true);
-        try {
-          let finalChartIds = chartId ? [chartId] : [];
-          if (!chartId && birthData && chartData) {
-             const newChartId = crypto.randomUUID();
-            // ... saving logic ...
-             const { error: saveError } = await supabase.from('saved_charts').insert({
-               id: newChartId,
-               user_id: userId || null,
-               name: birthData.name,
-               birth_date: `${birthData.year}-${String(birthData.month).padStart(2, '0')}-${String(birthData.day).padStart(2, '0')}`,
-               birth_time: `${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}:00`,
-               birth_place: birthData.place,
-               chart_data: chartData,
-             });
-            if (!saveError) finalChartIds = [newChartId];
-          }
-    
-          const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-    
-          const { data, error } = await supabase.functions.invoke('redeem-free-order', {
-            body: {
-              couponCode: couponCode.trim(),
-              referenceId,
-              customerName: billingName,
-              customerEmail: billingEmail,
-              customerPhone: billingPhone,
-              productName: `Full Report Human Design (Free): ${userName}`,
-              chartIds: finalChartIds,
-              birthData,
-              userId
-            }
-          });
-    
-          if (error) throw error;
-    
-          if (data?.success && data?.redirect_url) {
-            toast.success('Kupon berhasil digunakan! Mengarahkan...');
-            window.location.href = data.redirect_url;
-          } else {
-            throw new Error(data?.error || 'Redeem gagal');
-          }
-    
-        } catch (err: any) {
-          console.error('Redeem error:', err);
-          toast.error(err.message || 'Gagal klaim kupon');
-        } finally {
-          setIsLoading(false);
+    // Reuse logic similar to handleBuy but calling redeem endpoint
+    // Keeping it simple here, usually coupons apply to the base price
+    // For free coupons, we probably want to support the Full Report
+    // Logic would be similar to existing, just ensuring charts are saved
+
+    // ... (Implementation similar to original but using new params if needed)
+    // For now, assuming redeem-free-order backend handles it based on coupon config
+    setIsLoading(true);
+    try {
+      let finalChartIds = chartId ? [chartId] : [];
+      if (!chartId && birthData && chartData) {
+        const newChartId = crypto.randomUUID();
+        // ... saving logic ...
+        const { error: saveError } = await supabase.from('saved_charts').insert({
+          id: newChartId,
+          user_id: userId || null,
+          name: birthData.name,
+          birth_date: `${birthData.year}-${String(birthData.month).padStart(2, '0')}-${String(birthData.day).padStart(2, '0')}`,
+          birth_time: `${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}:00`,
+          birth_place: birthData.place,
+          chart_data: chartData,
+        });
+        if (!saveError) finalChartIds = [newChartId];
+      }
+
+      const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+      const { data, error } = await supabase.functions.invoke('redeem-free-order', {
+        body: {
+          couponCode: couponCode.trim(),
+          referenceId,
+          customerName: billingName,
+          customerEmail: billingEmail,
+          customerPhone: billingPhone,
+          productName: `Full Report Human Design (Free): ${userName}`,
+          chartIds: finalChartIds,
+          birthData,
+          userId
         }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.redirect_url) {
+        toast.success('Kupon berhasil digunakan! Mengarahkan...');
+        window.location.href = data.redirect_url;
+      } else {
+        throw new Error(data?.error || 'Redeem gagal');
+      }
+
+    } catch (err: any) {
+      console.error('Redeem error:', err);
+      toast.error(err.message || 'Gagal klaim kupon');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
 
@@ -323,15 +323,15 @@ export const ProductPreviewModal = ({
           </DialogHeader>
 
           <div className="flex flex-col gap-6 mt-4">
-            
+
             {/* Product Tier Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Essential Package */}
-              <div 
+              <div
                 className={cn(
                   "border rounded-xl p-4 cursor-pointer transition-all relative",
-                  selectedTier === 'essential' 
-                    ? "border-primary bg-primary/10 ring-1 ring-primary" 
+                  selectedTier === 'essential'
+                    ? "border-primary bg-primary/10 ring-1 ring-primary"
                     : "border-border bg-card hover:border-primary/50"
                 )}
                 onClick={() => setSelectedTier('essential')}
@@ -352,7 +352,7 @@ export const ProductPreviewModal = ({
                     </li>
                   ))}
                 </ul>
-                 {selectedTier === 'essential' && (
+                {selectedTier === 'essential' && (
                   <div className="absolute -top-3 -right-3 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-full">
                     Dipilih
                   </div>
@@ -360,11 +360,11 @@ export const ProductPreviewModal = ({
               </div>
 
               {/* Full Package */}
-              <div 
+              <div
                 className={cn(
                   "border rounded-xl p-4 cursor-pointer transition-all relative overflow-hidden",
-                  selectedTier === 'full' 
-                    ? "border-accent bg-accent/10 ring-1 ring-accent" 
+                  selectedTier === 'full'
+                    ? "border-accent bg-accent/10 ring-1 ring-accent"
                     : "border-border bg-card hover:border-accent/50"
                 )}
                 onClick={() => setSelectedTier('full')}
@@ -374,27 +374,27 @@ export const ProductPreviewModal = ({
                 </div>
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-bold text-lg">Full Report</h3>
-                   <div className="text-right mt-1">
+                  <div className="text-right mt-1">
                     <span className="block text-xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
                     <span className="block text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">Analisis 100+ halaman super lengkap.</p>
                 <ul className="space-y-1.5">
-                   {PRODUCTS.FULL_REPORT.features.slice(0, 5).map((feat, idx) => (
+                  {PRODUCTS.FULL_REPORT.features.slice(0, 5).map((feat, idx) => (
                     <li key={idx} className="text-xs flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
                       <span>{feat}</span>
                     </li>
                   ))}
                   <li className="text-xs flex items-start gap-2 font-semibold text-accent">
-                     <Plus className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                     <span>Semua fitur Essential</span>
+                    <Plus className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>Semua fitur Essential</span>
                   </li>
                 </ul>
                 {selectedTier === 'full' && (
                   <div className="absolute bottom-2 right-2 text-accent opacity-20">
-                     <CheckCircle2 className="w-16 h-16" />
+                    <CheckCircle2 className="w-16 h-16" />
                   </div>
                 )}
               </div>
@@ -402,15 +402,15 @@ export const ProductPreviewModal = ({
 
             {/* Add-on Selection */}
             <div className="bg-secondary/20 border border-amber-500/30 rounded-xl p-4 flex items-center gap-4">
-              <Checkbox 
-                id="bazi-addon" 
-                checked={includeBazi} 
-                onCheckedChange={(checked) => setIncludeBazi(checked as boolean)}
-                className="w-5 h-5 border-amber-500 data-[state=checked]:bg-amber-500 data-[state=checked]:text-black"
+              <Checkbox
+                id="bazi-addon"
+                checked={false}
+                disabled={true}
+                className="w-5 h-5 border-muted-foreground/30 data-[state=checked]:bg-muted data-[state=checked]:text-muted-foreground cursor-not-allowed"
               />
-              <div className="flex-1">
-                <Label htmlFor="bazi-addon" className="font-semibold text-sm cursor-pointer block text-amber-500">
-                  Tambah Bazi Report Add-on (+{formatPrice(PRODUCTS.BAZI_ADDON.price)})
+              <div className="flex-1 opacity-60">
+                <Label htmlFor="bazi-addon" className="font-semibold text-sm block text-muted-foreground cursor-not-allowed">
+                  Tambah Bazi Report Add-on (Coming Soon)
                 </Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Analisis elemen keberuntungan tahunan berdasarkan astrologi Cina.
@@ -422,7 +422,7 @@ export const ProductPreviewModal = ({
             <div className="space-y-3 border-t border-border pt-4">
               <h4 className="font-semibold text-foreground text-sm">Data Penerima Report:</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                 <div className="space-y-1.5">
+                <div className="space-y-1.5">
                   <Label htmlFor="billing-name" className="text-xs">Nama Lengkap</Label>
                   <Input id="billing-name" value={billingName} onChange={handleNameChange} placeholder="Nama Lengkap" className="h-9 text-sm" />
                 </div>
@@ -431,22 +431,22 @@ export const ProductPreviewModal = ({
                   <Input id="billing-email" type="email" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} placeholder="email@contoh.com" className="h-9 text-sm" />
                 </div>
               </div>
-               <div className="space-y-1.5">
-                  <Label htmlFor="billing-phone" className="text-xs">WhatsApp</Label>
-                  <Input id="billing-phone" type="tel" value={billingPhone} onChange={(e) => setBillingPhone(e.target.value)} placeholder="+628..." className="h-9 text-sm" />
-                </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="billing-phone" className="text-xs">WhatsApp</Label>
+                <Input id="billing-phone" type="tel" value={billingPhone} onChange={(e) => setBillingPhone(e.target.value)} placeholder="+628..." className="h-9 text-sm" />
+              </div>
             </div>
 
             {/* Coupon Input */}
             <div className="space-y-2 border-t border-border pt-4">
-               <div className="flex justify-between items-center">
-                  <Label className="text-xs font-semibold">Kode Kupon</Label>
-                  {appliedCoupon && (
-                     <span className="text-xs text-green-500 font-medium flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Hemat {appliedCoupon.discount_value}%
-                    </span>
-                  )}
-               </div>
+              <div className="flex justify-between items-center">
+                <Label className="text-xs font-semibold">Kode Kupon</Label>
+                {appliedCoupon && (
+                  <span className="text-xs text-green-500 font-medium flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Hemat {appliedCoupon.discount_value}%
+                  </span>
+                )}
+              </div>
               <div className="flex gap-2">
                 <Input
                   value={couponCode}
@@ -471,45 +471,45 @@ export const ProductPreviewModal = ({
             <div className="bg-secondary/30 rounded-xl p-4 border border-border space-y-3">
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                   <span className="text-muted-foreground">{selectedProduct.name}</span>
-                   <span>{formatPrice(selectedProduct.price)}</span>
+                  <span className="text-muted-foreground">{selectedProduct.name}</span>
+                  <span>{formatPrice(selectedProduct.price)}</span>
                 </div>
                 {includeBazi && (
                   <div className="flex justify-between">
-                     <span className="text-muted-foreground">Bazi Report Add-on</span>
-                     <span>{formatPrice(PRODUCTS.BAZI_ADDON.price)}</span>
+                    <span className="text-muted-foreground">Bazi Report Add-on</span>
+                    <span>{formatPrice(PRODUCTS.BAZI_ADDON.price)}</span>
                   </div>
                 )}
-                 {appliedCoupon && appliedCoupon.discount_type !== 'full_free' && (
-                    <div className="flex justify-between text-green-500">
-                      <span>Diskon ({appliedCoupon.discount_value}%)</span>
-                      <span>- {formatPrice(getSubtotal() - getTotalWithDiscount())}</span>
-                    </div>
-                 )}
-                
+                {appliedCoupon && appliedCoupon.discount_type !== 'full_free' && (
+                  <div className="flex justify-between text-green-500">
+                    <span>Diskon ({appliedCoupon.discount_value}%)</span>
+                    <span>- {formatPrice(getSubtotal() - getTotalWithDiscount())}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-end border-t border-border pt-2 mt-2">
                   <span className="font-semibold text-lg">Total</span>
                   <div className="text-right">
-                     {appliedCoupon?.discount_type === 'full_free' ? (
-                        <span className="text-xl font-bold text-green-500">GRATIS</span>
-                     ) : (
-                       <>
+                    {appliedCoupon?.discount_type === 'full_free' ? (
+                      <span className="text-xl font-bold text-green-500">GRATIS</span>
+                    ) : (
+                      <>
                         <span className="text-xs text-muted-foreground line-through mr-2">
                           {formatPrice((selectedTier === 'full' ? PRODUCTS.FULL_REPORT.original_price : PRODUCTS.ESSENTIAL_REPORT.original_price) + (includeBazi ? PRODUCTS.BAZI_ADDON.original_price : 0))}
                         </span>
                         <span className="text-xl font-bold text-primary">{formatPrice(getTotalWithDiscount())}</span>
-                       </>
-                     )}
+                      </>
+                    )}
                   </div>
                 </div>
-                 <div className="flex justify-end">
-                    <span className="bg-green-500/20 text-green-400 text-[10px] px-2 py-0.5 rounded-full">
-                       Hemat {getSavings()}%
-                    </span>
-                 </div>
+                <div className="flex justify-end">
+                  <span className="bg-green-500/20 text-green-400 text-[10px] px-2 py-0.5 rounded-full">
+                    Hemat {getSavings()}%
+                  </span>
+                </div>
               </div>
 
-               {/* CTA Button */}
+              {/* CTA Button */}
               {appliedCoupon?.discount_type === 'full_free' ? (
                 <Button
                   onClick={handleRedeemFree}
@@ -517,8 +517,8 @@ export const ProductPreviewModal = ({
                   size="lg"
                   className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-6"
                 >
-                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                   Klaim Report Gratis
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                  Klaim Report Gratis
                 </Button>
               ) : (
                 <Button
@@ -540,9 +540,9 @@ export const ProductPreviewModal = ({
                   )}
                 </Button>
               )}
-               <p className="text-center text-[10px] text-muted-foreground">
-                  Garansi uang kembali 30 hari. Transaksi aman & terenkripsi.
-               </p>
+              <p className="text-center text-[10px] text-muted-foreground">
+                Garansi uang kembali 30 hari. Transaksi aman & terenkripsi.
+              </p>
             </div>
 
           </div>

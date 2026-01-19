@@ -140,8 +140,9 @@ export const ReportPreviewSection = ({ onOpenChartModal, hideCta = false }: Repo
                                 >
                                     Buat Chart & Pesan Sekarang →
                                 </Button>
-                                <p className="text-muted-foreground text-sm">
-                                    Buat chart gratis, lalu pesan laporan lengkap yang dipersonalisasi.
+                                <p className="text-muted-foreground text-sm space-y-1">
+                                    <span>Buat chart gratis, lalu pesan laporan lengkap yang dipersonalisasi.</span>
+                                    <span className="block text-accent/80 font-medium">✨ Bergabunglah dengan 12 orang yang sudah memesan kejelasan untuk hidup mereka minggu ini.</span>
                                 </p>
                             </>
                         )}
