@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -333,6 +334,9 @@ export const ProductPreviewModal = ({
             <DialogTitle className="text-lg sm:text-xl md:text-2xl text-center text-foreground">
               Pilih Paket Laporan Human Design
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Pilih paket laporan yang sesuai dengan kebutuhan Anda
+            </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col gap-6 mt-4">
