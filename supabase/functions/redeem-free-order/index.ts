@@ -53,12 +53,11 @@ serve(async (req) => {
             throw new Error('Kupon sudah kadaluarsa');
         }
 
-        // Check Usage Limit
+        // Usage Check (Simplified for MVP)
         if (coupons.current_uses >= coupons.max_uses) {
             throw new Error('Kuota kupon sudah habis');
         }
 
-        // Check Discount Type (MVP only supports full_free)
         if (coupons.discount_type !== 'full_free') {
             throw new Error('Tipe kupon tidak didukung untuk klaim gratis');
         }
@@ -75,6 +74,7 @@ serve(async (req) => {
                 product_name: productName,
                 amount: 0, // FREE
                 status: 'PAID', // Directly PAID
+                paid_at: new Date().toISOString(),
                 payment_method: 'coupon',
                 metadata: {
                     chart_ids: chartIds,
@@ -89,11 +89,9 @@ serve(async (req) => {
         }
 
         // 3. Increment Coupon Usage
-        // We use direct update since we already checked validity and it's a small scale app. 
-        // Ideally we should use the RPC if it handles increment safely, but for now this works.
         const { error: updateError } = await supabase
             .from('coupons')
-            .update({ current_uses: coupons.current_uses + 1 })
+            .update({ current_uses: (coupons.current_uses || 0) + 1 })
             .eq('id', coupons.id);
 
         if (updateError) {
@@ -103,6 +101,7 @@ serve(async (req) => {
         // 4. TRIGGER N8N WORKFLOW (Simulate Paid Order)
         let n8nResponse;
         let responseText;
+        let n8n_debug = {};
         const N8N_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL') || 'https://flow.otomasi.click/webhook/hd-order-paid';
 
         try {
@@ -116,14 +115,14 @@ serve(async (req) => {
                 .single();
 
             // Fetch related charts data
-            const chartIds = orderData?.metadata?.chart_ids || [];
+            const chartIdsArray = orderData?.metadata?.chart_ids || [];
             let chartsData: any[] = [];
 
-            if (Array.isArray(chartIds) && chartIds.length > 0) {
+            if (Array.isArray(chartIdsArray) && chartIdsArray.length > 0) {
                 const { data: fetchedCharts } = await supabase
                     .from('saved_charts')
                     .select('*')
-                    .in('id', chartIds);
+                    .in('id', chartIdsArray);
                 chartsData = fetchedCharts || [];
             }
 
@@ -131,16 +130,13 @@ serve(async (req) => {
             let report_type = 'personal-comprehensive'; // Default
             const productNameLower = (orderData?.product_name || '').toLowerCase();
 
-            // Priority 1: Check for Bundles (Contain both 'bazi' AND 'human design')
             if (productNameLower.includes('bazi') && productNameLower.includes('human design')) {
                 if (productNameLower.includes('essential')) {
                     report_type = 'bundle-essential-bazi';
                 } else {
                     report_type = 'bundle-full-bazi';
                 }
-            }
-            // Priority 2: Check for Single Reports
-            else if (productNameLower.includes('essential')) {
+            } else if (productNameLower.includes('essential')) {
                 report_type = 'personal-essential';
             } else if (productNameLower.includes('bazi')) {
                 report_type = 'bazi';
@@ -158,7 +154,7 @@ serve(async (req) => {
                         transaction_id: `COUPON-${referenceId}`,
                         payment_type: 'coupon',
                         settlement_time: new Date().toISOString(),
-                        gross_amount: 0,
+                        gross_amount: "0.00",
                         coupon_code: couponCode
                     }
                 })
@@ -166,17 +162,37 @@ serve(async (req) => {
 
             responseText = await n8nResponse.text();
             console.log(`N8N Response Status: ${n8nResponse.status}`);
-            console.log(`N8N Response Body: ${responseText}`);
+
+            n8n_debug = {
+                status: n8nResponse.status,
+                ok: n8nResponse.ok,
+                response: responseText.substring(0, 500)
+            };
 
             if (n8nResponse.ok) {
                 console.log('n8n workflow triggered successfully');
             } else {
                 console.error(`Failed to trigger n8n workflow: ${n8nResponse.status} - ${responseText}`);
             }
-        } catch (n8nError) {
+        } catch (n8nError: any) {
             console.error('Error calling n8n webhook:', n8nError);
-            // Non-blocking error
+            n8n_debug = {
+                error: n8nError.message || 'Unknown network error'
+            };
         }
+
+        // Update order with n8n debug info
+        await supabase
+            .from('orders')
+            .update({
+                metadata: {
+                    ...(birthData ? { birth_data: birthData } : {}),
+                    chart_ids: chartIds,
+                    coupon_code: couponCode,
+                    n8n_webhook_debug: n8n_debug
+                }
+            })
+            .eq('reference_id', referenceId);
 
         return new Response(JSON.stringify({
             success: true,

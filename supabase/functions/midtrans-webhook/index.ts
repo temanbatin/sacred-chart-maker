@@ -254,31 +254,55 @@ serve(async (req) => {
                         report_type = 'bazi';
                     }
 
-                    const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            order: orderData,
-                            charts: chartsData,
-                            report_type: report_type,
-                            transaction: {
-                                transaction_id,
-                                payment_type,
-                                settlement_time,
-                                gross_amount
+                    let n8n_debug = {};
+                    try {
+                        const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                order: orderData,
+                                charts: chartsData,
+                                report_type: report_type,
+                                transaction: {
+                                    transaction_id,
+                                    payment_type,
+                                    settlement_time,
+                                    gross_amount
+                                }
+                            })
+                        });
+
+                        const responseText = await n8nResponse.text();
+                        n8n_debug = {
+                            status: n8nResponse.status,
+                            ok: n8nResponse.ok,
+                            response: responseText.substring(0, 500)
+                        };
+
+                        if (n8nResponse.ok) {
+                            console.log('n8n workflow triggered successfully');
+                        } else {
+                            console.error('Failed to trigger n8n workflow:', n8nResponse.status);
+                        }
+                    } catch (n8nErr: any) {
+                        console.error('Error calling n8n webhook:', n8nErr);
+                        n8n_debug = { error: n8nErr.message };
+                    }
+
+                    // Log n8n result to order metadata for troubleshooting
+                    await supabase
+                        .from('orders')
+                        .update({
+                            metadata: {
+                                ...(orderData?.metadata || {}),
+                                n8n_webhook_debug: n8n_debug
                             }
                         })
-                    });
-
-                    if (n8nResponse.ok) {
-                        console.log('n8n workflow triggered successfully');
-                    } else {
-                        console.error('Failed to trigger n8n workflow:', n8nResponse.status);
-                    }
+                        .eq('reference_id', order_id);
                 } catch (n8nError) {
-                    console.error('Error calling n8n webhook:', n8nError);
-                    // Don't fail the whole request just because n8n failed
+                    console.error('Error in n8n execution block:', n8nError);
                 }
+
             }
 
         } else if (isPending) {
