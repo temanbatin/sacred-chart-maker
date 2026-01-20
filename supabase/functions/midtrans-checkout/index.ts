@@ -171,7 +171,10 @@ serve(async (req) => {
 
         if (!response.ok) {
             console.error('Midtrans Error:', midtransResponse);
-            throw new Error(midtransResponse.error_messages?.join(', ') || 'Payment gateway error');
+            const debugMode = isProduction ? 'PROD' : 'SANDBOX';
+            const debugKey = MIDTRANS_SERVER_KEY.substring(0, 10) + '...';
+            const errorDetails = midtransResponse.error_messages?.join(', ') || 'Payment gateway error';
+            throw new Error(`${errorDetails} [Mode: ${debugMode}, KeyPrefix: ${debugKey}]`);
         }
 
         const snapToken = midtransResponse.token;
