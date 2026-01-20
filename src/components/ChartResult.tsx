@@ -541,7 +541,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
 
       try {
         const { data: result, error } = await supabase.functions.invoke("get-bodygraph", {
-          body: birthData,
+          body: { ...birthData, email: userEmail, whatsapp: userPhone },
         });
 
         if (error) {

@@ -15,6 +15,29 @@ export const useChartGenerator = (user: User | null) => {
     const [pendingBirthData, setPendingBirthData] = useState<BirthData | null>(null);
     const [currentChartId, setCurrentChartId] = useState<string | undefined>(undefined);
 
+    // Fetch profile data when user is logged in
+    useEffect(() => {
+        if (user) {
+            setUserName(user.user_metadata?.name || '');
+            setUserEmail(user.email || '');
+            setUserPhone(user.user_metadata?.whatsapp || '');
+
+            const fetchProfile = async () => {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('name, whatsapp')
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (!error && data) {
+                    if (data.name) setUserName(data.name);
+                    if (data.whatsapp) setUserPhone(data.whatsapp);
+                }
+            };
+            fetchProfile();
+        }
+    }, [user]);
+
     const generateChart = async (
         birthDataInput: BirthData,
         email: string,
@@ -118,6 +141,8 @@ export const useChartGenerator = (user: User | null) => {
                     minute: birthDataInput.minute,
                     place: birthDataInput.place,
                     gender: birthDataInput.gender,
+                    email,
+                    whatsapp,
                 },
             });
 

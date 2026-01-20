@@ -167,6 +167,8 @@ serve(async (req) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     order: orderData,
+                    email: orderData?.customer_email,
+                    whatsapp: orderData?.customer_phone,
                     charts: chartsData,
                     report_type: report_type,
                     transaction: {

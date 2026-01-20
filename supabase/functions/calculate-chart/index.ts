@@ -31,9 +31,9 @@ serve(async (req) => {
   }
 
   try {
-    const { year, month, day, hour, minute, place, gender } = await req.json();
+    const { year, month, day, hour, minute, place, gender, email, whatsapp } = await req.json();
 
-    console.log('Calculating chart via n8n:', { year, month, day, hour, minute, place, gender });
+    console.log('Calculating chart via n8n:', { year, month, day, hour, minute, place, gender, email, whatsapp });
 
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
@@ -43,6 +43,8 @@ serve(async (req) => {
         second: 0,
         place,
         gender,
+        email,
+        whatsapp,
         islive: true
       }),
     });

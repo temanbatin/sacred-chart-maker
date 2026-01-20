@@ -215,6 +215,27 @@ Deno.serve(async (req) => {
 
     console.log(`Lead saved successfully: ${data.id}`);
 
+    // Trigger n8n for lead capture
+    try {
+      const N8N_LEAD_WEBHOOK_URL = Deno.env.get('N8N_ORDER_PAID_WEBHOOK_URL') || 'https://flow.otomasi.click/webhook/hd-order-paid';
+      await fetch(N8N_LEAD_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: 'lead',
+          lead: data,
+          email: data.email,
+          whatsapp: data.whatsapp,
+          name: data.name,
+          birth_date: data.birth_date,
+          birth_place: data.birth_place
+        })
+      });
+      console.log('n8n lead webhook triggered');
+    } catch (e) {
+      console.error('Failed to trigger n8n lead webhook:', e);
+    }
+
     return new Response(
       JSON.stringify({ success: true, id: data.id }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -170,7 +170,11 @@ serve(async (req) => {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                order: orderData, charts: chartsData, report_type,
+                                order: orderData,
+                                email: orderData?.customer_email,
+                                whatsapp: orderData?.customer_phone,
+                                charts: chartsData,
+                                report_type,
                                 transaction: { transaction_id, payment_type, settlement_time, gross_amount }
                             })
                         });

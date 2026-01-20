@@ -31,9 +31,9 @@ serve(async (req) => {
   }
 
   try {
-    const { year, month, day, hour, minute, place } = await req.json();
+    const { year, month, day, hour, minute, place, email, whatsapp } = await req.json();
 
-    console.log('Fetching bodygraph via n8n:', { year, month, day, hour, minute, place });
+    console.log('Fetching bodygraph via n8n:', { year, month, day, hour, minute, place, email, whatsapp });
 
     // Retry logic configuration
     const MAX_RETRIES = 3;
@@ -60,6 +60,8 @@ serve(async (req) => {
             year, month, day, hour, minute,
             second: 0,
             place,
+            email,
+            whatsapp,
             fmt: 'svg'
           }),
           signal: controller.signal
