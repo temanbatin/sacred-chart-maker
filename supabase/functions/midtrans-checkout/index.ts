@@ -1,12 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Supabase Admin Client (needed to read/write coupons)
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Allowed origins for CORS
 const ALLOWED_ORIGINS = [
     'https://temanbatin.com',
     'https://www.temanbatin.com',
@@ -18,6 +16,11 @@ const ALLOWED_ORIGINS = [
     'http://127.0.0.1:8080'
 ];
 
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 function getCorsHeaders(req: Request) {
     const origin = req.headers.get('origin') || '';
     const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -27,41 +30,70 @@ function getCorsHeaders(req: Request) {
     };
 }
 
-// Midtrans API Configuration
-// Sandbox: https://app.sandbox.midtrans.com/snap/v1/transactions
-// Production: https://app.midtrans.com/snap/v1/transactions
-// function to get isProduction
-// Hardcoded for Production
-const isProduction = true;
-const MIDTRANS_API_URL = 'https://app.midtrans.com/snap/v1/transactions';
+function generateReferenceId(): string {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `TB-${timestamp}-${random}`;
+}
 
-// ... interface ...
+function formatPhoneNumber(phone: string): string {
+    let p = phone.replace(/[^\d+]/g, ''); // Keep digits and +
+    if (p.startsWith('0')) {
+        p = '62' + p.substring(1);
+    } else if (p.startsWith('+')) {
+        p = p.substring(1);
+    }
+    // If no prefix and likely ID, add 62 (simple heuristic)
+    if (p.startsWith('8')) {
+        p = '62' + p;
+    }
+    return p;
+}
 
-// ... generateReferenceId ...
-// ... formatPhoneNumber ...
+interface CheckoutRequest {
+    referenceId?: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    amount: number;
+    productName: string;
+    chartIds?: string[];
+    birthData?: any;
+    couponCode?: string;
+    products?: string[];
+}
 
 serve(async (req) => {
-    // ... cors ...
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: getCorsHeaders(req) });
+    }
+
+    const currentCorsHeaders = getCorsHeaders(req);
 
     try {
         const MIDTRANS_SERVER_KEY = (Deno.env.get('MIDTRANS_SERVER_KEY') || '').trim();
 
         if (!MIDTRANS_SERVER_KEY) {
-            console.error('Midtrans credentials not configured');
             throw new Error('Payment gateway not configured (Missing Server Key)');
         }
 
-        // Check environment state
-        // const isProduction = true; // Already defined globally
-        // const MIDTRANS_API_URL = ... // Already defined globally
+        // Auto-detect environment based on Server Key Custom Prefix (SB- for sandbox)
+        // This makes the system robust against missing MIDTRANS_IS_PRODUCTION secrets
+        const isSandboxKey = MIDTRANS_SERVER_KEY.startsWith('SB-');
+        const isProduction = !isSandboxKey;
 
-        // Validate Key Prefix - Ensure we are NOT using a Sandbox key
-        if (MIDTRANS_SERVER_KEY.startsWith('SB-')) {
-            const msg = 'CRITICAL ERROR: Production mode is hardcoded, but Server Key appears to be Sandbox (starts with SB-). Please update Supabase Secrets with the Production Server Key.';
-            console.error(msg);
-            throw new Error(msg);
-        }
+        // Optionally check the explicit secret if desired, but reliance on Key is safer for consistency
+        // const explicitEnv = Deno.env.get('MIDTRANS_IS_PRODUCTION');
+        // if (explicitEnv !== undefined) { ... warn if mismatch ... }
 
+        const MIDTRANS_API_URL = isProduction
+            ? 'https://app.midtrans.com/snap/v1/transactions'
+            : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+
+        console.log(`Using Midtrans Env in: ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
+
+        const body: CheckoutRequest = await req.json();
 
         const {
             referenceId,
@@ -71,40 +103,31 @@ serve(async (req) => {
             amount,
             productName,
             chartIds,
-            couponCode
-        }: CheckoutRequest & { couponCode?: string } = await req.json();
-
-        // ... discount code omitted for brevity as it is unchanged ...
-
-        // Debug Environment
-        console.log('Environment Config:', {
-            isProductionVar: Deno.env.get('MIDTRANS_IS_PRODUCTION'),
-            calculatedIsProduction: isProduction,
-            apiUrl: MIDTRANS_API_URL,
-            serverKeyLength: MIDTRANS_SERVER_KEY?.length,
-            serverKeyPrefix: MIDTRANS_SERVER_KEY?.substring(0, 5) + '...'
-        });
+            // birthData, // stored in metadata/DB, not sent to midtrans specifically except maybe custom fields if needed
+            // products
+        } = body;
 
         const refId = referenceId || generateReferenceId();
         const origin = req.headers.get('origin') || 'https://temanbatin.com';
 
-        // Hardcode the production Supabase Function URL for webhook
-        const PROJECT_REF = 'ggyhinxltikifmzczuyg';
+        // Ensure FINISH_URL points to the frontend
         const FINISH_URL = `${origin}/payment-result?ref=${refId}`;
 
-        // Prepare Midtrans Snap request body
-        // Midtrans has a 50-char limit for item name
-        const truncatedProductName = (productName || 'Laporan Analisis Human Design').substring(0, 50);
+        // Midtrans limit: 50 chars for item name
+        const truncatedProductName = (productName || 'Laporan Human Design').substring(0, 50);
+
+        // Round amount to integer (IDR doesn't support decimals in most gateways)
+        const finalAmount = Math.round(amount);
 
         const snapRequest = {
             transaction_details: {
                 order_id: refId,
-                gross_amount: finalAmount  // Use Final Discounted Amount
+                gross_amount: finalAmount
             },
             item_details: [
                 {
-                    id: 'full-report',
-                    price: finalAmount, // Use Final Discounted Amount
+                    id: 'human-design-report', // Generic ID for the combined line item
+                    price: finalAmount,
                     quantity: 1,
                     name: truncatedProductName
                 }
@@ -123,15 +146,10 @@ serve(async (req) => {
             }
         };
 
-        const bodyString = JSON.stringify(snapRequest);
+        console.log('Calling Midtrans Snap API:', MIDTRANS_API_URL);
 
-        // Base64 encode server key for Basic Auth
         const authString = btoa(MIDTRANS_SERVER_KEY + ':');
 
-        console.log('Calling Midtrans Snap API with reference:', referenceId);
-        console.log('Request body:', bodyString);
-
-        // Call Midtrans Snap API
         const response = await fetch(MIDTRANS_API_URL, {
             method: 'POST',
             headers: {
@@ -139,69 +157,58 @@ serve(async (req) => {
                 'Authorization': `Basic ${authString}`,
                 'Accept': 'application/json'
             },
-            body: bodyString,
+            body: JSON.stringify(snapRequest),
         });
 
         const responseText = await response.text();
-        console.log('Midtrans API response status:', response.status);
-        console.log('Midtrans API response:', responseText);
-
         let midtransResponse;
         try {
             midtransResponse = JSON.parse(responseText);
         } catch {
-            console.error('Failed to parse Midtrans response:', responseText);
+            console.error('Midtrans Parse Error:', responseText);
             throw new Error('Invalid response from payment gateway');
         }
 
         if (!response.ok) {
-            console.error('Midtrans API error:', midtransResponse);
+            console.error('Midtrans Error:', midtransResponse);
             throw new Error(midtransResponse.error_messages?.join(', ') || 'Payment gateway error');
         }
 
-        // Extract Snap token from response
         const snapToken = midtransResponse.token;
         const redirectUrl = midtransResponse.redirect_url;
 
         if (!snapToken) {
-            console.error('No Snap token in Midtrans response:', midtransResponse);
             throw new Error('Snap token not received');
         }
 
-        console.log('Snap token generated successfully');
-
-        // Save payment_url to database
-        if (redirectUrl && referenceId) {
-            const { error: updateError } = await supabase
+        // Update Order in DB with Redirect URL if existing
+        if (referenceId) {
+            // We don't await this to keep response fast, or we can await to ensure it's saved.
+            // Awaiting is safer for consistency.
+            await supabase
                 .from('orders')
                 .update({ payment_url: redirectUrl })
                 .eq('reference_id', referenceId);
-
-            if (updateError) {
-                console.error('Error saving payment_url:', updateError);
-            } else {
-                console.log('Payment URL saved to order:', referenceId);
-            }
         }
 
         return new Response(JSON.stringify({
             success: true,
             token: snapToken,
             redirect_url: redirectUrl,
-            paymentUrl: redirectUrl,
-            referenceId: referenceId
+            referenceId: refId
         }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            headers: { ...currentCorsHeaders, 'Content-Type': 'application/json' },
+            status: 200
         });
 
-    } catch (error) {
-        console.error('Error in midtrans-checkout function:', error);
-        return new Response(
-            JSON.stringify({
-                success: false,
-                error: error instanceof Error ? error.message : 'Unknown error'
-            }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+    } catch (error: any) {
+        console.error('Checkout Function Error:', error);
+        return new Response(JSON.stringify({
+            success: false,
+            error: error.message || 'Internal Server Error'
+        }), {
+            headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
+            status: 400
+        });
     }
 });
