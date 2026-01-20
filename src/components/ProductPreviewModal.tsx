@@ -44,8 +44,9 @@ export const ProductPreviewModal = ({
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
 
   // Product Selection State
-  const [selectedTier, setSelectedTier] = useState<'essential' | 'full'>('full');
+  const [selectedTier, setSelectedTier] = useState<'essential' | 'full' | 'upgrade'>('full');
   const [includeBazi, setIncludeBazi] = useState(false);
+  const [hasEssential, setHasEssential] = useState(false);
 
   // Coupon State
   const [couponCode, setCouponCode] = useState('');
@@ -76,9 +77,45 @@ export const ProductPreviewModal = ({
       setBillingName(userName);
       setBillingEmail(userEmail);
       setBillingPhone(userPhone);
-      // Reset selections
-      setSelectedTier('full');
       setIncludeBazi(false);
+
+      const checkPreviousPurchase = async () => {
+        if (!userEmail && !userId) return;
+
+        try {
+          let query = supabase.from('orders')
+            .select('metadata, status')
+            .in('status', ['settlement', 'capture']);
+
+          if (userId) {
+            query = query.eq('user_id', userId);
+          } else if (userEmail) {
+            query = query.eq('customer_email', userEmail);
+          }
+
+          const { data, error } = await query;
+
+          if (data) {
+            const hasEssentialPurchase = data.some((order: any) => {
+              const products = order.metadata?.products || [];
+              // check if products includes essential_report id
+              return Array.isArray(products) && products.includes(PRODUCTS.ESSENTIAL_REPORT.id);
+            });
+
+            if (hasEssentialPurchase) {
+              setHasEssential(true);
+              setSelectedTier('upgrade'); // Default to upgrade if they have essential
+            } else {
+              setHasEssential(false);
+              setSelectedTier('full');
+            }
+          }
+        } catch (err) {
+          console.error("Error checking purchases", err);
+        }
+      };
+
+      checkPreviousPurchase();
 
       // Track Initiate Checkout
       if (window.fbq) {
@@ -88,7 +125,11 @@ export const ProductPreviewModal = ({
   }, [isOpen, userName, userEmail, userPhone]);
 
   // Calculate Totals
-  const selectedProduct = selectedTier === 'full' ? PRODUCTS.FULL_REPORT : PRODUCTS.ESSENTIAL_REPORT;
+  const selectedProduct = selectedTier === 'full'
+    ? PRODUCTS.FULL_REPORT
+    : selectedTier === 'upgrade'
+      ? PRODUCTS.UPGRADE_ESSENTIAL
+      : PRODUCTS.ESSENTIAL_REPORT;
 
   const getSubtotal = () => {
     let total = selectedProduct.price;
@@ -108,8 +149,13 @@ export const ProductPreviewModal = ({
   };
 
   const getSavings = () => {
-    const originalTotal = (selectedTier === 'full' ? PRODUCTS.FULL_REPORT.original_price : PRODUCTS.ESSENTIAL_REPORT.original_price)
-      + (includeBazi ? PRODUCTS.BAZI_ADDON.original_price : 0);
+    let originalTotal = 0;
+    if (selectedTier === 'full') originalTotal += PRODUCTS.FULL_REPORT.original_price;
+    else if (selectedTier === 'essential') originalTotal += PRODUCTS.ESSENTIAL_REPORT.original_price;
+    else if (selectedTier === 'upgrade') originalTotal += PRODUCTS.UPGRADE_ESSENTIAL.original_price;
+
+    originalTotal += (includeBazi ? PRODUCTS.BAZI_ADDON.original_price : 0);
+
     const currentTotal = getSubtotal();
     return Math.round(((originalTotal - currentTotal) / originalTotal) * 100);
   };
@@ -168,6 +214,7 @@ export const ProductPreviewModal = ({
           const newChartId = crypto.randomUUID();
 
           // Insert with the pre-generated ID
+          // @ts-ignore
           const { error: saveError } = await supabase
             .from('saved_charts')
             .insert({
@@ -200,6 +247,7 @@ export const ProductPreviewModal = ({
       const finalAmount = getTotalWithDiscount();
 
       // 1. Save order to database first
+      // @ts-ignore
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -280,6 +328,7 @@ export const ProductPreviewModal = ({
       if (!chartId && birthData && chartData) {
         const newChartId = crypto.randomUUID();
         // ... saving logic ...
+        // @ts-ignore
         const { error: saveError } = await supabase.from('saved_charts').insert({
           id: newChartId,
           user_id: userId || null,
@@ -344,77 +393,122 @@ export const ProductPreviewModal = ({
             {/* Product Tier Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Essential Package */}
-              <div
-                className={cn(
-                  "border rounded-xl p-4 cursor-pointer transition-all relative",
-                  selectedTier === 'essential'
-                    ? "border-primary bg-primary/10 ring-1 ring-primary"
-                    : "border-border bg-card hover:border-primary/50"
-                )}
-                onClick={() => setSelectedTier('essential')}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-lg">Essential</h3>
-                  <div className="text-right">
-                    <span className="block text-xl font-bold text-primary">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.price)}</span>
-                    <span className="block text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
+              {!hasEssential && (
+                <div
+                  className={cn(
+                    "border rounded-xl p-4 cursor-pointer transition-all relative",
+                    selectedTier === 'essential'
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-border bg-card hover:border-primary/50"
+                  )}
+                  onClick={() => setSelectedTier('essential')}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-lg">Essential</h3>
+                    <div className="text-right">
+                      <span className="block text-xl font-bold text-primary">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.price)}</span>
+                      <span className="block text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
+                    </div>
                   </div>
+                  <p className="text-xs text-muted-foreground mb-3">Ringkasan fundamental desain Anda (20-30 halaman).</p>
+                  <ul className="space-y-1.5 mb-4">
+                    {PRODUCTS.ESSENTIAL_REPORT.features.slice(0, 4).map((feat, idx) => (
+                      <li key={idx} className="text-xs flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {selectedTier === 'essential' && (
+                    <div className="absolute -top-3 -right-3 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-full">
+                      Dipilih
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground mb-3">Ringkasan fundamental desain Anda (20-30 halaman).</p>
-                <ul className="space-y-1.5 mb-4">
-                  {PRODUCTS.ESSENTIAL_REPORT.features.slice(0, 4).map((feat, idx) => (
-                    <li key={idx} className="text-xs flex items-start gap-2">
-                      <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-                {selectedTier === 'essential' && (
-                  <div className="absolute -top-3 -right-3 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-full">
-                    Dipilih
-                  </div>
-                )}
-              </div>
+              )}
 
               {/* Full Package */}
-              <div
-                className={cn(
-                  "border rounded-xl p-4 cursor-pointer transition-all relative overflow-hidden",
-                  selectedTier === 'full'
-                    ? "border-accent bg-accent/10 ring-1 ring-accent"
-                    : "border-border bg-card hover:border-accent/50"
-                )}
-                onClick={() => setSelectedTier('full')}
-              >
-                <div className="absolute top-0 right-0 bg-accent text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg">
-                  TERLARIS
-                </div>
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-lg">Full Report</h3>
-                  <div className="text-right mt-1">
-                    <span className="block text-xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
-                    <span className="block text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
+              {!hasEssential && (
+                <div
+                  className={cn(
+                    "border rounded-xl p-4 cursor-pointer transition-all relative overflow-hidden",
+                    selectedTier === 'full'
+                      ? "border-accent bg-accent/10 ring-1 ring-accent"
+                      : "border-border bg-card hover:border-accent/50"
+                  )}
+                  onClick={() => setSelectedTier('full')}
+                >
+                  <div className="absolute top-0 right-0 bg-accent text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg">
+                    TERLARIS
                   </div>
-                </div>
-                <p className="text-xs text-muted-foreground mb-3">Analisis 100+ halaman super lengkap.</p>
-                <ul className="space-y-1.5">
-                  {PRODUCTS.FULL_REPORT.features.slice(0, 5).map((feat, idx) => (
-                    <li key={idx} className="text-xs flex items-start gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
-                      <span>{feat}</span>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-lg">Full Report</h3>
+                    <div className="text-right mt-1">
+                      <span className="block text-xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
+                      <span className="block text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">Analisis 100+ halaman super lengkap.</p>
+                  <ul className="space-y-1.5">
+                    {PRODUCTS.FULL_REPORT.features.slice(0, 5).map((feat, idx) => (
+                      <li key={idx} className="text-xs flex items-start gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                    <li className="text-xs flex items-start gap-2 font-semibold text-accent">
+                      <Plus className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      <span>Semua fitur Essential</span>
                     </li>
-                  ))}
-                  <li className="text-xs flex items-start gap-2 font-semibold text-accent">
-                    <Plus className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    <span>Semua fitur Essential</span>
-                  </li>
-                </ul>
-                {selectedTier === 'full' && (
-                  <div className="absolute bottom-2 right-2 text-accent opacity-20">
-                    <CheckCircle2 className="w-16 h-16" />
+                  </ul>
+                  {selectedTier === 'full' && (
+                    <div className="absolute bottom-2 right-2 text-accent opacity-20">
+                      <CheckCircle2 className="w-16 h-16" />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Upgrade Option (Shown only if hasEssential is true) */}
+              {hasEssential && (
+                <div
+                  className={cn(
+                    "border rounded-xl p-4 cursor-pointer transition-all relative overflow-hidden col-span-2", // Full width
+                    selectedTier === 'upgrade'
+                      ? "border-accent bg-accent/10 ring-1 ring-accent"
+                      : "border-border bg-card hover:border-accent/50"
+                  )}
+                  onClick={() => setSelectedTier('upgrade')}
+                >
+                  <div className="absolute top-0 right-0 bg-accent text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg">
+                    PENAWARAN KHUSUS
                   </div>
-                )}
-              </div>
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-bold text-lg">Upgrade ke Full Report</h3>
+                      <p className="text-xs text-muted-foreground">Lengkapi report Anda dengan analisis mendalam.</p>
+                    </div>
+                    <div className="text-right mt-1">
+                      <span className="block text-xl font-bold text-accent">{formatPrice(PRODUCTS.UPGRADE_ESSENTIAL.price)}</span>
+                      <span className="block text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.UPGRADE_ESSENTIAL.original_price)}</span>
+                    </div>
+                  </div>
+
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                    {PRODUCTS.UPGRADE_ESSENTIAL.features.map((feat, idx) => (
+                      <li key={idx} className="text-xs flex items-start gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {selectedTier === 'upgrade' && (
+                    <div className="absolute bottom-2 right-2 text-accent opacity-20">
+                      <CheckCircle2 className="w-16 h-16" />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Add-on Selection */}
@@ -512,7 +606,12 @@ export const ProductPreviewModal = ({
                     ) : (
                       <>
                         <span className="text-xs text-muted-foreground line-through mr-2">
-                          {formatPrice((selectedTier === 'full' ? PRODUCTS.FULL_REPORT.original_price : PRODUCTS.ESSENTIAL_REPORT.original_price) + (includeBazi ? PRODUCTS.BAZI_ADDON.original_price : 0))}
+                          {formatPrice(
+                            (selectedTier === 'full' ? PRODUCTS.FULL_REPORT.original_price
+                              : selectedTier === 'upgrade' ? PRODUCTS.UPGRADE_ESSENTIAL.original_price
+                                : PRODUCTS.ESSENTIAL_REPORT.original_price)
+                            + (includeBazi ? PRODUCTS.BAZI_ADDON.original_price : 0)
+                          )}
                         </span>
                         <span className="text-xl font-bold text-primary">{formatPrice(getTotalWithDiscount())}</span>
                       </>

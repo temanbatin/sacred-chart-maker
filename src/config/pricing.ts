@@ -25,7 +25,7 @@ export const PRODUCTS = {
     ESSENTIAL_REPORT: {
         id: 'essential_report',
         name: 'Essential Human Design Report',
-        price: 89000,
+        price: 120000,
         original_price: 250000,
         features: [
             'Basic Profile (Tipe, Strategi, Otoritas)',
@@ -33,6 +33,19 @@ export const PRODUCTS = {
             'Signature & Not-Self Theme',
             'Personalized Synthesis (Ringkasan Kekuatan)',
             'Dokumen PDF Ringkas (~15 Halaman)'
+        ]
+    },
+    UPGRADE_ESSENTIAL: {
+        id: 'upgrade_essential',
+        name: 'Upgrade to Full Report',
+        price: 100000,
+        original_price: 199000,
+        features: [
+            'Upgrade dari Essential ke Full',
+            'Analisis Mendalam (+80 Halaman)',
+            'Semua fitur Full Report',
+            'Incarnation Cross & Gates',
+            'Panduan Relasi & Karir'
         ]
     },
     BAZI_ADDON: {
