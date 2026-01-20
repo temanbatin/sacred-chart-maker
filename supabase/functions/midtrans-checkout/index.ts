@@ -31,73 +31,37 @@ function getCorsHeaders(req: Request) {
 // Sandbox: https://app.sandbox.midtrans.com/snap/v1/transactions
 // Production: https://app.midtrans.com/snap/v1/transactions
 // function to get isProduction
-const getIsProduction = () => ['true', 'TRUE', '1'].includes(Deno.env.get('MIDTRANS_IS_PRODUCTION') || '');
-const getApiUrl = () => getIsProduction()
-    ? 'https://app.midtrans.com/snap/v1/transactions'
-    : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+// Hardcoded for Production
+const isProduction = true;
+const MIDTRANS_API_URL = 'https://app.midtrans.com/snap/v1/transactions';
 
+// ... interface ...
 
-interface CheckoutRequest {
-    referenceId?: string;
-    customerName: string;
-    customerEmail: string;
-    customerPhone: string;
-    amount: number;
-    productName: string;
-    chartIds?: string[];
-}
-
-// Generate reference ID
-function generateReferenceId(): string {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `TB-${timestamp}-${random}`;
-}
-
-// Format phone number for Midtrans (remove +62, use 08xxx format)
-function formatPhoneNumber(phone: string | undefined): string {
-    if (!phone) return '08000000000';
-
-    let digits = phone.replace(/\D/g, '');
-
-    // If starts with 62, replace with 0
-    if (digits.startsWith('62')) {
-        digits = '0' + digits.substring(2);
-    }
-
-    // Ensure it starts with 0
-    if (!digits.startsWith('0')) {
-        digits = '0' + digits;
-    }
-
-    return digits;
-}
+// ... generateReferenceId ...
+// ... formatPhoneNumber ...
 
 serve(async (req) => {
-    const corsHeaders = getCorsHeaders(req);
-
-    if (req.method === 'OPTIONS') {
-        return new Response(null, { headers: corsHeaders });
-    }
+    // ... cors ...
 
     try {
-        const MIDTRANS_SERVER_KEY = Deno.env.get('MIDTRANS_SERVER_KEY');
+        const MIDTRANS_SERVER_KEY = (Deno.env.get('MIDTRANS_SERVER_KEY') || '').trim();
 
         if (!MIDTRANS_SERVER_KEY) {
             console.error('Midtrans credentials not configured');
-            throw new Error('Payment gateway not configured');
+            throw new Error('Payment gateway not configured (Missing Server Key)');
         }
 
         // Check environment state
-        const isProduction = getIsProduction();
-        const MIDTRANS_API_URL = getApiUrl();
+        // const isProduction = true; // Already defined globally
+        // const MIDTRANS_API_URL = ... // Already defined globally
 
-        // Validate Key Prefix vs Environment
-        if (isProduction && MIDTRANS_SERVER_KEY.startsWith('SB-')) {
-            console.error('CRITICAL CONFIG ERROR: Production mode is ON, but using a Sandbox Server Key (SB-...)!');
-        } else if (!isProduction && !MIDTRANS_SERVER_KEY.startsWith('SB-')) {
-            console.warn('CONFIG WARNING: Sandbox mode is ON, but Server Key does not start with SB-.');
+        // Validate Key Prefix - Ensure we are NOT using a Sandbox key
+        if (MIDTRANS_SERVER_KEY.startsWith('SB-')) {
+            const msg = 'CRITICAL ERROR: Production mode is hardcoded, but Server Key appears to be Sandbox (starts with SB-). Please update Supabase Secrets with the Production Server Key.';
+            console.error(msg);
+            throw new Error(msg);
         }
+
 
         const {
             referenceId,
