@@ -383,7 +383,7 @@ const Reports = () => {
           .eq('reference_id', referenceId);
 
         toast.success('Mengarahkan ke halaman pembayaran...');
-        // Redirect to iPaymu payment page
+        // Redirect to Payment Gateway
         window.location.href = data.paymentUrl;
       } else {
         toast.error(data?.error || 'Gagal mendapatkan link pembayaran');
