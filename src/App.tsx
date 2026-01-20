@@ -49,7 +49,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <ErrorBoundary>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Suspense fallback={<LoadingAnimation />}>
             <Routes>
               {/* Silo 1: Tool Utama */}

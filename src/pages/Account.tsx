@@ -47,7 +47,7 @@ const Account = () => {
       .eq('user_id', userId)
       .single();
 
-    if (!error && data?.role === 'admin') {
+    if (!error && data && data.role === 'admin') {
       toast.success('Selamat datang, Admin!');
       navigate('/admin');
     }

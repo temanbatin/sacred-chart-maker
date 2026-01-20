@@ -350,7 +350,7 @@ export const ProductPreviewModal = ({
           customerName: billingName,
           customerEmail: billingEmail,
           customerPhone: billingPhone,
-          productName: `Full Report Human Design (Free): ${userName}`,
+          productName: `${selectedProduct.name}${includeBazi ? ' + Bazi Addon' : ''} (Free): ${userName}`,
           chartIds: finalChartIds,
           birthData,
           userId

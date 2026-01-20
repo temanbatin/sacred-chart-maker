@@ -14,7 +14,7 @@ import { NewsletterSection } from '@/components/NewsletterSection';
 import { Footer } from '@/components/Footer';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { ChartGenerationModal } from '@/components/ChartGenerationModal';
-import { ExitIntentPopup } from '@/components/ExitIntentPopup';
+
 import { ScrollToTop } from '@/components/ScrollToTop';
 
 import { useAuthSession } from '@/hooks/useAuthSession';
@@ -157,7 +157,7 @@ const Index = () => {
           />
         )}
         <Footer />
-        <ExitIntentPopup />
+
         <ChartGenerationModal
           isOpen={isChartModalOpen}
           onClose={() => setIsChartModalOpen(false)}
