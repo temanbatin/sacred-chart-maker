@@ -17,6 +17,7 @@ import reportSS1 from "@/assets/Report SS.jpg";
 import reportSS2 from "@/assets/Report SS 2.jpg";
 import reportSS3 from "@/assets/Report SS 3.jpg";
 import { PRICING_CONFIG, PRODUCTS, formatPrice } from "@/config/pricing";
+import { TestimonialsSection } from "./TestimonialsSection";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -1094,75 +1095,77 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             </div>
           </div>
         ) : (
+          <>
           /* Already Ordered Section */
-          <div className="mt-12 space-y-12 animate-fade-up">
-            {/* Success Access Banner - Showing Full Report Result */}
-            <div className="bg-emerald-900/40 border border-emerald-500/30 rounded-3xl p-8 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 mb-6">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+            <div className="mt-12 space-y-12 animate-fade-up">
+              {/* Success Access Banner - Showing Full Report Result */}
+              <div className="bg-emerald-900/40 border border-emerald-500/30 rounded-3xl p-8 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 mb-6">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-emerald-400 mb-3">
+                  Full Report Tersedia
+                </h3>
+                <p className="text-muted-foreground max-w-xl mx-auto mb-8">
+                  Anda telah membuka akses penuh ke analisis chart ini. Silakan unduh dokumen PDF lengkap untuk mempelajarinya lebih dalam.
+                </p>
+                <div className="flex justify-center gap-4">
+                  <Button
+                    onClick={() => toast({ title: "Silakan cek dashboard atau email Anda", description: "Link download report telah dikirimkan." })}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF Report
+                  </Button>
+                </div>
               </div>
-              <h3 className="text-2xl font-bold text-emerald-400 mb-3">
-                Full Report Tersedia
-              </h3>
-              <p className="text-muted-foreground max-w-xl mx-auto mb-8">
-                Anda telah membuka akses penuh ke analisis chart ini. Silakan unduh dokumen PDF lengkap untuk mempelajarinya lebih dalam.
-              </p>
-              <div className="flex justify-center gap-4">
+
+              {/* Upsell for New Chart (Partner/Family) */}
+              <div className="glass-card rounded-3xl p-8 md:p-12 text-center border-2 border-primary/20">
+                <div className="mb-6">
+                  <span className="inline-block px-4 py-1.5 rounded-full bg-accent/20 text-accent font-medium text-sm mb-4">
+                    Hadiah Transformasi
+                  </span>
+                  <h3 className="text-3xl font-bold text-foreground mb-4">
+                    Pahami Orang Terkasih Lebih Dalam
+                  </h3>
+                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    Human Design bukan hanya tentang dirimu. Bayangkan jika kamu bisa memahami cara komunikasi pasangan, bakat tersembunyi anak, atau potensi sahabatmu.
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-10 text-left">
+                  <div className="bg-secondary/30 p-5 rounded-2xl">
+                    <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                      <span className="text-2xl">💑</span> Pasangan
+                    </h4>
+                    <p className="text-sm text-muted-foreground">Pahami bahasa cinta dan konflik mereka. Bangun hubungan yang lebih harmonis tanpa salah paham.</p>
+                  </div>
+                  <div className="bg-secondary/30 p-5 rounded-2xl">
+                    <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                      <span className="text-2xl">👶</span> Anak
+                    </h4>
+                    <p className="text-sm text-muted-foreground">Kenali gaya belajar dan bakat unik mereka sejak dini. Pandu mereka sesuai desain sejatinya.</p>
+                  </div>
+                  <div className="bg-secondary/30 p-5 rounded-2xl">
+                    <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                      <span className="text-2xl">🤝</span> Rekan Kerja
+                    </h4>
+                    <p className="text-sm text-muted-foreground">Tingkatkan kolaborasi dengan memahami gaya kerja dan pengambilan keputusan mereka.</p>
+                  </div>
+                </div>
+
                 <Button
-                  onClick={() => toast({ title: "Silakan cek dashboard atau email Anda", description: "Link download report telah dikirimkan." })}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  size="lg"
+                  onClick={onReset}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 shadow-lg shadow-primary/20"
                 >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF Report
+                  <Plus className="w-5 h-5 mr-2" />
+                  Buat Chart Baru Untuk Mereka
                 </Button>
               </div>
             </div>
-
-            {/* Upsell for New Chart (Partner/Family) */}
-            <div className="glass-card rounded-3xl p-8 md:p-12 text-center border-2 border-primary/20">
-              <div className="mb-6">
-                <span className="inline-block px-4 py-1.5 rounded-full bg-accent/20 text-accent font-medium text-sm mb-4">
-                  Hadiah Transformasi
-                </span>
-                <h3 className="text-3xl font-bold text-foreground mb-4">
-                  Pahami Orang Terkasih Lebih Dalam
-                </h3>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                  Human Design bukan hanya tentang dirimu. Bayangkan jika kamu bisa memahami cara komunikasi pasangan, bakat tersembunyi anak, atau potensi sahabatmu.
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-10 text-left">
-                <div className="bg-secondary/30 p-5 rounded-2xl">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <span className="text-2xl">💑</span> Pasangan
-                  </h4>
-                  <p className="text-sm text-muted-foreground">Pahami bahasa cinta dan konflik mereka. Bangun hubungan yang lebih harmonis tanpa salah paham.</p>
-                </div>
-                <div className="bg-secondary/30 p-5 rounded-2xl">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <span className="text-2xl">👶</span> Anak
-                  </h4>
-                  <p className="text-sm text-muted-foreground">Kenali gaya belajar dan bakat unik mereka sejak dini. Pandu mereka sesuai desain sejatinya.</p>
-                </div>
-                <div className="bg-secondary/30 p-5 rounded-2xl">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <span className="text-2xl">🤝</span> Rekan Kerja
-                  </h4>
-                  <p className="text-sm text-muted-foreground">Tingkatkan kolaborasi dengan memahami gaya kerja dan pengambilan keputusan mereka.</p>
-                </div>
-              </div>
-
-              <Button
-                size="lg"
-                onClick={onReset}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 shadow-lg shadow-primary/20"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Buat Chart Baru Untuk Mereka
-              </Button>
-            </div>
-          </div>
+          </>
         )}
         <ProductPreviewModal
           isOpen={isProductModalOpen}
@@ -1745,67 +1748,72 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       {/* Floating Sticky CTA for Non-Purchased Users */}
       {
         !isOrdered && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom duration-500">
-            {/* Mobile: Clean light floating bar */}
-            <div className="lg:hidden">
-              <div className="mx-3 mb-3 rounded-xl bg-white border border-gray-200 p-3 shadow-xl safe-area-bottom">
-                {/* Progress Bar */}
-                <div className="mb-2">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-gray-500">Chart Analysis</span>
-                    <span className="text-emerald-700 font-semibold">5%</span>
-                  </div>
-                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full w-[5%] bg-emerald-500 rounded-full" />
-                  </div>
-                </div>
-
-                {/* CTA Button - Scrolls to main CTA */}
-                <Button
-                  onClick={() => {
-                    document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 rounded-lg"
-                >
-                  Pesan In-Dept Analysis Desain Sejatimu
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Desktop: Slim bottom bar - Light Theme to match Mobile */}
-            <div className="hidden lg:block bg-white border-t border-gray-200 py-3 px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-              <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
-                {/* Left: Progress Info */}
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="flex flex-col w-full max-w-md">
-                    <div className="flex justify-between text-xs mb-1.5">
-                      <span className="text-gray-500 font-medium">Chart Analysis</span>
-                      <span className="text-emerald-700 font-bold">5%</span>
+          <>
+            <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom duration-500">
+              {/* Mobile: Clean light floating bar */}
+              <div className="lg:hidden">
+                <div className="mx-3 mb-3 rounded-xl bg-white border border-gray-200 p-3 shadow-xl safe-area-bottom">
+                  {/* Progress Bar */}
+                  <div className="mb-2">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-gray-500">Chart Analysis</span>
+                      <span className="text-emerald-700 font-semibold">5%</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden w-full">
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div className="h-full w-[5%] bg-emerald-500 rounded-full" />
                     </div>
                   </div>
-                </div>
 
-                {/* Right: Button */}
-                <div className="flex-shrink-0">
+                  {/* CTA Button - Scrolls to main CTA */}
                   <Button
                     onClick={() => {
                       document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-8 py-2.5 rounded-lg shadow-sm transition-all"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 rounded-lg"
                   >
                     Pesan In-Dept Analysis Desain Sejatimu
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
               </div>
+
+              {/* Desktop: Slim bottom bar - Light Theme to match Mobile */}
+              <div className="hidden lg:block bg-white border-t border-gray-200 py-3 px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
+                  {/* Left: Progress Info */}
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="flex flex-col w-full max-w-md">
+                      <div className="flex justify-between text-xs mb-1.5">
+                        <span className="text-gray-500 font-medium">Chart Analysis</span>
+                        <span className="text-emerald-700 font-bold">5%</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden w-full">
+                        <div className="h-full w-[5%] bg-emerald-500 rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Button */}
+                  <div className="flex-shrink-0">
+                    <Button
+                      onClick={() => {
+                        document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-8 py-2.5 rounded-lg shadow-sm transition-all"
+                    >
+                      Pesan In-Dept Analysis Desain Sejatimu
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </>
         )
       }
-    </section >
+
+      {/* Testimonials Section */}
+      <TestimonialsSection className="py-12 bg-transparent" />
+    </section>
   );
 };

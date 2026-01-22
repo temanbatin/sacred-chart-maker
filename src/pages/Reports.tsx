@@ -76,18 +76,7 @@ const reportBenefits = [
   },
 ];
 
-const testimonials = [
-  {
-    name: 'Sarah W.',
-    type: 'Generator',
-    quote: 'Full Report ini benar-benar membuka mata saya. Akhirnya saya paham kenapa saya selalu merasa tidak cocok dengan pekerjaan kantoran!',
-  },
-  {
-    name: 'Budi P.',
-    type: 'Projector',
-    quote: 'Sebagai Projector, saya belajar bahwa menunggu undangan adalah kunci sukses saya. Laporan ini mengubah cara saya berbisnis.',
-  },
-];
+import { TestimonialsSection } from '@/components/TestimonialsSection';
 
 import { PRICING_CONFIG, PRODUCTS, formatPrice } from '@/config/pricing';
 
@@ -646,34 +635,7 @@ const Reports = () => {
         <ReportPreviewSection hideCta={true} />
 
         {/* Testimonials */}
-        <section className="px-4 py-16">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-12">
-              Apa Kata Mereka?
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {testimonials.map((testimonial, index) => (
-                <div key={index} className="glass-card p-6 rounded-xl">
-                  <div className="flex items-center gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-accent text-accent" />
-                    ))}
-                  </div>
-                  <p className="text-foreground mb-4 italic">"{testimonial.quote}"</p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <span className="text-accent font-semibold">{testimonial.name[0]}</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{testimonial.name}</p>
-                      <p className="text-xs text-muted-foreground">{testimonial.type}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <TestimonialsSection className="bg-transparent py-16" />
 
         {/* CTA Section - Dynamic based on user state */}
         <section className="px-4 py-16">
