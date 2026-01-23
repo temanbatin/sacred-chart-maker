@@ -270,28 +270,9 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       const { data: { session } } = await supabase.auth.getSession();
       let activeUserId = currentUser?.id || session?.user?.id;
 
-      // Handle Guest Registration
-      if (!activeUserId && checkoutData.password) {
-        console.log("Creating account for guest...");
-        const { data: regData, error: regError } = await supabase.functions.invoke('register-user', {
-          body: {
-            email: checkoutData.email,
-            password: checkoutData.password,
-            name: checkoutData.name
-          }
-        });
-
-        if (regError) {
-          console.error("Registration failed:", regError);
-          // We continue with checkout even if registration fails (e.g. email exists)
-          // The order will still be trackable by email
-        } else {
-          toast({
-            title: "Akun berhasil dibuat!",
-            description: "Silakan cek email kamu untuk verifikasi setelah pembayaran.",
-          });
-        }
-      }
+      // In Google-only mode, we don't do background registration with password.
+      // Orders are trackable via customer_email, and will automatically link
+      // if the user later logs in with a Google account using the same email.
 
       // Generate Reference ID uniquely
       const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;

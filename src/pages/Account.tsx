@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { User, FileText, Clock, ArrowRight, LogIn, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, Calendar, MapPin, CreditCard } from 'lucide-react';
+import { User, FileText, Clock, ArrowRight, LogIn, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, Calendar, MapPin, CreditCard, CheckCircle2, Sparkles, Fingerprint } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +47,7 @@ const Account = () => {
       .eq('user_id', userId)
       .single();
 
-    if (!error && data && data.role === 'admin') {
+    if (!error && data && (data as any).role === 'admin') {
       toast.success('Selamat datang, Admin!');
       navigate('/admin');
     }
@@ -77,25 +77,7 @@ const Account = () => {
     }
   }, [user]);
 
-  // Auth form state - default to signup mode if email is in URL
-  const [isLoginMode, setIsLoginMode] = useState(!urlEmail);
-  const [email, setEmail] = useState(urlEmail);
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [signupMessage, setSignupMessage] = useState('');
-  const [resendingEmail, setResendingEmail] = useState(false);
 
-  // Check if email is verified
-  const isEmailVerified = user?.email_confirmed_at !== null;
-
-  // If URL has email param from payment, show helpful message
-  useEffect(() => {
-    if (urlEmail) {
-      setIsLoginMode(false);
-      setEmail(urlEmail);
-      setSignupMessage('Buat akun untuk track status pesanan dan download laporan.');
-    }
-  }, [urlEmail]);
 
   // Function to save pending chart from sessionStorage after login/signup
   const savePendingChart = async (userId: string) => {
@@ -125,24 +107,20 @@ const Account = () => {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
 
-        // Fetch charts and save pending chart when user logs in
         if (session?.user) {
           setTimeout(async () => {
-            // 1. Claim guest data (link anonymous charts from orders to this user)
             try {
               await supabase.rpc('claim_guest_data');
             } catch (err) {
               console.error('Error claiming guest data:', err);
             }
-
-            // 2. Fetch updated list
             fetchSavedCharts();
             savePendingChart(session.user.id);
           }, 0);
@@ -150,20 +128,16 @@ const Account = () => {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
 
-      // Admin Redirect Logic
       if (session?.user) {
         checkAdminRole(session.user.id);
-        // Claim guest data on initial load too
         supabase.rpc('claim_guest_data').then(() => {
           fetchSavedCharts();
         });
-        // Don't auto-save pending chart on initial load (only on new login)
       }
     });
 
@@ -179,8 +153,6 @@ const Account = () => {
     if (error) {
       console.error('Error fetching charts:', error);
     } else {
-      // Deduplicate charts based on content (Name + Birth Details)
-      // Keep the most recent one (first in the list due to order desc)
       const uniqueCharts = (data || []).reduce((acc: SavedChart[], current) => {
         const signature = `${current.name}|${current.birth_date}|${current.birth_time}|${current.birth_place}`;
         const isDuplicate = acc.some(item =>
@@ -197,34 +169,12 @@ const Account = () => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthLoading(true);
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      if (error.message.includes('Invalid login credentials')) {
-        toast.error('Email atau password salah');
-      } else {
-        toast.error(error.message);
-      }
-    } else {
-      toast.success('Berhasil masuk!');
-    }
-
-    setAuthLoading(false);
-  };
-
   const handleGoogleLogin = async () => {
     setAuthLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://temanbatin.com/account',
+        redirectTo: window.location.origin + '/account',
       },
     });
 
@@ -233,46 +183,6 @@ const Account = () => {
       setAuthLoading(false);
     }
   };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthLoading(true);
-
-    if (password.length < 6) {
-      toast.error('Password minimal 6 karakter');
-      setAuthLoading(false);
-      return;
-    }
-
-    const { data: authData, error } = await supabase.functions.invoke('register-user', {
-      body: { email, password }
-    });
-
-    if (error) {
-      toast.error('Gagal daftar: ' + error.message);
-    } else {
-      toast.success('Akun berhasil dibuat! Silakan cek email untuk verifikasi.');
-      setSignupMessage('Silakan cek email kamu untuk mengaktifkan akun.');
-    }
-
-    setAuthLoading(false);
-  };
-
-  const handleResendEmail = async () => {
-    if (!user?.email) return;
-
-    setResendingEmail(true);
-    const { error } = await supabase.functions.invoke('send-auth-email', {
-      body: { email: user.email, type: 'verification' }
-    });
-
-    if (error) {
-      toast.error('Gagal mengirim email: ' + error.message);
-    } else {
-      toast.success('Email verifikasi telah dikirim! Silakan cek inbox kamu.');
-    }
-    setResendingEmail(false);
-  };;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -332,171 +242,96 @@ const Account = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <MainNavbar />
 
-        <main className="pt-24 pb-16 px-4">
-          <div className="max-w-md mx-auto">
-            <div className="glass-card rounded-2xl p-8">
-              <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-                <LogIn className="w-10 h-10 text-accent" />
+        <main className="flex-1 flex items-center justify-center pt-24 pb-16 px-4">
+          <div className="max-w-[480px] w-full animate-fade-up">
+            <div className="glass-card rounded-[2.5rem] p-10 md:p-14 text-center relative overflow-hidden border-white/10 shadow-2xl">
+              {/* Background decoration */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-accent/10 blur-[100px] -z-10" />
+
+              <div className="flex justify-center mb-8 relative z-10">
+                <div className="bg-gradient-to-b from-primary/10 to-transparent p-6 rounded-full border border-primary/20 shadow-[0_0_30px_rgba(234,88,12,0.15)] animate-fade-up">
+                  <Fingerprint className="w-16 h-16 text-primary stroke-[1.5]" />
+                </div>
               </div>
 
-              <h1 className="text-2xl font-bold text-foreground text-center mb-2">
-                {isLoginMode ? 'Masuk ke Akun' : 'Buat Akun Baru'}
+              <h1 className="text-3xl md:text-5xl font-bold font-serif mb-4 tracking-tight leading-tight">
+                <span className="text-gradient-fire">Akses Dashboard</span>
               </h1>
-              <p className="text-muted-foreground text-center mb-8">
-                {isLoginMode
-                  ? 'Masuk untuk melihat chart tersimpan dan riwayat laporan.'
-                  : 'Daftar untuk menyimpan chart dan akses kapan saja.'}
+              <p className="text-muted-foreground mb-12 text-lg leading-relaxed max-w-sm mx-auto">
+                Kelola chart dan download laporan premium kamu dalam satu tempat yang aman dan terintegrasi.
               </p>
 
-              <form onSubmit={isLoginMode ? handleLogin : handleSignup} className="space-y-4">
-                {/* Message Banner */}
-                {signupMessage && (
-                  <div className={`p-3 rounded-xl text-sm text-center ${isLoginMode
-                    ? 'bg-amber-500/10 border border-amber-500/30 text-amber-200'
-                    : 'bg-primary/10 border border-primary/30 text-primary'
-                    }`}>
-                    {signupMessage}
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="auth-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="auth-email"
-                      type="email"
-                      placeholder="contoh@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-12 rounded-xl"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="auth-password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="auth-password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Masukkan password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10 h-12 rounded-xl"
-                      required
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  {!isLoginMode && (
-                    <p className="text-xs text-muted-foreground">Minimal 6 karakter</p>
-                  )}
-                </div>
-
+              <div className="space-y-8">
                 <Button
-                  type="submit"
-                  className="w-full fire-glow h-12 rounded-xl"
+                  type="button"
+                  size="lg"
+                  className="w-full bg-white hover:bg-gray-50 text-[hsl(160_84%_5%)] h-16 rounded-2xl shadow-xl hover:shadow-fire hover:scale-[1.02] transition-all duration-300 font-bold text-xl flex items-center justify-center gap-4 group relative overflow-hidden"
+                  onClick={handleGoogleLogin}
                   disabled={authLoading}
                 >
                   {authLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      {isLoginMode ? 'Masuk...' : 'Mendaftar...'}
-                    </>
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   ) : (
                     <>
-                      <LogIn className="w-5 h-5 mr-2" />
-                      {isLoginMode ? 'Masuk' : 'Daftar'}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+                      <svg className="w-7 h-7" viewBox="0 0 24 24">
+                        <path
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                          fill="#4285F4"
+                        />
+                        <path
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-1 .67-2.28 1.07-3.71 1.07-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          fill="#34A853"
+                        />
+                        <path
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                          fill="#FBBC05"
+                        />
+                        <path
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                          fill="#EA4335"
+                        />
+                      </svg>
+                      Daftar/Login dengan Google
                     </>
                   )}
                 </Button>
-              </form>
 
-              <div className="relative mt-6">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
+                <div className="grid grid-cols-1 gap-4 pt-4">
+                  <div className="flex items-center gap-4 text-left p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <p className="text-foreground/80 text-sm font-medium">Tanpa perlu verifikasi email manual</p>
+                  </div>
+                  <div className="flex items-center gap-4 text-left p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                      <Clock className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <p className="text-foreground/80 text-sm font-medium">Masuk cepat dalam hitungan detik</p>
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground px-2">Atau lanjut dengan</span>
-                </div>
-              </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full mt-4 h-12 rounded-xl border-border hover:bg-accent/50 group transition-all duration-200"
-                onClick={handleGoogleLogin}
-                disabled={authLoading}
-              >
-                {authLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                      <path
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        fill="#4285F4"
-                      />
-                      <path
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-1 .67-2.28 1.07-3.71 1.07-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        fill="#34A853"
-                      />
-                      <path
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        fill="#FBBC05"
-                      />
-                      <path
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        fill="#EA4335"
-                      />
-                    </svg>
-                    Google
-                  </>
-                )}
-              </Button>
-
-              <div className="mt-6 text-center">
-                <p className="text-sm text-muted-foreground">
-                  {isLoginMode ? 'Belum punya akun? ' : 'Sudah punya akun? '}
-                  <button
-                    onClick={() => setIsLoginMode(!isLoginMode)}
-                    className="text-accent hover:underline font-medium"
+                <div className="mt-8 pt-8 border-t border-white/5">
+                  <Link
+                    to="/"
+                    className="group text-accent hover:text-accent-hover transition-all inline-flex items-center gap-2 font-semibold text-lg hover:tracking-wide duration-300"
                   >
-                    {isLoginMode ? 'Daftar sekarang' : 'Masuk disini'}
-                  </button>
-                </p>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-border">
-                <p className="text-sm text-muted-foreground mb-4 text-center">
-                  Belum punya chart?
-                </p>
-                <Link
-                  to="/"
-                  className="text-accent hover:underline inline-flex items-center gap-1 justify-center w-full"
-                >
-                  Buat Chart Gratis
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+                    Belum punya chart?
+                    <span className="underline decoration-accent/50 underline-offset-4 group-hover:decoration-accent">Buat Disini</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </main >
+        </main>
 
         <Footer />
-      </div >
+      </div>
     );
   }
 
@@ -578,38 +413,7 @@ const Account = () => {
             </Button>
           </div>
 
-          {/* Email Verification Banner - Only show if email not confirmed */}
-          {user && !isEmailVerified && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-8 animate-fade-up">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">⚠️</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-amber-500 mb-1">
-                    Konfirmasi Email untuk Akses Penuh
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Kamu belum mengkonfirmasi email. Fitur pembelian laporan tidak tersedia sampai email dikonfirmasi.
-                  </p>
-                  <Button
-                    onClick={handleResendEmail}
-                    disabled={resendingEmail}
-                    size="sm"
-                    variant="outline"
-                    className="border-amber-500 text-amber-500 hover:bg-amber-500/10"
-                  >
-                    {resendingEmail ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Mengirim...
-                      </>
-                    ) : (
-                      'Kirim Ulang Email Verifikasi'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="charts" className="w-full">
