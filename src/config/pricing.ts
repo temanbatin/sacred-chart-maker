@@ -21,44 +21,9 @@ export const PRODUCTS = {
             'Tips Kesehatan & Vitalitas',
             'Variable (Digestion, Environment, Motivation)'
         ]
-    },
-    ESSENTIAL_REPORT: {
-        id: 'essential_report',
-        name: 'Essential Human Design Report',
-        price: 120000,
-        original_price: 250000,
-        features: [
-            'Basic Profile (Tipe, Strategi, Otoritas)',
-            'Analisis Profil (ex: 1/3, 4/6)',
-            'Signature & Not-Self Theme',
-            'Personalized Synthesis (Ringkasan Kekuatan)',
-            'Dokumen PDF Ringkas (~15 Halaman)'
-        ]
-    },
-    UPGRADE_ESSENTIAL: {
-        id: 'upgrade_essential',
-        name: 'Upgrade to Full Report',
-        price: 100000,
-        original_price: 199000,
-        features: [
-            'Upgrade dari Essential ke Full',
-            'Analisis Mendalam (+80 Halaman)',
-            'Semua fitur Full Report',
-            'Incarnation Cross & Gates',
-            'Panduan Relasi & Karir'
-        ]
-    },
-    BAZI_ADDON: {
-        id: 'bazi_addon',
-        name: 'Bazi Report Add-on',
-        price: 50000,
-        original_price: 150000,
-        features: [
-            'Analisis Elemen Diri (Day Master)',
-            'Kekuatan & Kelemahan Elemen',
-            'Keberuntungan Tahunan (General)'
-        ]
     }
+    // NOTE: Add-ons (Bazi, Relationship, Parenting) akan ditambahkan ketika fiturnya siap
+    // Lihat UnifiedCheckoutModal.tsx untuk "Coming Soon" placeholders
 };
 
 export const formatPrice = (price: number) => {

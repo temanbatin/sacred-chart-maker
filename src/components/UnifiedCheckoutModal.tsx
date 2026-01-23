@@ -397,55 +397,57 @@ export function UnifiedCheckoutModal({
                         </div>
 
                         <div className="space-y-3 pt-2 border-t border-border/50">
-                            {/* Add-on Section (Inserted) */}
+                            {/* Add-on Section - Optional Teasers */}
                             <div className="pb-2">
                                 <Accordion type="single" collapsible className="w-full">
                                     <AccordionItem value="addons" className="border-b-0">
                                         <AccordionTrigger className="hover:no-underline py-2">
-                                            <div className="flex items-center gap-2 opacity-60">
-                                                <div className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-bold">3</div>
-                                                <h3 className="font-semibold text-muted-foreground text-left text-sm">Add-on (Segera Hadir)</h3>
+                                            <div className="flex items-center gap-2 opacity-50">
+                                                <h3 className="font-medium text-muted-foreground text-left text-xs">💡 Lihat Add-on yang akan datang (opsional)</h3>
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent>
+                                            <p className="text-[10px] text-muted-foreground mb-3 italic">
+                                                Fitur tambahan ini sedang dalam pengembangan. Kamu bisa lanjut checkout tanpa ini.
+                                            </p>
                                             <div className="grid grid-cols-1 gap-3 pt-2 pb-2">
-                                                <div className="flex items-center justify-between p-3 border border-dashed border-border/60 rounded-lg bg-secondary/10 opacity-60 cursor-not-allowed">
+                                                <div className="flex items-center justify-between p-3 border border-dashed border-border/40 rounded-lg bg-secondary/5 opacity-50 cursor-not-allowed">
                                                     <div className="flex items-center gap-3">
                                                         <div className="p-2 bg-background/50 rounded-md">
                                                             <ScrollText className="w-4 h-4 text-muted-foreground" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium text-sm text-foreground/80">Bazi Chart Analysis</p>
+                                                            <p className="font-medium text-sm text-foreground/70">Bazi Chart Analysis</p>
                                                             <p className="text-[10px] text-muted-foreground">Detail elemen keberuntungan</p>
                                                         </div>
                                                     </div>
-                                                    <span className="text-[10px] font-medium px-2 py-1 bg-secondary rounded-full text-secondary-foreground">Coming Soon</span>
+                                                    <span className="text-[10px] font-medium px-2 py-1 bg-secondary/50 rounded-full text-secondary-foreground/70">Segera Hadir</span>
                                                 </div>
 
-                                                <div className="flex items-center justify-between p-3 border border-dashed border-border/60 rounded-lg bg-secondary/10 opacity-60 cursor-not-allowed">
+                                                <div className="flex items-center justify-between p-3 border border-dashed border-border/40 rounded-lg bg-secondary/5 opacity-50 cursor-not-allowed">
                                                     <div className="flex items-center gap-3">
                                                         <div className="p-2 bg-background/50 rounded-md">
                                                             <HeartHandshake className="w-4 h-4 text-muted-foreground" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium text-sm text-foreground/80">Relationship Chart</p>
+                                                            <p className="font-medium text-sm text-foreground/70">Relationship Chart</p>
                                                             <p className="text-[10px] text-muted-foreground">Kecocokan pasangan</p>
                                                         </div>
                                                     </div>
-                                                    <span className="text-[10px] font-medium px-2 py-1 bg-secondary rounded-full text-secondary-foreground">Coming Soon</span>
+                                                    <span className="text-[10px] font-medium px-2 py-1 bg-secondary/50 rounded-full text-secondary-foreground/70">Segera Hadir</span>
                                                 </div>
 
-                                                <div className="flex items-center justify-between p-3 border border-dashed border-border/60 rounded-lg bg-secondary/10 opacity-60 cursor-not-allowed">
+                                                <div className="flex items-center justify-between p-3 border border-dashed border-border/40 rounded-lg bg-secondary/5 opacity-50 cursor-not-allowed">
                                                     <div className="flex items-center gap-3">
                                                         <div className="p-2 bg-background/50 rounded-md">
                                                             <Baby className="w-4 h-4 text-muted-foreground" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium text-sm text-foreground/80">Parenting Chart</p>
+                                                            <p className="font-medium text-sm text-foreground/70">Parenting Chart</p>
                                                             <p className="text-[10px] text-muted-foreground">Panduan mengasuh anak</p>
                                                         </div>
                                                     </div>
-                                                    <span className="text-[10px] font-medium px-2 py-1 bg-secondary rounded-full text-secondary-foreground">Coming Soon</span>
+                                                    <span className="text-[10px] font-medium px-2 py-1 bg-secondary/50 rounded-full text-secondary-foreground/70">Segera Hadir</span>
                                                 </div>
                                             </div>
                                         </AccordionContent>

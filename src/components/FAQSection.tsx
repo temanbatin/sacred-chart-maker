@@ -6,9 +6,9 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import reportSS1 from "@/assets/Report SS.jpg";
-import reportSS2 from "@/assets/Report SS 2.jpg";
-import reportSS3 from "@/assets/Report SS 3.jpg";
+import reportSS1 from "@/assets/Report SS.webp";
+import reportSS2 from "@/assets/Report SS 2.webp";
+import reportSS3 from "@/assets/Report SS 3.webp";
 
 const faqs = [
   {

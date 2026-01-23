@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn, ChevronLeft, ChevronRight, Plus, ArrowRight, Lock, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import type { BirthData } from "@/components/MultiStepForm";
@@ -13,9 +12,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
-import reportSS1 from "@/assets/Report SS.jpg";
-import reportSS2 from "@/assets/Report SS 2.jpg";
-import reportSS3 from "@/assets/Report SS 3.jpg";
 import { PRICING_CONFIG, PRODUCTS, MARKETING_CONFIG, formatPrice } from "@/config/pricing";
 import { TestimonialsSection } from "./TestimonialsSection";
 import { ComparisonTable } from "./ComparisonTable";
@@ -24,11 +20,16 @@ import { TrustBadgeSection } from "./TrustBadgeSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-const reportSlides = [
-  { img: reportSS1, title: "Daftar Isi Lengkap", desc: "100+ halaman strukturnya jelas, mudah diikuti dari awal hingga akhir" },
-  { img: reportSS2, title: "Langkah Praktis Sesuai Authority", desc: "Panduan spesifik berdasarkan cara kamu membuat keputusan terbaik" },
-  { img: reportSS3, title: "Strategi Personal Kehidupan", desc: "Cara memanfaatkan kekuatan unikmu di karir, relasi, dan keseharian" },
-];
+// Extracted components and constants
+import { PlanetColumn, type PlanetData } from "@/components/chart";
+import { PropertiesSidebar } from "@/components/chart";
+import {
+  reportSlides,
+  planetSymbols,
+  typeDescriptions,
+  strategyDescriptions,
+  authorityDescriptions,
+} from "@/lib/chartConstants";
 
 const ExpandableText = ({ text, limit = 150 }: { text: string; limit?: number }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -102,267 +103,7 @@ interface ChartResultProps {
   className?: string;
 }
 
-interface PlanetData {
-  Planet: string;
-  Gate: number;
-  Line: number;
-  Lon: number;
-  Ch_Gate?: number;
-}
-
-// Planet symbols mapping
-const planetSymbols: Record<string, string> = {
-  Sun: "☉",
-  Earth: "⊕",
-  Moon: "☾",
-  North_Node: "Ω",
-  South_Node: "☋",
-  Mercury: "☿",
-  Venus: "♀",
-  Mars: "♂",
-  Jupiter: "♃",
-  Saturn: "♄",
-  Uranus: "♅",
-  Neptune: "♆",
-  Pluto: "♇",
-};
-
-const formatPlanetName = (name: string): string => {
-  return name.replace("_", " ");
-};
-
-// Planet descriptions for tooltips
-const planetDescriptions: Record<string, { title: string; description: string }> = {
-  Sun: {
-    title: "Matahari ☉",
-    description: "Inti dari identitasmu. Mewakili 70% dari energi dan tema hidup utamamu.",
-  },
-  Earth: {
-    title: "Bumi ⊕",
-    description: "Grounding dan stabilitas. Bagaimana kamu membumi dan menyeimbangkan energi Matahari.",
-  },
-  Moon: {
-    title: "Bulan ☾",
-    description: "Dorongan dan motivasi. Apa yang mendorongmu maju dalam hidup.",
-  },
-  North_Node: {
-    title: "North Node Ω",
-    description: "Arah masa depan. Lingkungan dan orang yang membawa pertumbuhan.",
-  },
-  South_Node: {
-    title: "South Node ☋",
-    description: "Pengalaman masa lalu. Apa yang sudah kamu kuasai dan bawa dari kehidupan sebelumnya.",
-  },
-  Mercury: {
-    title: "Merkurius ☿",
-    description: "Komunikasi dan pikiran. Bagaimana kamu berpikir dan menyampaikan ide.",
-  },
-  Venus: {
-    title: "Venus ♀",
-    description: "Nilai dan moral. Apa yang kamu hargai dan bagaimana kamu berhubungan dengan orang lain.",
-  },
-  Mars: {
-    title: "Mars ♂",
-    description: "Energi dan ketidakdewasaan. Dimana kamu perlu tumbuh dan berkembang.",
-  },
-  Jupiter: {
-    title: "Jupiter ♃",
-    description: "Hukum dan keberuntungan. Dimana kamu menemukan ekspansi dan peluang.",
-  },
-  Saturn: {
-    title: "Saturnus ♄",
-    description: "Disiplin dan batasan. Dimana kamu perlu struktur dan tanggung jawab.",
-  },
-  Uranus: {
-    title: "Uranus ♅",
-    description: "Keunikan dan inovasi. Tema yang tidak biasa dalam hidupmu.",
-  },
-  Neptune: {
-    title: "Neptunus ♆",
-    description: "Ilusi dan spiritualitas. Dimana kamu perlu kejelasan dan kesadaran.",
-  },
-  Pluto: {
-    title: "Pluto ♇",
-    description: "Transformasi dan kebenaran. Dimana kamu mengalami perubahan mendalam.",
-  },
-};
-
-// Planet column - aligned properly for symmetry
-const PlanetColumn = ({ planets, title, side, hideHeader = false }: { planets: PlanetData[]; title: string; side: "left" | "right"; hideHeader?: boolean }) => {
-  const isDesign = side === "left";
-
-  return (
-    <div className={`flex flex-col ${isDesign ? "items-end" : "items-start"}`}>
-      {/* Header with arrow - Conditionally Rendered */}
-      {!hideHeader && (
-        <div className={`flex items-center gap-1 mb-2 pb-1 border-b border-muted w-full ${isDesign ? "justify-end" : "justify-start"}`}>
-          {isDesign && <span className="text-primary text-xs">←</span>}
-          <span className={`text-[10px] font-bold uppercase tracking-wider ${isDesign ? "text-primary" : "text-muted-foreground"}`}>
-            {title}
-          </span>
-          {!isDesign && <span className="text-muted-foreground text-xs">→</span>}
-        </div>
-      )}
-      {/* Planet rows - aligned */}
-      {planets.map((planet, index) => (
-        <Popover key={index}>
-          <PopoverTrigger asChild>
-            <div
-              className={`flex items-center gap-1.5 py-0.5 cursor-pointer hover:bg-muted/30 rounded px-1 transition-colors ${isDesign ? "flex-row-reverse" : "flex-row"}`}
-            >
-              {/* Gate.Line */}
-              <span className="text-xs font-medium text-foreground">
-                {planet.Gate}.{planet.Line}
-              </span>
-              {/* Planet symbol */}
-              <span className={`text-xs ${isDesign ? "text-primary" : "text-muted-foreground"}`}>
-                {planetSymbols[planet.Planet] || planet.Planet[0]}
-              </span>
-            </div>
-          </PopoverTrigger>
-          <PopoverContent side={isDesign ? "left" : "right"} className="max-w-xs p-3">
-            <p className="font-semibold text-sm">
-              {planetDescriptions[planet.Planet]?.title || formatPlanetName(planet.Planet)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {planetDescriptions[planet.Planet]?.description || `Gate ${planet.Gate}, Line ${planet.Line}`}
-            </p>
-          </PopoverContent>
-        </Popover>
-      ))}
-    </div>
-  );
-};
-
-// Variable descriptions for tooltips
-const variableDescriptions: Record<string, { title: string; description: string }> = {
-  Digestion: {
-    title: "Digestion (Design - Otak)",
-    description:
-      "Cara terbaik bagi tubuhmu untuk mencerna makanan dan informasi. Arrow kiri = Aktif/Spesifik, Arrow kanan = Pasif/Umum.",
-  },
-  Environment: {
-    title: "Environment (Design - Tubuh)",
-    description: "Lingkungan fisik yang mendukung kesejahteraanmu. Arrow kiri = Selektif, Arrow kanan = Variabel.",
-  },
-  Motivation: {
-    title: "Motivation (Personality - Pikiran)",
-    description: "Motivasi sejatimu dalam berpikir. Arrow kiri = Strategis/Fokus, Arrow kanan = Reseptif/Terbuka.",
-  },
-  Perspective: {
-    title: "Perspective (Personality - Pandangan)",
-    description: "Cara unikmu melihat dan memahami dunia. Arrow kiri = Fokus, Arrow kanan = Periferal.",
-  },
-};
-
-// Properties sidebar component for desktop layout
-interface PropertiesSidebarProps {
-  userName: string;
-  birthData: BirthData | null;
-  chartType: string;
-  strategy: string;
-  authority: string;
-  profile: string;
-  definition: string;
-  incarnationCross: string;
-  signature: string;
-  notSelf: string;
-  variables?: {
-    top_left?: { value: string };
-    bottom_left?: { value: string };
-    top_right?: { value: string };
-    bottom_right?: { value: string };
-  };
-  utcDateTime?: string;
-}
-
-const PropertiesSidebar = ({
-  userName,
-  birthData,
-  chartType,
-  strategy,
-  authority,
-  profile,
-  definition,
-  incarnationCross,
-  signature,
-  notSelf,
-  variables,
-  utcDateTime,
-}: PropertiesSidebarProps) => {
-  const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-
-  const formatDateTimeLocal = () => {
-    if (!birthData) return "—";
-    return `${birthData.day} ${monthNames[birthData.month - 1]} ${birthData.year}, ${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}`;
-  };
-
-  const formatDateTimeUTC = () => {
-    if (utcDateTime) return utcDateTime;
-    return "—";
-  };
-
-  const getVariableString = () => {
-    if (!variables) return "—";
-    const tl = variables.top_left?.value === "left" ? "P" : "P";
-    const bl = variables.bottom_left?.value === "left" ? "R" : "L";
-    const tr = variables.top_right?.value === "left" ? "L" : "R";
-    const br = variables.bottom_right?.value === "left" ? "L" : "L";
-    return `${tl}${bl}${tr} ${br}LL`;
-  };
-
-  const Item = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
-    <div className="flex items-start gap-2 py-1.5">
-      <span className="text-muted-foreground mt-0.5 w-4 h-4 flex items-center justify-center">{icon}</span>
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide leading-tight">{label}</p>
-        <p className="text-xs font-semibold text-foreground leading-tight">{value}</p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="w-full">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-          <span className="text-primary font-bold text-sm">{userName.charAt(0).toUpperCase()}</span>
-        </div>
-        <h2 className="text-base font-bold text-foreground uppercase tracking-wide">Properties</h2>
-      </div>
-
-      {/* Birth Data - 2 columns */}
-      <div className="mb-4">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Birth Data</p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-0">
-          <Item icon={<span className="text-xs">○</span>} label="Name" value={userName} />
-          <Item icon={<span className="text-xs">◎</span>} label="Date and Time (Local)" value={formatDateTimeLocal()} />
-          <Item icon={<span className="text-xs">◎</span>} label="Date and Time (UTC)" value={formatDateTimeUTC()} />
-          <Item icon={<span className="text-xs">◉</span>} label="Location" value={birthData?.place || "—"} />
-        </div>
-      </div>
-
-      {/* Properties - 2 columns */}
-      <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Properties</p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-0">
-          <Item icon={<span className="text-xs">◈</span>} label="Type" value={chartType} />
-          <Item icon={<span className="text-xs">⟡</span>} label="Strategy" value={strategy} />
-          <Item icon={<span className="text-xs">✧</span>} label="Signature" value={signature || "—"} />
-          <Item icon={<span className="text-xs">◆</span>} label="Not-Self Theme" value={notSelf || "—"} />
-          <Item icon={<span className="text-xs">△</span>} label="Authority" value={authority} />
-          <Item icon={<span className="text-xs">⊞</span>} label="Definition" value={definition} />
-          <Item icon={<span className="text-xs">✚</span>} label="Incarnation Cross" value={incarnationCross || "—"} />
-          <Item icon={<span className="text-xs">◯</span>} label="Profile" value={profile} />
-        </div>
-        <div className="mt-1">
-          <Item icon={<span className="text-xs">⇌</span>} label="Variable" value={getVariableString()} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
+// PlanetData, PlanetColumn, and PropertiesSidebar are now imported from @/components/chart
 export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, chartId, userId, onReset, isOrdered = false, className }: ChartResultProps) => {
   const navigate = useNavigate();
   const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
@@ -408,41 +149,40 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const isSavedChart = Boolean(chartId && userId);
 
   // ===== DYNAMIC SLOT CONFIGURATION =====
-  // Ubah angka ini untuk update otomatis jumlah slot yang tersisa
-  const TOTAL_SLOTS = 80; // Total slot tersedia bulan ini
-  const MANUAL_SOLD_COUNT = 12; // MANUAL: Jumlah orang yang sudah membeli (ubah angka ini)
+  // Base count yang sudah terjual (update manual jika perlu)
+  const BASE_SOLD_COUNT = 128;
+  const TOTAL_SLOTS = 200; // Total slot tersedia bulan ini
 
-  // Future Usage: Set this to true to use Real DB Data
-  const USE_REAL_DATA = false;
+  const [soldCount, setSoldCount] = useState(BASE_SOLD_COUNT);
+  const remainingSlots = Math.max(0, TOTAL_SLOTS - soldCount);
 
-  const [soldCount, setSoldCount] = useState(MANUAL_SOLD_COUNT);
-  const remainingSlots = TOTAL_SLOTS - soldCount;
-
-  // ===== FUTURE: REAL-TIME DATA FETCHING =====
-  /* 
+  // ===== REAL-TIME DATA FETCHING =====
   useEffect(() => {
-    if (!USE_REAL_DATA) return;
-
     const fetchRealOrderCount = async () => {
-      // Hitung order 'PAID' di bulan ini
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
+      try {
+        // Hitung order 'PAID' di bulan ini
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
 
-      const { count, error } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'PAID')
-        .gte('created_at', startOfMonth.toISOString());
+        const { count, error } = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'PAID')
+          .gte('created_at', startOfMonth.toISOString());
 
-      if (!error && count !== null) {
-        setSoldCount(count + MANUAL_SOLD_COUNT); // Bisa ditambah base count jika perlu
+        if (!error && count !== null) {
+          // Tambahkan order real ke base count
+          setSoldCount(BASE_SOLD_COUNT + count);
+        }
+      } catch (err) {
+        console.error('Error fetching order count:', err);
+        // Fallback ke base count jika error
       }
     };
 
     fetchRealOrderCount();
   }, []);
-  */
   // ==========================================
 
   // Warning saat user mau tutup tab (hanya untuk guest yang belum save)
@@ -508,55 +248,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
     }
   };
 
-  const typeDescriptions: Record<string, string> = {
-    Generator:
-      "Kamu adalah sumber energi kehidupan dunia. Kamu memiliki daya tahan yang luar biasa, dan dirancang untuk membangun sesuatu yang besar dan bermakna. Kuncinya adalah menggunakan energimu hanya untuk hal-hal yang benar-benar memicu antusiasme di dalam dirimu.",
-    "Manifesting Generator":
-      "Kamu adalah tipe energi yang paling cepat dan efisien. Dirancang untuk menangani banyak hal sekaligus, kamu memiliki kemampuan unik untuk menemukan jalan pintas dan mewujudkan berbagai ide menjadi kenyataan dalam waktu singkat.",
-    Projector:
-      "Kamu tidak lahir untuk bekerja keras secara fisik, melainkan untuk melihat pola dan potensi yang tidak dilihat orang lain. Kamu adalah kompas bagi orang di sekitarmu, yang hadir untuk membimbing dan mengarahkan orang lain menuju kesuksesan.",
-    Manifestor:
-      "Kamu adalah pemantik perubahan. Kamu memiliki kekuatan alami untuk memulai sesuatu secara mandiri, kamu tidak perlu menunggu izin atau bantuan orang lain untuk bergerak. Kehadiranmu berfungsi untuk membuka pintu baru dan menginspirasi pergerakan besar.",
-    Reflector:
-      "Kamu adalah tipe yang paling langka, berfungsi sebagai cermin objektif bagi lingkungan sekitarmu. Kamu memiliki kemampuan luar biasa untuk merasakan kesehatan dan keharmonisan suatu tempat, memberikan perspektif yang sangat dalam tentang kondisi dunia di sekelilingmu.",
-  };
-
-  const strategyDescriptions: Record<string, string> = {
-    "To Respond":
-      "Jangan memaksakan aksi. Biarkan dunia memberikan sinyal atau peluang, lalu bertindaklah hanya saat energimu merespon tanda tersebut secara alami.",
-    "Wait to Respond":
-      "Jangan memaksakan aksi. Biarkan dunia memberikan sinyal atau peluang, lalu bertindaklah hanya saat energimu merespon tanda tersebut secara alami.",
-    "Wait for the Invitation":
-      "Efektivitasmu muncul saat kamu diakui. Tunggu undangan atau apresiasi tulus dari orang lain sebelum kamu membagikan bimbingan dan arahanmu.",
-    "To Inform":
-      "Amankan langkahmu dengan berkomunikasi. Beritahu orang-orang di sekitarmu tentang rencana besarmu agar jalanmu bebas dari hambatan dan resistensi.",
-    Inform:
-      "Amankan langkahmu dengan berkomunikasi. Beritahu orang-orang di sekitarmu tentang rencana besarmu agar jalanmu bebas dari hambatan dan resistensi.",
-    "Wait a Lunar Cycle": "Beri dirimu 28 hari untuk merasakan kejelasan sebelum keputusan besar.",
-  };
-
-  const authorityDescriptions: Record<string, string> = {
-    Sacral:
-      'Gunakan gut feeling atau respon fisik spontan dari perutmu. Percayai jawaban instan seperti "uh-huh" (ya) atau "un-un" (tidak) saat ini juga.',
-    Emotional:
-      "Hindari keputusan impulsif. Kejelasan sejati datang saat gelombang emosimu sudah tenang. Jangan memutuskan sesuatu di puncak rasa senang maupun sedih.",
-    "Solar Plexus":
-      "Hindari keputusan impulsif. Kejelasan sejati datang saat gelombang emosimu sudah tenang. Jangan memutuskan sesuatu di puncak rasa senang maupun sedih.",
-    Splenic:
-      "Percayai insting instan demi keamanan dan kesehatanmu. Jawaban terbaik muncul dalam sekejap—perhatikan peringatan halus dari tubuhmu tanpa perlu berpikir lama.",
-    Spleen:
-      "Percayai insting instan demi keamanan dan kesehatanmu. Jawaban terbaik muncul dalam sekejap—perhatikan peringatan halus dari tubuhmu tanpa perlu berpikir lama.",
-    "Ego Manifested": "Dengarkan apa yang benar-benar kamu inginkan dari hatimu.",
-    "Ego Projected": "Bicarakan keinginanmu dan dengarkan apa yang keluar dari mulutmu.",
-    "Self Projected":
-      "Suarakan pilihanmu kepada orang lain. Kamu akan menemukan kebenaran melalui apa yang keluar dari mulutmu, bukan melalui apa yang kamu pikirkan di kepala.",
-    "Self-Projected":
-      "Suarakan pilihanmu kepada orang lain. Kamu akan menemukan kebenaran melalui apa yang keluar dari mulutmu, bukan melalui apa yang kamu pikirkan di kepala.",
-    Mental: "Diskusikan dengan orang terpercaya dan perhatikan lingkunganmu.",
-    None: "Kamu adalah Reflector - tunggu satu siklus bulan penuh sebelum keputusan besar.",
-    Lunar:
-      "Biarkan waktu yang memberikan jawaban. Berikan dirimu jeda satu siklus bulan penuh (28 hari) untuk mendapatkan kejernihan total sebelum mengambil komitmen besar.",
-  };
+  // typeDescriptions, strategyDescriptions, authorityDescriptions are imported from @/lib/chartConstants
 
   const birthDataString = JSON.stringify(birthData);
 

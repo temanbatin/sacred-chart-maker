@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Star, ClipboardList, Zap, Target, Check, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import reportSS1 from "@/assets/Report SS.jpg";
-import reportSS2 from "@/assets/Report SS 2.jpg";
-import reportSS3 from "@/assets/Report SS 3.jpg";
+import reportSS1 from "@/assets/Report SS.webp";
+import reportSS2 from "@/assets/Report SS 2.webp";
+import reportSS3 from "@/assets/Report SS 3.webp";
 import { PRODUCTS, formatPrice } from "@/config/pricing";
 
 const reportSlides = [

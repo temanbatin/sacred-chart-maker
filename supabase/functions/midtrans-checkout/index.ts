@@ -74,6 +74,28 @@ interface CheckoutRequest {
     products?: string[];
 }
 
+// ===== RATE LIMITING =====
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_MAX = 10; // Max checkout attempts per window
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function checkRateLimit(clientIP: string): { allowed: boolean; remaining: number } {
+    const now = Date.now();
+    const record = rateLimitStore.get(clientIP);
+
+    if (!record || now > record.resetTime) {
+        rateLimitStore.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+        return { allowed: true, remaining: RATE_LIMIT_MAX - 1 };
+    }
+
+    if (record.count >= RATE_LIMIT_MAX) {
+        return { allowed: false, remaining: 0 };
+    }
+
+    record.count++;
+    return { allowed: true, remaining: RATE_LIMIT_MAX - record.count };
+}
+
 serve(async (req) => {
     // Handle CORS preflight
     if (req.method === 'OPTIONS') {
@@ -81,6 +103,29 @@ serve(async (req) => {
     }
 
     const currentCorsHeaders = getCorsHeaders(req);
+
+    // Rate limiting check
+    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+        req.headers.get('x-real-ip') || 'unknown';
+
+    const rateLimit = checkRateLimit(clientIP);
+    if (!rateLimit.allowed) {
+        console.log(`Checkout rate limit exceeded for IP: ${clientIP}`);
+        return new Response(
+            JSON.stringify({
+                success: false,
+                error: 'Terlalu banyak percobaan checkout. Silakan coba lagi dalam 1 jam.'
+            }),
+            {
+                status: 429,
+                headers: {
+                    ...currentCorsHeaders,
+                    'Content-Type': 'application/json',
+                    'Retry-After': '3600'
+                }
+            }
+        );
+    }
 
     try {
         const MIDTRANS_SERVER_KEY = (Deno.env.get('MIDTRANS_SERVER_KEY') || '').trim();
