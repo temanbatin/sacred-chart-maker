@@ -73,3 +73,6 @@ export const formatPrice = (price: number) => {
 export const getDiscountPercentage = () => {
     return Math.round(((PRICING_CONFIG.ORIGINAL_PRICE - PRICING_CONFIG.REPORT_PRICE) / PRICING_CONFIG.ORIGINAL_PRICE) * 100);
 };
+export const MARKETING_CONFIG = {
+    REMAINING_SLOTS: 8
+};

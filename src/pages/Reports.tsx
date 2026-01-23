@@ -27,6 +27,7 @@ import { FAQSection } from '@/components/FAQSection';
 import { ComparisonTable } from '@/components/ComparisonTable';
 import { UnifiedCheckoutModal, UnifiedCheckoutData } from '@/components/UnifiedCheckoutModal';
 import { TrustBadgeSection } from '@/components/TrustBadgeSection';
+import { PRICING_CONFIG, PRODUCTS, MARKETING_CONFIG, formatPrice } from "@/config/pricing";
 
 interface SavedChart {
   id: string;
@@ -83,8 +84,6 @@ const reportBenefits = [
 ];
 
 import { TestimonialsSection } from '@/components/TestimonialsSection';
-
-import { PRICING_CONFIG, PRODUCTS, formatPrice } from '@/config/pricing';
 
 const reportFeatures = [
   '100+ Halaman → Roadmap Lengkap Kehidupan Anda',
@@ -1346,7 +1345,7 @@ const Reports = () => {
             <div className="flex flex-col gap-2 items-center">
               <div className="bg-white text-[hsl(160_84%_5%)] text-xs md:text-sm font-bold py-1.5 px-3 md:px-4 rounded-full flex items-center gap-1.5 shadow-lg border border-[hsl(160_84%_5%)]/10">
                 <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 animate-pulse text-[hsl(160_84%_5%)]" />
-                Penawaran Terbatas: Tersisa 8 slot hari ini
+                Penawaran Terbatas: Tersisa {MARKETING_CONFIG.REMAINING_SLOTS} slot hari ini
               </div>
               <Button
                 size="lg"

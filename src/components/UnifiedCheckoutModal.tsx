@@ -346,7 +346,7 @@ export function UnifiedCheckoutModal({
                                         {isSearchingCity && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />}
                                     </div>
                                     {showCitySuggestions && citySuggestions.length > 0 && (
-                                        <div className="absolute z-20 w-full mt-1 bg-card border border-border rounded-md shadow-lg overflow-hidden max-h-40 overflow-y-auto">
+                                        <div className="z-20 w-full mt-1 bg-card border border-border rounded-md shadow-lg overflow-hidden max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-2">
                                             {citySuggestions.map((city, idx) => (
                                                 <button
                                                     key={idx}

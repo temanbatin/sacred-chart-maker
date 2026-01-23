@@ -2,13 +2,12 @@ import React, { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn, ChevronLeft, ChevronRight, Plus, ArrowRight, Lock } from "lucide-react";
+import { Download, Share2, RotateCcw, Loader2, CheckCircle2, Save, LogIn, ChevronLeft, ChevronRight, Plus, ArrowRight, Lock, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import type { BirthData } from "@/components/MultiStepForm";
-import { ProductPreviewModal } from "./ProductPreviewModal";
 import { UnifiedCheckoutModal, UnifiedCheckoutData } from "./UnifiedCheckoutModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,8 +16,10 @@ import { Link, useNavigate } from "react-router-dom";
 import reportSS1 from "@/assets/Report SS.jpg";
 import reportSS2 from "@/assets/Report SS 2.jpg";
 import reportSS3 from "@/assets/Report SS 3.jpg";
-import { PRICING_CONFIG, PRODUCTS, formatPrice } from "@/config/pricing";
+import { PRICING_CONFIG, PRODUCTS, MARKETING_CONFIG, formatPrice } from "@/config/pricing";
 import { TestimonialsSection } from "./TestimonialsSection";
+import { ComparisonTable } from "./ComparisonTable";
+import { TrustBadgeSection } from "./TrustBadgeSection";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -126,7 +127,6 @@ const planetSymbols: Record<string, string> = {
   Pluto: "♇",
 };
 
-// Format planet name for display
 const formatPlanetName = (name: string): string => {
   return name.replace("_", " ");
 };
@@ -369,9 +369,31 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const [bodygraphLoading, setBodygraphLoading] = useState(false);
   const [bodygraphError, setBodygraphError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  /* const [isProductModalOpen, setIsProductModalOpen] = useState(false); // Deprecated */
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const [showFloatingCTA, setShowFloatingCTA] = useState(false);
+
+  // Handle scroll for floating CTA
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show significantly earlier - as soon as user scrolls past the first view
+      const scrollThreshold = 300;
+
+      const ctaSection = document.getElementById('cta-section');
+      if (ctaSection) {
+        const rect = ctaSection.getBoundingClientRect();
+        // Hide if the main CTA section is visible nicely in viewport
+        const isMainCtaVisible = rect.top < window.innerHeight && rect.bottom > 0;
+        setShowFloatingCTA(window.scrollY > scrollThreshold && !isMainCtaVisible && !isOrdered);
+      } else {
+        setShowFloatingCTA(window.scrollY > scrollThreshold && !isOrdered);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isOrdered]);
   const [slideIndex, setSlideIndex] = useState(0);
   const chartRef = useRef<HTMLDivElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
@@ -549,22 +571,34 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
     }
   }, [isSavedChart]);
 
-  // Handle checkout submission for saved charts
+  // Handle checkout submission for saved charts and guest checkout
   const handleCheckoutSubmit = async (checkoutData: UnifiedCheckoutData) => {
     setIsCheckoutLoading(true);
     try {
-      // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('🔐 Auth check - Session:', session ? 'Valid' : 'None', '| User:', currentUser?.email || 'None');
+      let activeUserId = currentUser?.id || session?.user?.id;
 
-      if (!currentUser) {
-        toast({
-          title: 'Sesi tidak valid',
-          description: 'Silakan login kembali untuk melanjutkan',
-          variant: 'destructive'
+      // Handle Guest Registration
+      if (!activeUserId && checkoutData.password) {
+        console.log("Creating account for guest...");
+        const { data: regData, error: regError } = await supabase.functions.invoke('register-user', {
+          body: {
+            email: checkoutData.email,
+            password: checkoutData.password,
+            name: checkoutData.name
+          }
         });
-        setIsCheckoutLoading(false);
-        return;
+
+        if (regError) {
+          console.error("Registration failed:", regError);
+          // We continue with checkout even if registration fails (e.g. email exists)
+          // The order will still be trackable by email
+        } else {
+          toast({
+            title: "Akun berhasil dibuat!",
+            description: "Silakan cek email Anda untuk verifikasi setelah pembayaran.",
+          });
+        }
       }
 
       // Generate Reference ID uniquely
@@ -579,7 +613,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         .from('orders')
         // @ts-ignore
         .insert({
-          user_id: userId || null,
+          user_id: activeUserId || null,
           reference_id: referenceId,
           customer_name: checkoutData.name,
           customer_email: checkoutData.email,
@@ -647,6 +681,21 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           // @ts-ignore
           .update({ payment_url: result.redirect_url })
           .eq('reference_id', referenceId);
+
+        // Set payment flag to prevent "unsaved chart" warning
+        sessionStorage.setItem('paymentRefId', referenceId);
+
+        // Save chart data to localStorage for guest users (backup in case they return)
+        if (!activeUserId && birthData) {
+          localStorage.setItem('pending_chart_data', JSON.stringify({
+            name: checkoutData.name,
+            birth_date: `${birthData.year}-${String(birthData.month).padStart(2, '0')}-${String(birthData.day).padStart(2, '0')}`,
+            birth_time: `${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}`,
+            birth_place: birthData.place,
+            chart_data: data,
+            gender: birthData.gender
+          }));
+        }
 
         toast({
           title: 'Mengarahkan ke halaman pembayaran...'
@@ -914,8 +963,8 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               {/* Chart with Planet Columns - Centered - Bottom Aligned */}
               <div className="w-full flex justify-center items-start gap-0 relative">
 
-                {/* Design Column - fixed width */}
-                <div className="w-[70px] flex-shrink-0 self-start mt-12 relative z-20 text-right">
+                {/* Design Column - fixed width - scaled down for small mobile */}
+                <div className="w-[55px] sm:w-[70px] flex-shrink-0 self-start mt-12 relative z-20 text-right">
                   <PlanetColumn planets={designPlanets} title="DESIGN" side="left" hideHeader={false} />
                 </div>
 
@@ -925,21 +974,21 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                   {general.variables && (
                     <>
                       {/* Left Arrows (Design) */}
-                      <div className="absolute top-[45px] left-[25px] flex flex-col gap-6 z-30">
-                        <span className="text-xs font-bold text-amber-500 drop-shadow-md transform scale-125">
+                      <div className="absolute top-[40px] left-[20px] sm:top-[45px] sm:left-[25px] flex flex-col gap-6 z-30">
+                        <span className="text-[10px] sm:text-xs font-bold text-amber-500 drop-shadow-md transform scale-110 sm:scale-125">
                           {general.variables.top_left?.value === "left" ? "←" : "→"}
                         </span>
-                        <span className="text-xs font-bold text-amber-500 drop-shadow-md transform scale-125">
+                        <span className="text-[10px] sm:text-xs font-bold text-amber-500 drop-shadow-md transform scale-110 sm:scale-125">
                           {general.variables.bottom_left?.value === "left" ? "←" : "→"}
                         </span>
                       </div>
 
                       {/* Right Arrows (Personality) */}
-                      <div className="absolute top-[45px] right-[25px] flex flex-col gap-6 z-30">
-                        <span className="text-xs font-bold text-foreground drop-shadow-md transform scale-125">
+                      <div className="absolute top-[40px] right-[20px] sm:top-[45px] sm:right-[25px] flex flex-col gap-6 z-30">
+                        <span className="text-[10px] sm:text-xs font-bold text-foreground drop-shadow-md transform scale-110 sm:scale-125">
                           {general.variables.top_right?.value === "left" ? "←" : "→"}
                         </span>
-                        <span className="text-xs font-bold text-foreground drop-shadow-md transform scale-125">
+                        <span className="text-[10px] sm:text-xs font-bold text-foreground drop-shadow-md transform scale-110 sm:scale-125">
                           {general.variables.bottom_right?.value === "left" ? "←" : "→"}
                         </span>
                       </div>
@@ -947,18 +996,18 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                   )}
 
                   {bodygraphLoading ? (
-                    <div className="w-[200px] aspect-[3/4] rounded-xl bg-secondary/30 flex flex-col items-center justify-center animate-pulse">
+                    <div className="w-[170px] sm:w-[200px] aspect-[3/4] rounded-xl bg-secondary/30 flex flex-col items-center justify-center animate-pulse">
                       <Loader2 className="w-8 h-8 text-primary animate-spin" />
                     </div>
                   ) : bodygraphImage ? (
-                    <img src={bodygraphImage} alt="Bodygraph" className="w-[200px] h-auto relative z-10" />
+                    <img src={bodygraphImage} alt="Bodygraph" className="w-[170px] sm:w-[200px] h-auto relative z-10" />
                   ) : (
-                    <div className="w-[200px] aspect-[3/4] bg-secondary/20 rounded-xl flex items-center justify-center text-muted-foreground text-xs">Chart unavailable</div>
+                    <div className="w-[170px] sm:w-[200px] aspect-[3/4] bg-secondary/20 rounded-xl flex items-center justify-center text-muted-foreground text-xs">Chart unavailable</div>
                   )}
                 </div>
 
                 {/* Personality Column - fixed width */}
-                <div className="w-[70px] flex-shrink-0 self-start mt-12 relative z-20 text-left">
+                <div className="w-[55px] sm:w-[70px] flex-shrink-0 self-start mt-12 relative z-20 text-left">
                   <PlanetColumn planets={personalityPlanets} title="PERSONALITY" side="right" hideHeader={false} />
                 </div>
               </div>
@@ -970,11 +1019,11 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
                   <div className="py-1 overflow-hidden">
                     <p className="text-[10px] text-muted-foreground uppercase">Name</p>
-                    <p className="text-xs font-semibold text-foreground truncate">{userName}</p>
+                    <p className="text-xs font-semibold text-foreground break-words">{userName}</p>
                   </div>
                   <div className="py-1 overflow-hidden">
                     <p className="text-[10px] text-muted-foreground uppercase">Location</p>
-                    <p className="text-xs font-semibold text-foreground truncate">{birthData?.place || "—"}</p>
+                    <p className="text-xs font-semibold text-foreground break-words leading-tight">{birthData?.place || "—"}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
@@ -1143,109 +1192,122 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
 
         {/* Upsell CTA Section - Only Show if NOT Ordered */}
         {!isOrdered ? (
-          <div id="cta-section" className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
-            <div className="text-center mb-6">
-              <p className="text-amber-400 text-sm font-medium mb-1">🔥 Hanya {remainingSlots} slot tersisa bulan ini</p>
-              <p className="text-white/60 text-xs mb-3">{soldCount} orang telah memesan minggu ini</p>
-              <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
-                Siap Menyelami Potensi Terbesarmu?
-              </h3>
-              <p className="text-white/90 text-lg">
-                Apa yang kamu lihat di sini hanyalah permukaan. Pesan In-depth Analysis untuk mengungkap misi hidup dan bakat terpendammu.
-              </p>
-            </div>
+          <>
+            <div id="cta-section" className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
+              <div className="text-center mb-6">
+                <p className="text-amber-400 text-sm font-medium mb-1">🔥 Hanya {MARKETING_CONFIG.REMAINING_SLOTS} slot tersisa bulan ini</p>
+                <p className="text-white/60 text-xs mb-3">{soldCount} orang telah memesan minggu ini</p>
+                <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
+                  Chart Anda Adalah Peta.<br />Full Report Adalah Kompasnya.
+                </h3>
+                <p className="text-white/90 text-lg">
+                  Melihat gambar Bodygraph di atas tanpa penjelasan ibarat memiliki peta harta karun tapi tidak bisa membacanya.
+                  Full Report 100+ Halaman akan menerjemahkan setiap simbol, garis, dan warna menjadi panduan hidup yang praktis.
+                </p>
+              </div>
 
-            {/* Report Screenshots Carousel */}
-            <div className="relative mb-8 max-w-2xl mx-auto">
-              <div className="overflow-hidden rounded-xl border border-amber-400/30 shadow-2xl">
-                <img
-                  src={reportSlides[slideIndex % reportSlides.length].img}
-                  alt={reportSlides[slideIndex % reportSlides.length].title}
-                  className="w-full h-auto"
-                  loading="lazy"
-                />
-              </div>
-              {/* Navigation Arrows */}
-              <button
-                aria-label="Previous slide"
-                onClick={() => setSlideIndex((prev) => (prev === 0 ? reportSlides.length - 1 : prev - 1))}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                aria-label="Next slide"
-                onClick={() => setSlideIndex((prev) => (prev === reportSlides.length - 1 ? 0 : prev + 1))}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-              {/* Caption */}
-              <div className="text-center mt-4">
-                <p className="text-amber-300 font-semibold text-lg">{reportSlides[slideIndex % reportSlides.length].title}</p>
-                <p className="text-white/80 text-sm">{reportSlides[slideIndex % reportSlides.length].desc}</p>
-              </div>
-              {/* Dots */}
-              <div className="flex justify-center gap-2 mt-3">
-                {reportSlides.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSlideIndex(idx)}
-                    className={`w-2.5 h-2.5 rounded-full transition-colors ${idx === (slideIndex % reportSlides.length) ? 'bg-amber-400' : 'bg-white/30'}`}
+              {/* Report Screenshots Carousel */}
+              <div className="relative mb-8 max-w-lg mx-auto">
+                <div className="overflow-hidden rounded-xl border border-amber-400/30 shadow-2xl bg-black/20">
+                  <img
+                    src={reportSlides[slideIndex % reportSlides.length].img}
+                    alt={reportSlides[slideIndex % reportSlides.length].title}
+                    className="w-full h-auto object-cover"
+                    loading="lazy"
                   />
-                ))}
+                </div>
+                {/* Navigation Arrows */}
+                <button
+                  aria-label="Previous slide"
+                  onClick={() => setSlideIndex((prev) => (prev === 0 ? reportSlides.length - 1 : prev - 1))}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  aria-label="Next slide"
+                  onClick={() => setSlideIndex((prev) => (prev === reportSlides.length - 1 ? 0 : prev + 1))}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                {/* Caption */}
+                <div className="text-center mt-4">
+                  <p className="text-amber-300 font-semibold text-lg">{reportSlides[slideIndex % reportSlides.length].title}</p>
+                  <p className="text-white/80 text-sm">{reportSlides[slideIndex % reportSlides.length].desc}</p>
+                </div>
+                {/* Dots */}
+                <div className="flex justify-center gap-2 mt-3">
+                  {reportSlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSlideIndex(idx)}
+                      className={`w-2.5 h-2.5 rounded-full transition-colors ${idx === (slideIndex % reportSlides.length) ? 'bg-amber-400' : 'bg-white/30'}`}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-3 mb-8 max-w-2xl mx-auto">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                <p className="text-white/90">
-                  <span className="font-semibold">100+ Halaman Analisis Mendalam</span> — Tipe, Strategi, Otoritas, Profil, dan semua yang kamu lihat di atas
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                <p className="text-white/90">
-                  <span className="font-semibold">Misi Hidupmu (Incarnation Cross)</span> — Mengapa kamu ada di dunia ini
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                <p className="text-white/90">
-                  <span className="font-semibold">Panduan Praktis Karir & Relasi</span> — Langkah konkret sesuai desainmu
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                <p className="text-white/90">
-                  <span className="font-semibold">Garansi 100% Pembuatan Report Ulang</span> — Jika ada kesalahan data
-                </p>
-              </div>
-            </div>
+              <div className="space-y-4 mb-8 max-w-2xl mx-auto">
+                <div className="flex items-start gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
+                  <div className="bg-amber-400/20 p-2 rounded-full">
+                    <CheckCircle2 className="w-5 h-5 text-amber-300" />
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold mb-1">Arti Center Putih (Undefined) Anda</p>
+                    <p className="text-white/70 text-sm">Temukan di mana Anda rentan menyerap emosi orang lain dan cara melindunginya.</p>
+                  </div>
+                </div>
 
-            <div className="text-center">
-              <Button
-                size="lg"
-                onClick={() => {
-                  if (isSavedChart) {
+                <div className="flex items-start gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
+                  <div className="bg-amber-400/20 p-2 rounded-full">
+                    <CheckCircle2 className="w-5 h-5 text-amber-300" />
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold mb-1">Cara Menggunakan Strategi {strategy}</p>
+                    <p className="text-white/70 text-sm">Terdengar sederhana, tapi kami berikan contoh konkret penerapannya dalam karir & cinta.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
+                  <div className="bg-amber-400/20 p-2 rounded-full">
+                    <CheckCircle2 className="w-5 h-5 text-amber-300" />
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold mb-1">Misi Jiwa (Incarnation Cross)</p>
+                    <p className="text-white/70 text-sm">Cetak biru tujuan hidup Anda yang sesungguhnya—bukan karir, tapi peran jiwa.</p>
+                  </div>
+                </div>
+                <p className="text-center text-white/70 text-sm italic mt-4">
+                  ... Dan masih banyak panduan praktis lain yang tidak muat kalau kita jelaskan satu persatu.
+                </p>
+              </div>
+
+              <div className="text-center">
+                <Button
+                  size="lg"
+                  onClick={() => {
                     setIsCheckoutModalOpen(true);
-                  } else {
-                    setIsProductModalOpen(true);
-                  }
-                }}
-                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(245,158,11,0.5)] border-2 border-amber-400/50 animate-pulse-slow w-full md:w-auto"
-              >
-                Dapatkan Full Report Sekarang
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-              <div className="flex items-center justify-center gap-3 mt-4">
-                <span className="text-amber-300 font-bold text-xl">Mulai {formatPrice(PRODUCTS.ESSENTIAL_REPORT.price)}</span>
-                <span className="text-white/60 line-through text-base">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
+                  }}
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(245,158,11,0.5)] border-2 border-amber-400/50 animate-pulse-slow w-full md:w-auto"
+                >
+                  Dapatkan Full Report Sekarang
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+                <div className="flex items-center justify-center gap-3 mt-4">
+                  <span className="text-amber-300 font-bold text-xl">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
+                  <span className="text-white/60 line-through text-base">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
+                </div>
+                <p className="text-center text-white/60 text-sm mt-2">⚡ Pengiriman Instan</p>
               </div>
-              <p className="text-center text-white/60 text-sm mt-2">⚡ Tersedia Paket Essential & Full Report</p>
             </div>
-          </div>
+            <div className="mt-12 mb-12">
+              <TrustBadgeSection />
+            </div>
+            <div className="mb-12">
+              <ComparisonTable className="bg-transparent" />
+            </div>
+          </>
         ) : (
           <>
           /* Already Ordered Section */
@@ -1319,20 +1381,8 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             </div>
           </>
         )}
-        <ProductPreviewModal
-          isOpen={isProductModalOpen}
-          onClose={() => setIsProductModalOpen(false)}
-          userName={userName}
-          userEmail={userEmail}
-          userPhone={userPhone}
-          chartId={chartId}
-          userId={userId}
-          birthData={birthData}
-          chartData={data}
-        />
-
-        {/* Unified Checkout Modal for Saved Charts (My Chart Page) */}
-        {isSavedChart && birthData && (
+        {/* Unified Checkout Modal for All Users */}
+        {birthData && (
           <UnifiedCheckoutModal
             open={isCheckoutModalOpen}
             onOpenChange={(open) => setIsCheckoutModalOpen(open)}
@@ -1484,6 +1534,33 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Floating CTA Button */}
+      {showFloatingCTA && (
+        <div className="fixed bottom-6 left-0 right-0 z-50 px-4 animate-in fade-in slide-in-from-bottom-10 duration-300">
+          <div className="max-w-md mx-auto">
+            <div className="flex flex-col gap-2 items-center">
+              <div className="bg-white text-[hsl(160_84%_5%)] text-xs md:text-sm font-bold py-1.5 px-3 md:px-4 rounded-full flex items-center gap-1.5 shadow-lg border border-[hsl(160_84%_5%)]/10">
+                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 animate-pulse text-[hsl(160_84%_5%)]" />
+                Penawaran Terbatas: Tersisa {MARKETING_CONFIG.REMAINING_SLOTS} slot hari ini
+              </div>
+              <Button
+                size="lg"
+                className="w-full fire-glow py-7 shadow-2xl relative overflow-hidden group"
+                onClick={() => {
+                  setIsCheckoutModalOpen(true);
+                }}
+              >
+                <div className="flex flex-col items-center leading-tight">
+                  <span className="text-sm font-bold tracking-wide">Dapatkan Full Report Sekarang</span>
+                  <span className="text-[10px] opacity-80 font-medium">Investasi terbaik untuk dirimu</span>
+                </div>
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hidden Instagram Story Export View - Luxury Edition 1080x1920 */}
       <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
@@ -1917,75 +1994,10 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         </div>
       </div>
 
-      {/* Floating Sticky CTA for Non-Purchased Users */}
-      {
-        !isOrdered && (
-          <>
-            <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom duration-500">
-              {/* Mobile: Clean light floating bar */}
-              <div className="lg:hidden">
-                <div className="mx-3 mb-3 rounded-xl bg-white border border-gray-200 p-3 shadow-xl safe-area-bottom">
-                  {/* Progress Bar */}
-                  <div className="mb-2">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-gray-500">Chart Analysis</span>
-                      <span className="text-emerald-700 font-semibold">5%</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full w-[5%] bg-emerald-500 rounded-full" />
-                    </div>
-                  </div>
 
-                  {/* CTA Button - Scrolls to main CTA */}
-                  <Button
-                    onClick={() => {
-                      document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 rounded-lg"
-                  >
-                    Pesan In-Dept Analysis Desain Sejatimu
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Desktop: Slim bottom bar - Light Theme to match Mobile */}
-              <div className="hidden lg:block bg-white border-t border-gray-200 py-3 px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
-                  {/* Left: Progress Info */}
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="flex flex-col w-full max-w-md">
-                      <div className="flex justify-between text-xs mb-1.5">
-                        <span className="text-gray-500 font-medium">Chart Analysis</span>
-                        <span className="text-emerald-700 font-bold">5%</span>
-                      </div>
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden w-full">
-                        <div className="h-full w-[5%] bg-emerald-500 rounded-full" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Button */}
-                  <div className="flex-shrink-0">
-                    <Button
-                      onClick={() => {
-                        document.getElementById('cta-section')?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-8 py-2.5 rounded-lg shadow-sm transition-all"
-                    >
-                      Pesan In-Dept Analysis Desain Sejatimu
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        )
-      }
 
       {/* Testimonials Section */}
       <TestimonialsSection className="py-12 bg-transparent" />
-    </section>
+    </section >
   );
 };

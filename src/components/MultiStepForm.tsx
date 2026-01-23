@@ -359,9 +359,9 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                                         : "Tunggu sebentar, daftar kota akan muncul otomatis."}
                                 </p>
 
-                                {/* Suggestions dropdown */}
+                                {/* Suggestions dropdown - Relative positioning to push content down */}
                                 {showSuggestions && citySuggestions.length > 0 && (
-                                    <div className="absolute z-20 w-full mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                                    <div className="z-20 w-full mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2">
                                         {citySuggestions.map((city, index) => (
                                             <button
                                                 key={index}
