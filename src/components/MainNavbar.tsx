@@ -75,7 +75,7 @@ export const MainNavbar = () => {
               className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
             >
               <ShoppingBag className="w-4 h-4" />
-              Shop
+              Produk
             </Link>
 
             {/* About Dropdown */}
@@ -138,7 +138,7 @@ export const MainNavbar = () => {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <ShoppingBag className="w-4 h-4" />
-                Shop
+                Produk
               </Link>
               <div className="border-b border-border/10 pb-2 mb-2">
                 <button

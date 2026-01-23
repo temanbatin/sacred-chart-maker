@@ -113,6 +113,7 @@ export const TestimonialsSection = ({ className }: { className?: string }) => {
     skipSnaps: false
   });
   const [isPaused, setIsPaused] = useState(false);
+  const [expandedTestimonials, setExpandedTestimonials] = useState<Set<number>>(new Set());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Set this to true when you want to show video testimonials again
@@ -125,6 +126,23 @@ export const TestimonialsSection = ({ className }: { className?: string }) => {
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();
   }, [emblaApi]);
+
+  const toggleExpanded = (index: number) => {
+    const newExpanded = new Set(expandedTestimonials);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedTestimonials(newExpanded);
+  };
+
+  const truncateText = (text: string, maxLines: number = 3) => {
+    // Approximate: ~100 characters per line for responsive estimate
+    const maxChars = maxLines * 100;
+    if (text.length <= maxChars) return text;
+    return text.substring(0, maxChars) + '...';
+  };
 
   useEffect(() => {
     if (!emblaApi || isPaused) return;
@@ -178,46 +196,76 @@ export const TestimonialsSection = ({ className }: { className?: string }) => {
             onTouchEnd={() => setIsPaused(false)}
           >
             <div className="flex">
-              {testimonials.map((testimonial, index) => (
-                <div
-                  key={index}
-                  className="flex-[0_0_100%] min-w-0 px-4"
-                >
-                  <div className="glass-card rounded-3xl p-8 md:p-12 transition-all hover:border-accent/50 shadow-xl h-full flex flex-col justify-center">
-                    {/* Stars */}
-                    <div className="flex gap-1 mb-6 justify-center">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star key={i} className="w-5 h-5 fill-accent text-accent" />
-                      ))}
-                    </div>
+              {testimonials.map((testimonial, index) => {
+                const isExpanded = expandedTestimonials.has(index);
+                const displayText = isExpanded
+                  ? testimonial.quote
+                  : truncateText(testimonial.quote, 3);
+                const needsTruncation = testimonial.quote.length > 300; // ~3 lines worth
 
-                    {/* Quote */}
-                    <p className="text-foreground mb-8 leading-relaxed text-base md:text-lg text-justify italic font-light">
-                      "{testimonial.quote}"
-                    </p>
+                return (
+                  <div
+                    key={index}
+                    className="flex-[0_0_100%] min-w-0 px-4"
+                  >
+                    <div className="glass-card rounded-3xl p-8 md:p-12 transition-all hover:border-accent/50 shadow-xl h-full flex flex-col justify-center">
+                      {/* Stars */}
+                      <div className="flex gap-1 mb-6 justify-center">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <Star key={i} className="w-5 h-5 fill-accent text-accent" />
+                        ))}
+                      </div>
 
-                    {/* Author */}
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-2xl overflow-hidden border-2 border-accent/20">
-                        {testimonial.avatar.startsWith('/') ? (
-                          <img
-                            src={testimonial.avatar}
-                            alt={testimonial.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          testimonial.avatar
+                      {/* Quote */}
+                      <div className="mb-4">
+                        <p className={`text-foreground leading-relaxed text-base md:text-lg text-justify italic font-light ${!isExpanded && needsTruncation ? 'line-clamp-3' : ''}`}>
+                          "{displayText}"
+                        </p>
+
+                        {/* Read More/Less Button */}
+                        {needsTruncation && (
+                          <button
+                            onClick={() => toggleExpanded(index)}
+                            className="mt-3 text-accent hover:text-accent/80 text-sm font-semibold transition-colors flex items-center gap-1"
+                          >
+                            {isExpanded ? (
+                              <>
+                                Tampilkan lebih sedikit
+                                <ChevronRight className="w-4 h-4 rotate-90" />
+                              </>
+                            ) : (
+                              <>
+                                Baca selengkapnya
+                                <ChevronRight className="w-4 h-4 -rotate-90" />
+                              </>
+                            )}
+                          </button>
                         )}
                       </div>
-                      <div className="text-center">
-                        <p className="font-bold text-foreground text-lg">{testimonial.name}</p>
-                        <p className="text-sm text-accent font-medium tracking-wide uppercase">{testimonial.location}</p>
+
+                      {/* Author */}
+                      <div className="flex flex-col items-center gap-3 mt-4">
+                        <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-2xl overflow-hidden border-2 border-accent/20">
+                          {testimonial.avatar.startsWith('/') ? (
+                            <img
+                              src={testimonial.avatar}
+                              alt={testimonial.name}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            testimonial.avatar
+                          )}
+                        </div>
+                        <div className="text-center">
+                          <p className="font-bold text-foreground text-lg">{testimonial.name}</p>
+                          <p className="text-sm text-accent font-medium tracking-wide uppercase">{testimonial.location}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

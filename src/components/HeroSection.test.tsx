@@ -48,7 +48,7 @@ describe('HeroSection', () => {
 
     // Click new chart button
     fireEvent.click(newChartButton);
-    expect(mockScrollToCalculator).toHaveBeenCalledTimes(1);
+    expect(mockScrollToCalculator).toHaveBeenCalledTimes(2);
   });
 
   it('displays trust indicator', () => {

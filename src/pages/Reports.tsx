@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
 import { Check, X, ArrowRight, Star, Shield, Clock, FileText, Plus, Calendar, MapPin, Loader2, CreditCard, Mail, Phone, User as UserIcon } from 'lucide-react';
@@ -23,6 +23,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FAQSection } from '@/components/FAQSection';
+import { ComparisonTable } from '@/components/ComparisonTable';
+import { UnifiedCheckoutModal, UnifiedCheckoutData } from '@/components/UnifiedCheckoutModal';
 
 interface SavedChart {
   id: string;
@@ -35,18 +38,20 @@ interface SavedChart {
 
 // ... constants ...
 const painPoints = [
-  'Merasa hidup tidak sesuai dengan diri sejati Anda',
-  'Sering merasa kelelahan atau burnout tanpa tahu penyebabnya',
-  'Kesulitan membuat keputusan yang tepat',
-  'Merasa tidak dipahami oleh orang lain',
-  'Mencari tujuan hidup yang sebenarnya',
+  'Menghabiskan waktu dan energi meniru strategi sukses orang lain yang tidak cocok dengan energimu',
+  'Merasa "salah" atau "berbeda" karena cara kamu berpikir/merasa tidak seperti mayoritas',
+  'Konflik berulang dengan orang terkasih karena memaksakan cara kerjamu kepada mereka',
+  'Sering merasa burnout atau lelah tanpa tahu penyebabnya, meski sudah berusaha keras',
+  'Kesulitan membuat keputusan penting dengan percaya diri, takut salah pilih',
+  'Mencari validasi bahwa kamu "normal" dan tidak rusak',
 ];
 
 const wrongSolutions = [
-  'Mengikuti saran orang lain yang tidak sesuai dengan desain Anda',
-  'Memaksakan diri untuk menjadi seperti orang lain',
-  'Mengabaikan intuisi dan sinyal tubuh Anda',
-  'Membuat keputusan berdasarkan logika semata',
+  'Burnout karena ngikutin saran "Just Do It" terus-terusan',
+  'Makin insecure karena maksa jadi seperti orang lain',
+  'Ngerasa gagal karena "berbeda" dan terus nyalahin diri sendiri',
+  'Keputusan yang salah karena cuma dengerin logika, abaikan intuisi',
+  'Overwhelmed nyobain semua strategi productivity yang viral',
 ];
 
 const reportBenefits = [
@@ -81,13 +86,13 @@ import { TestimonialsSection } from '@/components/TestimonialsSection';
 import { PRICING_CONFIG, PRODUCTS, formatPrice } from '@/config/pricing';
 
 const reportFeatures = [
-  'Analisis mendalam 100+ halaman',
-  'Profil lengkap: Tipe, Strategi & Otoritas',
-  'Analisis 9 Energy Center',
-  'Panduan karir & hubungan',
-  'Peta potensi tersembunyi',
-  'Tips kesehatan & vitalitas',
-  'Panduan pengambilan keputusan',
+  '100+ Halaman → Roadmap Lengkap Kehidupan Anda',
+  'Tipe, Strategi & Otoritas → Cara Membuat Keputusan yang Tepat',
+  'Analisis 9 Energy Center → Kelola Energi, Hindari Burnout',
+  'Panduan Karir → Temukan Pekerjaan yang Flow dengan Energi Anda',
+  'Peta Genius Zone → Maksimalkan Potensi Tersembunyi',
+  'Tips Kesehatan → Vitalitas Optimal Sesuai Desain Anda',
+  'Panduan Hubungan → Komunikasi yang Autentik & Harmonis',
 ];
 
 const Reports = () => {
@@ -97,11 +102,16 @@ const Reports = () => {
   const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCheckoutPreview, setShowCheckoutPreview] = useState(false);
+  const [showUnifiedCheckout, setShowUnifiedCheckout] = useState(false);
   const [showTncModal, setShowTncModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToTnc, setAgreedToTnc] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [userProfile, setUserProfile] = useState<{ name: string | null; whatsapp: string | null } | null>(null);
+
+  // Ref for final CTA section
+  const finalCtaRef = useRef<HTMLElement>(null);
+  const [showFloatingCTA, setShowFloatingCTA] = useState(false);
 
   // Billing info state
   const [billingName, setBillingName] = useState('');
@@ -140,6 +150,24 @@ const Reports = () => {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Scroll listener for Floating CTA
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show floating CTA after scrolling 600px
+      const isPastHero = window.scrollY > 600;
+
+      // Hide if near the bottom (where the real CTA section is)
+      const scrollBottom = window.innerHeight + window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+      const isNearBottom = docHeight - scrollBottom < 500; // Final CTA section is usually large
+
+      setShowFloatingCTA(isPastHero && !isNearBottom);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const fetchOrders = async () => {
@@ -552,14 +580,39 @@ const Reports = () => {
         <section className="px-4 py-16 text-center">
           <div className="max-w-4xl mx-auto">
             <span className="inline-block text-accent text-sm font-semibold mb-4 uppercase tracking-wider">
-              Personal Report
+              Teman Batin Personal Report
             </span>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-              Temukan <span className="text-gradient-fire">Cetak Biru</span> Kehidupan Anda
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 leading-tight">
+              Co-pilot Batinmu untuk Hidup <span className="text-gradient-fire">Tenang, Pasti, dan Utuh</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Laporan Human Design personal yang mendalam untuk membantu Anda hidup sesuai dengan desain sejati Anda.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-2">
+              Kembali ke Diri Sejatimu dengan Panduan 100+ Halaman Berdasarkan Human Design & Bazi
             </p>
+            <p className="text-base text-muted-foreground/80 max-w-xl mx-auto mb-4">
+              Temukan Potensi Tersembunyi, Karir yang Sesuai & Cara Membuat Keputusan dengan Percaya Diri
+            </p>
+
+            {/* Social Proof Counter */}
+            <div className="flex items-center justify-center gap-2 mb-8 text-sm text-muted-foreground">
+              <Star className="w-4 h-4 text-accent fill-accent" />
+              <span className="font-semibold text-foreground">Baru sedikit orang yang mengetahui ini, kamu beruntung!</span>
+            </div>
+
+            {/* Hero CTA */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button
+                size="lg"
+                className="fire-glow text-lg px-8 py-6"
+                onClick={() => finalCtaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+              >
+                Mulai Perjalanan Transformasi (Gratis)
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Shield className="w-4 h-4 text-accent" />
+                <span>Garansi 100% Report Ulang</span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -567,7 +620,7 @@ const Reports = () => {
         <section className="px-4 py-12 bg-secondary/30">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-8">
-              Apakah Anda Mengalami Ini?
+              Hei Teman, Apakah kamu...
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
               {painPoints.map((point, index) => (
@@ -585,20 +638,20 @@ const Reports = () => {
         {/* Wrong Solutions Section */}
         <section className="px-4 py-12">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-4">
-              Solusi yang Tidak Bekerja
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-8">
+              Parahnya, kamu nyoba kesana kemari ngikutin saran orang yang berujung...
             </h2>
-            <p className="text-muted-foreground text-center mb-8 max-w-2xl mx-auto">
-              Banyak orang mencoba berbagai cara untuk menemukan diri, tapi tanpa pemahaman tentang desain unik mereka:
-            </p>
             <div className="space-y-3 max-w-xl mx-auto">
               {wrongSolutions.map((solution, index) => (
-                <div key={index} className="flex items-center gap-3 text-muted-foreground">
+                <div key={index} className="flex items-center gap-3 text-muted-foreground glass-card p-3 rounded-lg">
                   <X className="w-5 h-5 text-destructive/60 shrink-0" />
                   <span>{solution}</span>
                 </div>
               ))}
             </div>
+            <p className="text-center text-foreground/80 mt-6 text-sm italic max-w-xl mx-auto">
+              💡 <span className="font-semibold">Plot twist:</span> Kamu tidak perlu "diperbaiki". Kamu hanya perlu memahami cara kerjamu yang unik.
+            </p>
           </div>
         </section>
 
@@ -609,11 +662,15 @@ const Reports = () => {
               <Star className="w-4 h-4" />
               <span className="text-sm font-semibold">Solusi yang Tepat</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Human Design: Peta Perjalanan Hidup Anda
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Teman Batin: Blueprint Kehidupan yang Komprehensif
             </h2>
+            <p className="text-base text-muted-foreground/90 max-w-2xl mx-auto mb-3">
+              Menggunakan <span className="font-semibold text-foreground">Human Design</span> (sistem yang menggabungkan astrologi, I-Ching, Kabbalah, dan Chakra)
+              dan <span className="font-semibold text-foreground">Bazi</span> (Four Pillars of Destiny dari tradisi Tiongkok)
+            </p>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12">
-              Human Design menggabungkan astrologi, I-Ching, Kabbalah, dan sistem Chakra untuk memberikan pemahaman yang unik tentang siapa Anda sebenarnya.
+              untuk memberikan pemahaman <span className="font-semibold text-accent">360° tentang desain energi unik Anda</span>—dari cara membuat keputusan hingga timing terbaik untuk bertindak.
             </p>
           </div>
 
@@ -634,26 +691,62 @@ const Reports = () => {
         {/* Preview Section */}
         <ReportPreviewSection hideCta={true} />
 
+        {/* Comparison Table */}
+        <ComparisonTable className="bg-gradient-to-b from-transparent to-secondary/30" />
+
         {/* Testimonials */}
         <TestimonialsSection className="bg-transparent py-16" />
 
+        {/* FAQ Section */}
+        <FAQSection />
+
         {/* CTA Section - Dynamic based on user state */}
-        <section className="px-4 py-16">
-          <div className="max-w-4xl mx-auto glass-card rounded-2xl p-8 md:p-12">
+        <section ref={finalCtaRef} className="px-4 py-16">
+          <div className="max-w-4xl mx-auto glass-card rounded-2xl p-6 md:p-10 lg:p-12">
             <div className="text-center mb-8">
               <FileText className="w-12 h-12 text-accent mx-auto mb-6" />
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Dapatkan Full Report Anda
+                Siap untuk Hidup Tenang, Pasti, dan Utuh?
               </h2>
-              <p className="text-muted-foreground max-w-xl mx-auto mb-4">
-                Laporan 100+ halaman yang dipersonalisasi berdasarkan data kelahiran Anda.
+              <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
+                Kamu sudah lihat apa yang kamu dapat. Sekarang waktunya mengambil langkah pertama menuju pemahaman sejati tentang dirimu.
               </p>
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-2xl font-bold text-accent">Mulai {formatPrice(PRODUCTS.ESSENTIAL_REPORT.price)}</span>
-                <span className="text-lg text-muted-foreground line-through">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
+
+              {/* Quick Benefit Recap - Result-Oriented & Centered */}
+              <div className="flex flex-wrap justify-center gap-x-4 md:gap-x-8 gap-y-3 max-w-3xl mx-auto mb-8">
+                <div className="flex items-center gap-2 text-xs md:text-sm lg:text-base text-foreground font-medium group">
+                  <div className="w-5 h-5 md:w-6 md:h-6 bg-accent/20 rounded-full flex items-center justify-center border border-accent/30 group-hover:bg-accent/30 transition-colors">
+                    <Check className="w-3 h-3 md:w-4 md:h-4 text-accent" />
+                  </div>
+                  <span>Navigasi Hidup Akurat</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs md:text-sm lg:text-base text-foreground font-medium group">
+                  <div className="w-5 h-5 md:w-6 md:h-6 bg-accent/20 rounded-full flex items-center justify-center border border-accent/30 group-hover:bg-accent/30 transition-colors">
+                    <Check className="w-3 h-3 md:w-4 md:h-4 text-accent" />
+                  </div>
+                  <span>Radical Self-Acceptance</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs md:text-sm lg:text-base text-foreground font-medium group">
+                  <div className="w-5 h-5 md:w-6 md:h-6 bg-accent/20 rounded-full flex items-center justify-center border border-accent/30 group-hover:bg-accent/30 transition-colors">
+                    <Check className="w-3 h-3 md:w-4 md:h-4 text-accent" />
+                  </div>
+                  <span>Harmoni & Koneksi</span>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground mb-3">Investment untuk pemahaman seumur hidup:</p>
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <span className="text-3xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
+                <span className="text-lg text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
                 <span className="bg-accent/20 text-accent text-xs font-semibold px-2 py-1 rounded">
-                  HEMAT {Math.round(((PRODUCTS.ESSENTIAL_REPORT.original_price - PRODUCTS.ESSENTIAL_REPORT.price) / PRODUCTS.ESSENTIAL_REPORT.original_price) * 100)}%
+                  HEMAT {Math.round(((PRODUCTS.FULL_REPORT.original_price - PRODUCTS.FULL_REPORT.price) / PRODUCTS.FULL_REPORT.original_price) * 100)}%
                 </span>
+              </div>
+
+              {/* Urgency Element */}
+              <div className="inline-flex items-center gap-2 bg-destructive/20 text-destructive px-4 py-2 rounded-full">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm font-semibold">Penawaran Terbatas: Tersisa 8 slot hari ini</span>
               </div>
             </div>
 
@@ -664,43 +757,42 @@ const Reports = () => {
             ) : user ? (
               /* User logged in */
               <div className="text-center">
-                <p className="text-muted-foreground mb-6">
-                  Buat chart gratis terlebih dahulu untuk memesan Full Report.
-                </p>
                 <Button
                   size="lg"
-                  className="fire-glow text-lg px-8 py-6"
-                  onClick={handleAddNewChart}
+                  className="fire-glow text-lg px-8 py-6 mb-4"
+                  onClick={() => setShowUnifiedCheckout(true)}
                 >
-                  Buat Chart Gratis
+                  Dapatkan Full Report kamu Sekarang
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
+                <p className="text-sm text-muted-foreground">
+                  <button
+                    onClick={() => setShowChartModal(true)}
+                    className="text-accent hover:underline"
+                  >
+                    Mau Lihat Chart dulu?
+                  </button>
+                </p>
               </div>
             ) : (
               /* Not logged in */
               <div className="text-center">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Shield className="w-4 h-4 text-accent" />
-                    Garansi pembuatan report ulang
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="w-4 h-4 text-accent" />
-                    Dikirim dalam 24 jam
-                  </div>
-                </div>
-
                 <Button
                   size="lg"
-                  className="fire-glow text-lg px-8 py-6"
-                  onClick={handleAddNewChart}
+                  className="fire-glow text-lg px-8 py-6 mb-4"
+                  onClick={() => setShowUnifiedCheckout(true)}
                 >
-                  Buat Chart Gratis Dulu
+                  Dapatkan Full Report kamu Sekarang
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
 
-                <p className="text-xs text-muted-foreground mt-4">
-                  *Untuk membeli Full Report, Anda perlu membuat chart gratis terlebih dahulu
+                <p className="text-sm text-muted-foreground">
+                  <button
+                    onClick={() => setShowChartModal(true)}
+                    className="text-accent hover:underline"
+                  >
+                    Mau Lihat Chart dulu?
+                  </button>
                 </p>
               </div>
             )}
@@ -857,11 +949,11 @@ const Reports = () => {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="font-semibold text-foreground">{chart.name}</p>
-                      <p className="text-sm text-accent">Personal Report (Mulai)</p>
+                      <p className="text-sm text-accent">Full Personal Report</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-semibold text-foreground">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.price)}</span>
-                      <span className="text-xs text-muted-foreground line-through ml-1">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
+                      <span className="font-semibold text-foreground">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
+                      <span className="text-xs text-muted-foreground line-through ml-1">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground space-y-1 mt-3 pt-3 border-t border-border">
@@ -1020,7 +1112,253 @@ const Reports = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Unified Checkout Modal (New Phase 2) */}
+      <UnifiedCheckoutModal
+        open={showUnifiedCheckout}
+        onOpenChange={setShowUnifiedCheckout}
+        onSubmit={async (data) => {
+          setIsGeneratingChart(true);
+          try {
+            let currentUser = user;
+
+            // Helper: Format WhatsApp (08xx -> 628xx)
+            const formatWhatsApp = (number: string): string => {
+              if (!number || number.trim() === '') {
+                throw new Error('WhatsApp number is required');
+              }
+              let cleaned = number.replace(/\D/g, ''); // Remove non-digits
+              if (cleaned.startsWith('0')) {
+                cleaned = '62' + cleaned.slice(1);
+              }
+              if (!cleaned.startsWith('62')) {
+                cleaned = '62' + cleaned;
+              }
+              return '+' + cleaned;
+            };
+
+            // Validate whatsapp before formatting
+            if (!data.whatsapp || data.whatsapp.trim() === '') {
+              toast.error('Nomor WhatsApp wajib diisi');
+              setIsGeneratingChart(false);
+              return;
+            }
+
+            const formattedWhatsapp = formatWhatsApp(data.whatsapp);
+
+            // 1. Handle Auth (Signup) if not logged in
+            if (!currentUser && data.password) {
+              const { data: authData, error: authError } = await supabase.auth.signUp({
+                email: data.email,
+                password: data.password,
+                options: {
+                  data: { name: data.name, whatsapp: formattedWhatsapp },
+                },
+              });
+
+              if (authError) {
+                if (authError.message.includes('User already registered') || authError.status === 422) {
+                  toast.error('Email sudah terdaftar. Silakan Log In di menu untuk melanjutkan.', {
+                    duration: 5000,
+                    action: {
+                      label: 'Log In',
+                      onClick: () => navigate('/login')
+                    }
+                  });
+                  setIsGeneratingChart(false);
+                  return;
+                }
+                throw new Error(authError.message);
+              }
+              currentUser = authData.user;
+
+              if (currentUser) {
+                await supabase.from('profiles').update({
+                  name: data.name,
+                  whatsapp: formattedWhatsapp
+                }).eq('user_id', currentUser.id);
+              }
+            }
+
+            // 2. Prepare Date Strings
+            const [year, month, day] = data.birthDate.split('-').map(Number);
+            const [hour, minute] = data.birthTime.split(':').map(Number);
+
+            if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
+              toast.error("Format tanggal atau waktu tidak valid");
+              setIsGeneratingChart(false);
+              return;
+            }
+
+            // Validate City
+            if (!data.birthCity || data.birthCity.trim().length === 0) {
+              toast.error("Kota kelahiran wajib diisi");
+              setIsGeneratingChart(false);
+              return;
+            }
+
+            const birthDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+            // Submit Lead
+            try {
+              await supabase.functions.invoke('submit-lead', {
+                body: {
+                  name: data.name,
+                  email: data.email,
+                  whatsapp: formattedWhatsapp,
+                  birth_date: birthDateStr,
+                  birth_place: data.birthCity,
+                }
+              });
+            } catch (leadError) {
+              console.warn("Lead submission failed, continuing...", leadError);
+            }
+
+            // 3. Calculate Chart
+            const { data: chartResult, error: chartError } = await supabase.functions.invoke('calculate-chart', {
+              body: {
+                year, month, day, hour, minute,
+                place: data.birthCity,
+                gender: data.gender,
+              },
+            });
+
+            if (chartError) throw chartError;
+
+            // 4. Save Chart to DB
+            const { data: { user: freshUser } } = await supabase.auth.getUser();
+            currentUser = freshUser || currentUser;
+
+            if (!currentUser) {
+              toast.error("Silakan cek email untuk konfirmasi akun, lalu login kembali.");
+              setIsGeneratingChart(false);
+              return;
+            }
+
+            const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+
+            const { data: savedChart, error: saveError } = await supabase.from('saved_charts').insert({
+              user_id: currentUser.id,
+              name: data.name,
+              birth_date: birthDateStr,
+              birth_time: timeStr,
+              birth_place: data.birthCity,
+              chart_data: chartResult,
+            })
+              .select()
+              .single();
+
+            if (saveError) throw saveError;
+
+            setCurrentChartId(savedChart.id);
+
+            // 5. Create Order & Trigger Midtrans
+            const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+            const productName = 'Human Design Full Personal Report';
+
+            // Create Order
+            // @ts-ignore
+            const { error: orderError } = await supabase
+              .from('orders')
+              .insert({
+                user_id: user?.id || null,
+                reference_id: referenceId,
+                customer_name: data.name,
+                customer_email: data.email,
+                customer_phone: formattedWhatsapp,
+                product_name: productName,
+                amount: PRODUCTS.FULL_REPORT.price,
+                status: 'PENDING',
+                metadata: {
+                  chart_ids: [savedChart.id],
+                  products: ['full_report'],
+                  birth_data: {
+                    name: data.name,
+                    date: data.birthDate,
+                    time: data.birthTime,
+                    city: data.birthCity,
+                    gender: data.gender
+                  }
+                }
+              });
+
+            if (orderError) throw orderError;
+
+            // Call Midtrans
+            const { data: paymentData, error: paymentError } = await supabase.functions.invoke('midtrans-checkout', {
+              body: {
+                referenceId: referenceId,
+                customerName: data.name,
+                customerEmail: data.email,
+                customerPhone: formattedWhatsapp,
+                amount: PRODUCTS.FULL_REPORT.price,
+                productName: productName,
+                chartIds: [savedChart.id],
+                products: ['full_report'],
+                birthData: {
+                  name: data.name,
+                  date: data.birthDate,
+                  time: data.birthTime,
+                  city: data.birthCity,
+                  gender: data.gender
+                }
+              }
+            });
+
+            if (paymentError) throw paymentError;
+
+            if (paymentData && paymentData.redirect_url) {
+              setShowUnifiedCheckout(false);
+
+              // Use redirect_url directly
+              window.location.href = paymentData.redirect_url;
+
+              /* 
+              // Legacy Snap Popup - replaced with Direct Redirect for better compatibility
+              if ((window as any).snap) {
+                (window as any).snap.pay(paymentData.token, {
+                  onSuccess: function (result: any) { xmlns: ... }
+                });
+              } 
+              */
+            }
+
+          } catch (error: any) {
+            console.error(error);
+            toast.error('Terjadi kesalahan: ' + (error.message || "Unknown error"));
+          } finally {
+            setIsGeneratingChart(false);
+          }
+        }}
+        isLoading={isGeneratingChart}
+        user={user}
+      />
+
       <Footer />
+
+      {/* Floating CTA Button */}
+      {showFloatingCTA && (
+        <div className="fixed bottom-6 left-0 right-0 z-50 px-4 animate-in fade-in slide-in-from-bottom-10 duration-300">
+          <div className="max-w-md mx-auto">
+            <div className="flex flex-col gap-2 items-center">
+              <div className="bg-white text-[hsl(160_84%_5%)] text-xs md:text-sm font-bold py-1.5 px-3 md:px-4 rounded-full flex items-center gap-1.5 shadow-lg border border-[hsl(160_84%_5%)]/10">
+                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 animate-pulse text-[hsl(160_84%_5%)]" />
+                Penawaran Terbatas: Tersisa 8 slot hari ini
+              </div>
+              <Button
+                size="lg"
+                className="w-full fire-glow py-7 shadow-2xl relative overflow-hidden group"
+                onClick={() => finalCtaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+              >
+                <div className="flex flex-col items-center leading-tight">
+                  <span className="text-sm font-bold tracking-wide">Dapatkan Full Report Sekarang</span>
+                  <span className="text-[10px] opacity-80 font-medium">Investasi terbaik untuk dirimu</span>
+                </div>
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

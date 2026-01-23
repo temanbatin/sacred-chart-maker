@@ -116,35 +116,12 @@ export const ReportPreviewSection = ({ onOpenChartModal, hideCta = false }: Repo
                             </div>
                         </div>
 
-                        <div className="pt-4 flex flex-wrap items-center gap-4">
-                            <span className="text-3xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
-                            <span className="text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
-                            <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-sm font-medium">
-                                -{Math.round(((PRODUCTS.FULL_REPORT.original_price - PRODUCTS.FULL_REPORT.price) / PRODUCTS.FULL_REPORT.original_price) * 100)}%
-                            </span>
-                        </div>
-
                         {!hideCta && (
-                            <>
-                                <Button
-                                    size="lg"
-                                    className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-lg px-8 py-6 mt-4"
-                                    onClick={() => {
-                                        if (onOpenChartModal) {
-                                            onOpenChartModal();
-                                        } else {
-                                            const calculator = document.getElementById('calculator');
-                                            calculator?.scrollIntoView({ behavior: 'smooth' });
-                                        }
-                                    }}
-                                >
-                                    Buat Chart & Pesan Sekarang →
-                                </Button>
-                                <p className="text-muted-foreground text-sm space-y-1">
-                                    <span>Buat chart gratis, lalu pesan laporan lengkap yang dipersonalisasi.</span>
-                                    <span className="block text-accent/80 font-medium">✨ Bergabunglah dengan 12 orang yang sudah memesan kejelasan untuk hidup mereka minggu ini.</span>
+                            <div className="pt-6 border-t border-border/50">
+                                <p className="text-muted-foreground text-sm">
+                                    💡 Lihat detail lengkap & harga di bagian bawah halaman
                                 </p>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>

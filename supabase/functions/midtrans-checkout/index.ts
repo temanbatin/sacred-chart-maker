@@ -37,6 +37,11 @@ function generateReferenceId(): string {
 }
 
 function formatPhoneNumber(phone: string): string {
+    // Handle null, undefined, or empty string
+    if (!phone || typeof phone !== 'string') {
+        throw new Error('Nomor WhatsApp wajib diisi');
+    }
+
     let p = phone.replace(/[^\d+]/g, ''); // Keep digits and +
     if (p.startsWith('0')) {
         p = '62' + p.substring(1);
@@ -47,6 +52,12 @@ function formatPhoneNumber(phone: string): string {
     if (p.startsWith('8')) {
         p = '62' + p;
     }
+
+    // Validate minimum length (62 + at least 9 digits)
+    if (p.length < 11) {
+        throw new Error('Nomor WhatsApp tidak valid. Gunakan format: 08123456789 atau +628123456789');
+    }
+
     return p;
 }
 

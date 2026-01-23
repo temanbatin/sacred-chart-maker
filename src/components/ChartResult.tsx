@@ -9,10 +9,11 @@ import { toast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import type { BirthData } from "@/components/MultiStepForm";
 import { ProductPreviewModal } from "./ProductPreviewModal";
+import { UnifiedCheckoutModal, UnifiedCheckoutData } from "./UnifiedCheckoutModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import reportSS1 from "@/assets/Report SS.jpg";
 import reportSS2 from "@/assets/Report SS 2.jpg";
 import reportSS3 from "@/assets/Report SS 3.jpg";
@@ -363,6 +364,7 @@ const PropertiesSidebar = ({
 };
 
 export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, chartId, userId, onReset, isOrdered = false, className }: ChartResultProps) => {
+  const navigate = useNavigate();
   const [bodygraphImage, setBodygraphImage] = useState<string | null>(null);
   const [bodygraphLoading, setBodygraphLoading] = useState(false);
   const [bodygraphError, setBodygraphError] = useState<string | null>(null);
@@ -374,6 +376,15 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const chartRef = useRef<HTMLDivElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
   const instagramExportRef = useRef<HTMLDivElement>(null);
+
+  // Unified Checkout State (for saved charts in Account page)
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Check if this is a saved chart from Account page
+  const isSavedChart = Boolean(chartId && userId);
+
   // ===== DYNAMIC SLOT CONFIGURATION =====
   // Ubah angka ini untuk update otomatis jumlah slot yang tersisa
   const TOTAL_SLOTS = 80; // Total slot tersedia bulan ini
@@ -526,6 +537,139 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   };
 
   const birthDataString = JSON.stringify(birthData);
+
+  // Fetch current user (for saved chart checkout)
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    if (isSavedChart) {
+      fetchUser();
+    }
+  }, [isSavedChart]);
+
+  // Handle checkout submission for saved charts
+  const handleCheckoutSubmit = async (checkoutData: UnifiedCheckoutData) => {
+    setIsCheckoutLoading(true);
+    try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 Auth check - Session:', session ? 'Valid' : 'None', '| User:', currentUser?.email || 'None');
+
+      if (!currentUser) {
+        toast({
+          title: 'Sesi tidak valid',
+          description: 'Silakan login kembali untuk melanjutkan',
+          variant: 'destructive'
+        });
+        setIsCheckoutLoading(false);
+        return;
+      }
+
+      // Generate Reference ID uniquely
+      const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+      const productName = `Full Report Human Design: ${checkoutData.name}`;
+      const finalChartIds = chartId ? [chartId] : [];
+
+      // 1. Save order to database first (same as Reports.tsx)
+      // @ts-ignore
+      const { error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: userId || null,
+          reference_id: referenceId,
+          customer_name: checkoutData.name,
+          customer_email: checkoutData.email,
+          customer_phone: checkoutData.whatsapp,
+          product_name: productName,
+          amount: PRODUCTS.FULL_REPORT.price,
+          status: 'PENDING',
+          metadata: {
+            chart_ids: finalChartIds,
+            products: [PRODUCTS.FULL_REPORT.id]
+          }
+        });
+
+      if (orderError) {
+        console.error('Order creation error:', orderError);
+        toast({
+          title: 'Gagal membuat pesanan',
+          description: orderError.message,
+          variant: 'destructive'
+        });
+        setIsCheckoutLoading(false);
+        return;
+      }
+
+      // 2. Call midtrans-checkout with correct payload structure
+      const payload = {
+        referenceId: referenceId,
+        customerName: checkoutData.name,
+        customerEmail: checkoutData.email,
+        customerPhone: checkoutData.whatsapp,
+        amount: PRODUCTS.FULL_REPORT.price,
+        productName: productName,
+        chartIds: finalChartIds,
+        birthData: birthData, // Include birth data for report generation
+        products: [PRODUCTS.FULL_REPORT.id]
+      };
+
+      console.log('🚀 Sending payload to midtrans-checkout:', JSON.stringify(payload, null, 2));
+
+      const { data: result, error } = await supabase.functions.invoke('midtrans-checkout', {
+        body: payload
+      });
+
+      console.log('📥 Midtrans response:', result);
+      console.log('❌ Midtrans error:', error);
+
+      if (error) {
+        console.error('Edge function invoke error:', error);
+        throw error;
+      }
+
+      if (result?.success && result?.redirect_url) {
+        // Track InitiateCheckout event
+        if (window.fbq) {
+          window.fbq('track', 'InitiateCheckout', {
+            value: PRODUCTS.FULL_REPORT.price / 100,
+            currency: 'IDR'
+          });
+        }
+
+        // Update order with payment URL
+        // @ts-ignore
+        await supabase
+          .from('orders')
+          .update({ payment_url: result.redirect_url })
+          .eq('reference_id', referenceId);
+
+        toast({
+          title: 'Mengarahkan ke halaman pembayaran...'
+        });
+
+        // Redirect to payment page
+        window.location.href = result.redirect_url;
+      } else {
+        toast({
+          title: 'Gagal mendapatkan link pembayaran',
+          description: result?.error || 'Silakan coba lagi',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({
+        title: 'Gagal memproses checkout',
+        description: error.message || 'Terjadi kesalahan, silakan coba lagi',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
 
   // Fetch bodygraph image when component mounts
   useEffect(() => {
@@ -1081,7 +1225,13 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             <div className="text-center">
               <Button
                 size="lg"
-                onClick={() => setIsProductModalOpen(true)}
+                onClick={() => {
+                  if (isSavedChart) {
+                    setIsCheckoutModalOpen(true);
+                  } else {
+                    setIsProductModalOpen(true);
+                  }
+                }}
                 className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(245,158,11,0.5)] border-2 border-amber-400/50 animate-pulse-slow w-full md:w-auto"
               >
                 Dapatkan Full Report Sekarang
@@ -1178,6 +1328,26 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           birthData={birthData}
           chartData={data}
         />
+
+        {/* Unified Checkout Modal for Saved Charts (My Chart Page) */}
+        {isSavedChart && birthData && (
+          <UnifiedCheckoutModal
+            open={isCheckoutModalOpen}
+            onOpenChange={(open) => setIsCheckoutModalOpen(open)}
+            onSubmit={handleCheckoutSubmit}
+            isLoading={isCheckoutLoading}
+            user={currentUser}
+            skipBirthData={true}
+            prefillBirthData={{
+              birthDate: `${birthData.year}-${String(birthData.month).padStart(2, '0')}-${String(birthData.day).padStart(2, '0')}`,
+              birthTime: `${String(birthData.hour).padStart(2, '0')}-${String(birthData.minute).padStart(2, '0')}`,
+              birthCity: birthData.place,
+              gender: birthData.gender as 'male' | 'female'
+            }}
+          />
+        )}
+
+
 
         {/* Save Chart Dialog for Guest Users */}
         <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
