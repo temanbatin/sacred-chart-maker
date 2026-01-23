@@ -5,7 +5,7 @@ import { Sparkles, BookOpen, Compass, Heart, Star } from 'lucide-react';
 const methodologySources = [
   {
     title: 'Astrologi',
-    description: 'Posisi planet saat kelahiran Anda memberikan dasar untuk gate dan channel dalam chart.',
+    description: 'Posisi planet saat kelahiran kamu memberikan dasar untuk gate dan channel dalam chart.',
     icon: Star,
   },
   {
@@ -34,7 +34,7 @@ const Methodology = () => {
   return (
     <div className="min-h-screen bg-background">
       <MainNavbar />
-      
+
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -53,10 +53,10 @@ const Methodology = () => {
               Apa itu Human Design?
             </h2>
             <p className="text-muted-foreground mb-4">
-              Human Design adalah sistem yang diterima oleh Ra Uru Hu pada tahun 1987 melalui pengalaman mistis selama 8 hari. Sistem ini menggabungkan kebijaksanaan kuno dengan sains modern untuk menciptakan peta unik tentang bagaimana Anda dirancang untuk beroperasi di dunia.
+              Human Design adalah sistem yang diterima oleh Ra Uru Hu pada tahun 1987 melalui pengalaman mistis selama 8 hari. Sistem ini menggabungkan kebijaksanaan kuno dengan sains modern untuk menciptakan peta unik tentang bagaimana kamu dirancang untuk beroperasi di dunia.
             </p>
             <p className="text-muted-foreground">
-              Berbeda dengan sistem kepribadian lainnya, Human Design tidak hanya menggambarkan siapa Anda, tetapi juga memberikan strategi praktis untuk membuat keputusan yang selaras dengan sifat sejati Anda.
+              Berbeda dengan sistem kepribadian lainnya, Human Design tidak hanya menggambarkan siapa kamu, tetapi juga memberikan strategi praktis untuk membuat keputusan yang selaras dengan sifat sejati kamu.
             </p>
           </section>
 
@@ -93,13 +93,13 @@ const Methodology = () => {
               Bagaimana Chart Dihitung?
             </h2>
             <p className="text-muted-foreground mb-4">
-              Chart Human Design Anda dihitung berdasarkan data kelahiran yang tepat: tanggal, waktu, dan lokasi. Posisi matahari, bulan, dan planet lainnya pada saat kelahiran Anda menentukan aktivasi gate dalam bodygraph Anda.
+              Chart Human Design kamu dihitung berdasarkan data kelahiran yang tepat: tanggal, waktu, dan lokasi. Posisi matahari, bulan, dan planet lainnya pada saat kelahiran kamu menentukan aktivasi gate dalam bodygraph kamu.
             </p>
             <p className="text-muted-foreground mb-4">
-              Uniknya, Human Design juga memperhitungkan posisi planet 88 hari sebelum kelahiran Anda (Design Calculation) yang mewakili aspek bawah sadar Anda, sementara posisi saat kelahiran (Personality Calculation) mewakili aspek sadar Anda.
+              Uniknya, Human Design juga memperhitungkan posisi planet 88 hari sebelum kelahiran kamu (Design Calculation) yang mewakili aspek bawah sadar kamu, sementara posisi saat kelahiran (Personality Calculation) mewakili aspek sadar kamu.
             </p>
             <p className="text-muted-foreground">
-              Kombinasi kedua kalkulasi ini menciptakan bodygraph yang unik untuk setiap individu, menunjukkan bagaimana energi mengalir dalam diri Anda dan bagaimana Anda berinteraksi dengan dunia.
+              Kombinasi kedua kalkulasi ini menciptakan bodygraph yang unik untuk setiap individu, menunjukkan bagaimana energi mengalir dalam diri kamu dan bagaimana kamu berinteraksi dengan dunia.
             </p>
           </section>
 

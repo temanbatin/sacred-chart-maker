@@ -175,7 +175,7 @@ export const useChartGenerator = (user: User | null) => {
                     // Don't block the flow, chart is still displayed
                 } else {
                     setCurrentChartId(savedChart.id);
-                    toast.success('Chart berhasil disimpan ke akun Anda!');
+                    toast.success('Chart berhasil disimpan ke akun kamu!');
                 }
             } else {
                 // Guest user - save pending chart data to sessionStorage for auto-save after signup

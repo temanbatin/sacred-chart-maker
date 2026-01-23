@@ -35,12 +35,12 @@ serve(async (req) => {
     if (type === 'signup' || type === 'verification') {
       html = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-          <h2 style="color: #4f46e5; text-align: center;">Konfirmasi Akun Anda</h2>
-          <p>Silakan klik tombol di bawah ini untuk memverifikasi email Anda:</p>
+          <h2 style="color: #4f46e5; text-align: center;">Konfirmasi Akun Kamu</h2>
+          <p>Silakan klik tombol di bawah ini untuk memverifikasi email kamu:</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${verificationUrl}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Konfirmasi Email</a>
           </div>
-          <p style="color: #666; font-size: 14px;">Atau copy link berikut ke browser Anda:</p>
+          <p style="color: #666; font-size: 14px;">Atau copy link berikut ke browser kamu:</p>
           <p style="word-break: break-all; color: #4f46e5; font-size: 12px;">${verificationUrl}</p>
         </div>
       `;
@@ -57,7 +57,7 @@ serve(async (req) => {
         to: [email],
         subject: subject,
         html: html,
-        text: `Silakan konfirmasi email Anda dengan mengklik link berikut: ${verificationUrl}`,
+        text: `Silakan konfirmasi email kamu dengan mengklik link berikut: ${verificationUrl}`,
       }),
     });
 

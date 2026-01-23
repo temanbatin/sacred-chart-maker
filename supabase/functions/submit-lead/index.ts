@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
     if (!ipCountError && ipCount && ipCount >= 10) {
       console.log(`IP rate limit exceeded: ${clientIP}`);
       return new Response(
-        JSON.stringify({ error: 'Terlalu banyak permintaan dari lokasi Anda. Silakan coba lagi nanti.' }),
+        JSON.stringify({ error: 'Terlalu banyak permintaan dari lokasi kamu. Silakan coba lagi nanti.' }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

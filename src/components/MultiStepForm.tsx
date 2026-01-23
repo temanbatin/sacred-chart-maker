@@ -73,7 +73,7 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
             setShowSuggestions(true);
         } catch (error) {
             console.error('Error searching cities:', error);
-            toast.error("Gagal mencari kota. Silakan periksa koneksi internet Anda.");
+            toast.error("Gagal mencari kota. Silakan periksa koneksi internet kamu.");
         } finally {
             setIsSearching(false);
         }

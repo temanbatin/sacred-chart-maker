@@ -15,15 +15,15 @@ const faqs = [
   },
   {
     question: "Bagaimana cara mendapatkan chart Human Design saya?",
-    answer: "Anda cukup memasukkan data kelahiran lengkap (tanggal, waktu, dan tempat lahir) di halaman utama Teman Batin. Sistem kami akan menghasilkan chart Human Design Anda secara otomatis dan gratis."
+    answer: "Kamu cukup memasukkan data kelahiran lengkap (tanggal, waktu, dan tempat lahir) di halaman utama Teman Batin. Sistem kami akan menghasilkan chart Human Design kamu secara otomatis dan gratis."
   },
   {
     question: "Apakah layanan chart gratis di Teman Batin benar-benar gratis?",
-    answer: "Ya, layanan pembuatan chart Human Design dasar di Teman Batin sepenuhnya gratis. Anda dapat mengakses chart dan informasi dasar tentang tipe, strategi, dan otoritas Anda tanpa biaya."
+    answer: "Ya, layanan pembuatan chart Human Design dasar di Teman Batin sepenuhnya gratis. Kamu dapat mengakses chart dan informasi dasar tentang tipe, strategi, dan otoritas kamu tanpa biaya."
   },
   {
     question: "Mengapa waktu lahir penting untuk chart Human Design?",
-    answer: "Waktu lahir sangat penting karena posisi planet dan gate berubah setiap beberapa menit. Waktu yang akurat menghasilkan chart yang lebih tepat. Jika Anda tidak tahu waktu pasti, gunakan perkiraan terbaik atau 12:00 siang."
+    answer: "Waktu lahir sangat penting karena posisi planet dan gate berubah setiap beberapa menit. Waktu yang akurat menghasilkan chart yang lebih tepat. Jika kamu tidak tahu waktu pasti, gunakan perkiraan terbaik atau 12:00 siang."
   },
   {
     question: "Apa perbedaan antara tipe-tipe Human Design?",
@@ -31,15 +31,15 @@ const faqs = [
   },
   {
     question: "Apa itu strategi dan otoritas dalam Human Design?",
-    answer: "Strategi adalah cara optimal setiap tipe untuk mengambil keputusan dan berinteraksi dengan dunia. Otoritas adalah 'suara dalam' atau sistem pengambilan keputusan personal yang membantu Anda membuat pilihan yang benar untuk diri sendiri."
+    answer: "Strategi adalah cara optimal setiap tipe untuk mengambil keputusan dan berinteraksi dengan dunia. Otoritas adalah 'suara dalam' atau sistem pengambilan keputusan personal yang membantu kamu membuat pilihan yang benar untuk diri sendiri."
   },
   {
     question: "Bisakah Human Design berubah seiring waktu?",
-    answer: "Tidak, chart Human Design Anda ditentukan saat lahir dan tidak berubah. Yang berubah adalah pemahaman dan kemampuan Anda untuk menghayati desain unik Anda seiring waktu."
+    answer: "Tidak, chart Human Design kamu ditentukan saat lahir dan tidak berubah. Yang berubah adalah pemahaman dan kemampuan kamu untuk menghayati desain unik kamu seiring waktu."
   },
   {
     question: "Apakah Human Design adalah ramalan atau prediksi?",
-    answer: "Tidak, Human Design bukan tentang meramal masa depan. Ini adalah alat untuk memahami mekanika energi unik Anda, potensi bawaan, dan cara optimal untuk menjalani hidup sesuai dengan desain asli Anda."
+    answer: "Tidak, Human Design bukan tentang meramal masa depan. Ini adalah alat untuk memahami mekanika energi unik kamu, potensi bawaan, dan cara optimal untuk menjalani hidup sesuai dengan desain asli kamu."
   },
   {
     question: "Apa saja layanan berbayar yang tersedia di Teman Batin?",
@@ -47,11 +47,11 @@ const faqs = [
   },
   {
     question: "Bagaimana cara menghubungi tim Teman Batin?",
-    answer: "Anda dapat menghubungi kami melalui halaman Hubungi Kami, email ke Hei@temanbatin.com, atau WhatsApp di nomor yang tertera di website. Tim kami siap membantu pada jam kerja."
+    answer: "Kamu dapat menghubungi kami melalui halaman Hubungi Kami, email ke Hei@temanbatin.com, atau WhatsApp di nomor yang tertera di website. Tim kami siap membantu pada jam kerja."
   },
   {
     question: "Apakah data saya aman di Teman Batin?",
-    answer: "Ya, kami sangat menjaga privasi dan keamanan data Anda. Silakan baca Kebijakan Privasi kami untuk informasi lengkap tentang bagaimana kami mengumpulkan, menggunakan, dan melindungi data Anda."
+    answer: "Ya, kami sangat menjaga privasi dan keamanan data kamu. Silakan baca Kebijakan Privasi kami untuk informasi lengkap tentang bagaimana kami mengumpulkan, menggunakan, dan melindungi data kamu."
   },
   {
     question: "Bagaimana kebijakan pengembalian dana Teman Batin?",
@@ -93,7 +93,7 @@ const FAQ = () => {
           <div className="mt-12 p-6 bg-secondary/50 rounded-lg text-center">
             <h2 className="text-xl font-semibold text-foreground mb-2">Masih punya pertanyaan?</h2>
             <p className="text-muted-foreground mb-4">
-              Jika Anda tidak menemukan jawaban yang dicari, jangan ragu untuk menghubungi tim kami.
+              Jika kamu tidak menemukan jawaban yang dicari, jangan ragu untuk menghubungi tim kami.
             </p>
             <Link
               to="/hubungi-kami"

@@ -59,7 +59,7 @@ const wrongSolutions = [
 const reportBenefits = [
   {
     title: 'Analisis Mendalam 100+ Halaman',
-    description: 'Laporan komprehensif tentang tipe, profil, otoritas, dan strategi Anda',
+    description: 'Laporan komprehensif tentang tipe, profil, otoritas, dan strategi kamu',
   },
   {
     title: 'Panduan Karir & Hubungan',
@@ -67,31 +67,31 @@ const reportBenefits = [
   },
   {
     title: 'Peta Potensi Tersembunyi',
-    description: 'Temukan bakat dan kemampuan yang mungkin belum Anda sadari',
+    description: 'Temukan bakat dan kemampuan yang mungkin belum kamu sadari',
   },
   {
     title: 'Panduan Pengambilan Keputusan',
-    description: 'Cara membuat keputusan yang selaras dengan desain sejati Anda',
+    description: 'Cara membuat keputusan yang selaras dengan desain sejati kamu',
   },
   {
     title: 'Analisis 9 Energy Center',
-    description: 'Pemahaman mendalam tentang bagaimana energi mengalir dalam diri Anda',
+    description: 'Pemahaman mendalam tentang bagaimana energi mengalir dalam diri kamu',
   },
   {
     title: 'Tips Kesehatan & Vitalitas',
-    description: 'Rekomendasi gaya hidup berdasarkan desain unik Anda',
+    description: 'Rekomendasi gaya hidup berdasarkan desain unik kamu',
   },
 ];
 
 import { TestimonialsSection } from '@/components/TestimonialsSection';
 
 const reportFeatures = [
-  '100+ Halaman → Roadmap Lengkap Kehidupan Anda',
+  '100+ Halaman → Roadmap Lengkap Kehidupan kamu',
   'Tipe, Strategi & Otoritas → Cara Membuat Keputusan yang Tepat',
   'Analisis 9 Energy Center → Kelola Energi, Hindari Burnout',
-  'Panduan Karir → Temukan Pekerjaan yang Flow dengan Energi Anda',
+  'Panduan Karir → Temukan Pekerjaan yang Flow dengan Energi kamu',
   'Peta Genius Zone → Maksimalkan Potensi Tersembunyi',
-  'Tips Kesehatan → Vitalitas Optimal Sesuai Desain Anda',
+  'Tips Kesehatan → Vitalitas Optimal Sesuai Desain kamu',
   'Panduan Hubungan → Komunikasi yang Autentik & Harmonis',
 ];
 
@@ -337,7 +337,7 @@ const Reports = () => {
     }
 
     if (!agreedToTerms || !agreedToTnc) {
-      toast.error('Anda harus menyetujui semua ketentuan sebelum melanjutkan');
+      toast.error('Kamu harus menyetujui semua ketentuan sebelum melanjutkan');
       return;
     }
 
@@ -553,7 +553,7 @@ const Reports = () => {
           setShowResultModal(true);
         }
       } else {
-        toast.message('Silakan cek email Anda untuk konfirmasi akun, lalu login untuk menyimpan chart.');
+        toast.message('Silakan cek email kamu untuk konfirmasi akun, lalu login untuk menyimpan chart.');
         // Still close modal
         setShowLeadCapture(false);
       }
@@ -670,7 +670,7 @@ const Reports = () => {
               dan <span className="font-semibold text-foreground">Bazi</span> (Four Pillars of Destiny dari tradisi Tiongkok)
             </p>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12">
-              untuk memberikan pemahaman <span className="font-semibold text-accent">360° tentang desain energi unik Anda</span>—dari cara membuat keputusan hingga timing terbaik untuk bertindak.
+              untuk memberikan pemahaman <span className="font-semibold text-accent">360° tentang desain energi unik kamu</span>—dari cara membuat keputusan hingga timing terbaik untuk bertindak.
             </p>
           </div>
 
@@ -737,7 +737,7 @@ const Reports = () => {
                 </div>
               </div>
 
-              <p className="text-sm text-muted-foreground mb-3">Investment untuk pemahaman seumur hidup:</p>
+              <p className="text-sm text-muted-foreground mb-3">Investasi untuk pemahaman seumur hidup:</p>
               <div className="flex items-center justify-center gap-3 mb-4">
                 <span className="text-3xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
                 <span className="text-lg text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
@@ -765,7 +765,7 @@ const Reports = () => {
                   className="fire-glow text-lg px-8 py-6 mb-4"
                   onClick={() => setShowUnifiedCheckout(true)}
                 >
-                  Dapatkan Full Report kamu Sekarang
+                  Dapatkan Full Report Kamu
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
                 <p className="text-sm text-muted-foreground">
@@ -785,7 +785,7 @@ const Reports = () => {
                   className="fire-glow text-lg px-8 py-6 mb-4"
                   onClick={() => setShowUnifiedCheckout(true)}
                 >
-                  Dapatkan Full Report kamu Sekarang
+                  Dapatkan Full Report Kamu
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
 
@@ -979,7 +979,7 @@ const Reports = () => {
 
             {/* Features included */}
             <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
-              <h4 className="font-semibold text-foreground mb-3">Yang Anda dapatkan:</h4>
+              <h4 className="font-semibold text-foreground mb-3">Yang kamu dapatkan:</h4>
               <div className="grid grid-cols-1 gap-2">
                 {reportFeatures.map((feature, index) => (
                   <div key={index} className="flex items-center gap-2 text-sm text-foreground">
@@ -997,7 +997,7 @@ const Reports = () => {
                 <div className="text-sm">
                   <p className="font-semibold text-foreground mb-1">Waktu Pemrosesan</p>
                   <p className="text-muted-foreground">
-                    Full Report akan dikirim ke email Anda <strong className="text-foreground">secara instan (otomatis)</strong> setelah pembayaran dikonfirmasi.
+                    Full Report akan dikirim ke email kamu <strong className="text-foreground">secara instan (otomatis)</strong> setelah pembayaran dikonfirmasi.
                   </p>
                 </div>
               </div>
@@ -1020,7 +1020,7 @@ const Reports = () => {
                     Saya menyetujui Syarat dan Ketentuan
                   </label>
                   <p className="text-sm text-muted-foreground">
-                    Dengan mencentang ini, Anda setuju dengan{' '}
+                    Dengan mencentang ini, kamu setuju dengan{' '}
                     <span
                       className="text-accent cursor-pointer hover:underline"
                       onClick={() => setShowTncModal(true)}
@@ -1092,19 +1092,19 @@ const Reports = () => {
           </DialogHeader>
           <div className="space-y-4 text-sm text-muted-foreground">
             <p>
-              1. <strong>Data Kelahiran:</strong> Akurasi report sangat bergantung pada data kelahiran (jam & menit). Pastikan data yang Anda masukkan akurat.
+              1. <strong>Data Kelahiran:</strong> Akurasi report sangat bergantung pada data kelahiran (jam & menit). Pastikan data yang kamu masukkan akurat.
             </p>
             <p>
-              2. <strong>Waktu Layanan:</strong> Report akan dikirimkan ke email Anda secara instan (otomatis dalam hitungan menit) setelah pembayaran dikonfirmasi.
+              2. <strong>Waktu Layanan:</strong> Report akan dikirimkan ke email kamu secara instan (otomatis dalam hitungan menit) setelah pembayaran dikonfirmasi.
             </p>
             <p>
-              3. <strong>Kebijakan Garansi:</strong> Kami memberikan garansi 100% pembuatan report ulang jika ada kesalahan dalam perhitungan atau report tidak sesuai dengan data yang Anda berikan.
+              3. <strong>Kebijakan Garansi:</strong> Kami memberikan garansi 100% pembuatan report ulang jika ada kesalahan dalam perhitungan atau report tidak sesuai dengan data yang kamu berikan.
             </p>
             <p>
-              4. <strong>Privasi:</strong> Data kelahiran Anda hanya digunakan untuk pembuatan chart dan tidak akan disebarluaskan.
+              4. <strong>Privasi:</strong> Data kelahiran kamu hanya digunakan untuk pembuatan chart dan tidak akan disebarluaskan.
             </p>
             <p>
-              5. <strong>Non-Transferable:</strong> Report ini dibuat khusus untuk Anda dan tidak dapat dipindahtangankan manfaatnya.
+              5. <strong>Non-Transferable:</strong> Report ini dibuat khusus untuk kamu dan tidak dapat dipindahtangankan manfaatnya.
             </p>
           </div>
           <div className="pt-4">
@@ -1353,7 +1353,7 @@ const Reports = () => {
                 onClick={() => finalCtaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
               >
                 <div className="flex flex-col items-center leading-tight">
-                  <span className="text-sm font-bold tracking-wide">Dapatkan Full Report Sekarang</span>
+                  <span className="text-sm font-bold tracking-wide text-center">Dapatkan Full Report Kamu</span>
                   <span className="text-[10px] opacity-80 font-medium">Investasi terbaik untuk dirimu</span>
                 </div>
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />

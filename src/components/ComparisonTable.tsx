@@ -58,7 +58,7 @@ export const ComparisonTable = ({ className = '' }: ComparisonTableProps) => {
                         Kenapa Pilih Human Design Report?
                     </h2>
                     <p className="text-muted-foreground max-w-2xl mx-auto">
-                        Bandingkan investasi Anda dengan alternatif lain untuk self-discovery dan personal growth
+                        Bandingkan investasi kamu dengan alternatif lain untuk self-discovery dan personal growth
                     </p>
                 </div>
 
@@ -73,7 +73,7 @@ export const ComparisonTable = ({ className = '' }: ComparisonTableProps) => {
                         <div className="space-y-3">
                             {[
                                 'Hasil Instan (hitungan menit)',
-                                'Blueprint unik Anda',
+                                'Blueprint unik kamu',
                                 'Lifetime access',
                                 '100+ halaman komprehensif',
                                 'Garansi report ulang'
@@ -188,7 +188,7 @@ export const ComparisonTable = ({ className = '' }: ComparisonTableProps) => {
                         <span className="font-bold text-accent">Kesimpulan:</span> Human Design Report memberikan <span className="font-semibold">value 50x lebih tinggi</span> dengan investasi minimal
                     </p>
                     <p className="text-sm text-muted-foreground">
-                        Perfect sebagai starting point self-discovery Anda, atau complement untuk coaching/terapi yang sudah berjalan
+                        Sempurna jika dijadikan starting point self-discovery kamu, atau complement untuk coaching/terapi yang sudah berjalan
                     </p>
                 </div>
             </div>

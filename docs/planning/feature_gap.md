@@ -33,7 +33,7 @@ Berikut adalah fitur yang belum ada tapi sangat umum/dibutuhkan di niche Human D
 ## 5. 📸 Social Share Cards (Viral Loops)
 **Status: Basic (hanya copy link)**
 *   **Fungsi**: Tombol "Share to Instagram Story" yang men-generate gambar estetik (berisi Type, Profile, & Incarnation Cross user) siap posting.
-*   **Kenapa Penting?**: Human Design sangat visual dan *shareable*. Biarkan user jadi marketing gratisan Anda di sosmed.
+*   **Kenapa Penting?**: Human Design sangat visual dan *shareable*. Biarkan user jadi marketing gratisan kamu di sosmed.
 
 ## Rekomendasi Prioritas
 

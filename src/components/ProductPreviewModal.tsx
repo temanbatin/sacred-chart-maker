@@ -384,7 +384,7 @@ export const ProductPreviewModal = ({
               Pilih Paket Laporan Human Design
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Pilih paket laporan yang sesuai dengan kebutuhan Anda
+              Pilih paket laporan yang sesuai dengan kebutuhan kamu
             </DialogDescription>
           </DialogHeader>
 
@@ -410,7 +410,7 @@ export const ProductPreviewModal = ({
                       <span className="block text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.ESSENTIAL_REPORT.original_price)}</span>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-3">Ringkasan fundamental desain Anda (20-30 halaman).</p>
+                  <p className="text-xs text-muted-foreground mb-3">Ringkasan fundamental desain kamu (20-30 halaman).</p>
                   <ul className="space-y-1.5 mb-4">
                     {PRODUCTS.ESSENTIAL_REPORT.features.slice(0, 4).map((feat, idx) => (
                       <li key={idx} className="text-xs flex items-start gap-2">
@@ -486,7 +486,7 @@ export const ProductPreviewModal = ({
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <h3 className="font-bold text-lg">Upgrade ke Full Report</h3>
-                      <p className="text-xs text-muted-foreground">Lengkapi report Anda dengan analisis mendalam.</p>
+                      <p className="text-xs text-muted-foreground">Lengkapi report kamu dengan analisis mendalam.</p>
                     </div>
                     <div className="text-right mt-1">
                       <span className="block text-xl font-bold text-accent">{formatPrice(PRODUCTS.UPGRADE_ESSENTIAL.price)}</span>
@@ -648,7 +648,7 @@ export const ProductPreviewModal = ({
                             Konfirmasi Email Diperlukan
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Silakan konfirmasi email Anda terlebih dahulu untuk melakukan pembelian. Cek inbox atau halaman akun untuk kirim ulang email verifikasi.
+                            Silakan konfirmasi email kamu terlebih dahulu untuk melakukan pembelian. Cek inbox atau halaman akun untuk kirim ulang email verifikasi.
                           </p>
                         </div>
                       </div>

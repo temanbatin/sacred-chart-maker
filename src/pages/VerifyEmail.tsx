@@ -9,7 +9,7 @@ const VerifyEmail = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-    const [message, setMessage] = useState('Sedang memverifikasi email Anda...');
+    const [message, setMessage] = useState('Sedang memverifikasi email kamu...');
 
     useEffect(() => {
         const verify = async () => {
@@ -37,7 +37,7 @@ const VerifyEmail = () => {
                 setMessage('Gagal memverifikasi: ' + error.message);
             } else {
                 setStatus('success');
-                setMessage('Email Anda berhasil dikonfirmasi! Anda akan diarahkan ke dashboard.');
+                setMessage('Email kamu berhasil dikonfirmasi! Kamu akan diarahkan ke dashboard.');
                 setTimeout(() => navigate('/account'), 3000);
             }
         };

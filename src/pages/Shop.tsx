@@ -9,7 +9,7 @@ const products = [
   {
     id: 'full-report',
     title: PRODUCTS.FULL_REPORT.name,
-    description: 'Laporan komprehensif 100+ halaman tentang Human Design Anda',
+    description: 'Laporan komprehensif 100+ halaman tentang Human Design kamu',
     price: formatPrice(PRODUCTS.FULL_REPORT.price),
     icon: FileText,
     featured: true,
@@ -36,7 +36,7 @@ const products = [
   {
     id: 'teman-ai',
     title: '24/7 Teman AI',
-    description: 'Personal Assistant via WhatsApp yang paham Human Design & Bazi Anda',
+    description: 'Personal Assistant via WhatsApp yang paham Human Design & Bazi kamu',
     price: 'Rp 49.000/bln',
     icon: MessageSquare,
     comingSoon: true,
@@ -75,7 +75,7 @@ const Shop = () => {
               Digital <span className="text-gradient-fire">Products</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Produk digital untuk membantu Anda memahami dan menerapkan Human Design dalam kehidupan sehari-hari.
+              Produk digital untuk membantu kamu memahami dan menerapkan Human Design dalam kehidupan sehari-hari.
             </p>
           </div>
 
@@ -147,7 +147,7 @@ const Shop = () => {
                   Untuk Instansi & Perusahaan
                 </h2>
                 <p className="text-muted-foreground mb-6">
-                  Tertarik menggunakan Human Design untuk pemetaan tim, rekrutmen, atau pengembangan SDM di perusahaan Anda? Kami menyediakan layanan konsultasi dan workshop khusus korporat.
+                  Tertarik menggunakan Human Design untuk pemetaan tim, rekrutmen, atau pengembangan SDM di perusahaan kamu? Kami menyediakan layanan konsultasi dan workshop khusus korporat.
                 </p>
                 <Button size="lg" variant="outline" className="border-accent text-accent hover:bg-accent hover:text-black" asChild>
                   <a href="https://wa.me/628123456789?text=Halo%20Teman%20Batin,%20saya%20tertarik%20untuk%20inquiry%20instansi" target="_blank" rel="noopener noreferrer">
@@ -165,7 +165,7 @@ const Shop = () => {
               Belum yakin produk mana yang cocok?
             </h2>
             <p className="text-muted-foreground mb-6">
-              Mulai dengan chart gratis untuk mengetahui tipe Human Design Anda.
+              Mulai dengan chart gratis untuk mengetahui tipe Human Design kamu.
             </p>
             <Button size="lg" className="fire-glow" asChild>
               <Link to="/">

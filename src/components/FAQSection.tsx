@@ -18,7 +18,7 @@ const faqs = [
   },
   {
     question: 'Apakah Human Design Report ini akurat?',
-    answer: 'Human Design Report kami menggunakan perhitungan yang sama dengan sistem yang digunakan oleh praktisi Human Design profesional di seluruh dunia. Akurasi sangat bergantung pada ketepatan data kelahiran Anda (tanggal, waktu, dan tempat lahir). Ribuan pengguna kami telah merasakan resonansi mendalam dengan hasil report mereka.'
+    answer: 'Human Design Report kami menggunakan perhitungan yang sama dengan sistem yang digunakan oleh praktisi Human Design profesional di seluruh dunia. Akurasi sangat bergantung pada ketepatan data kelahiran kamu (tanggal, waktu, dan tempat lahir). Ribuan pengguna kami telah merasakan resonansi mendalam dengan hasil report mereka.'
   },
   {
     question: 'Berapa lama laporan dikirim?',
@@ -29,21 +29,33 @@ const faqs = [
     answer: 'Kami memberikan garansi 100% pembuatan report ulang jika ada kesalahan atau jika report tidak sesuai dengan data yang kamu berikan. Cukup hubungi support kami via WhatsApp dengan bukti kesalahan.',
   },
   {
-    question: 'Bisakah saya melihat contoh laporan sebelum membeli?',
-    answer: 'Ya! Saat kamu klik "Dapatkan Laporan Lengkap", kami menampilkan preview beberapa halaman dan sample analisis yang sudah disesuaikan dengan chart unikmu.',
+    question: 'Apakah bisa melihat sample ?',
+    answer: (
+      <span>
+        Tentu saja, kamu bisa melihat cuplikan hasil sampel report{' '}
+        <a
+          href="https://drive.google.com/file/d/1pNZjPzLn37dNQwTjDoGlrf-5w8llv7A6/view?usp=sharing"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-accent hover:underline font-medium"
+        >
+          disini
+        </a>
+      </span>
+    ),
     showGallery: true,
   },
   {
     question: 'Apakah saya harus percaya astrologi atau spiritual untuk menggunakan ini?',
-    answer: 'Tidak sama sekali. Human Design adalah sistem yang menggabungkan berbagai ilmu termasuk genetika, fisika kuantum, astrologi, I-Ching, dan Kabbalah. Anda bisa menggunakannya sebagai alat self-awareness yang pragmatis tanpa harus percaya aspek spiritual. Banyak profesional dan eksekutif menggunakan Human Design sebagai framework untuk optimasi performa dan produktivitas.'
+    answer: 'Tidak sama sekali. Human Design adalah sistem yang menggabungkan berbagai ilmu termasuk genetika, fisika kuantum, astrologi, I-Ching, dan Kabbalah. Kamu bisa menggunakannya sebagai alat self-awareness yang pragmatis tanpa harus percaya aspek spiritual. Banyak profesional dan eksekutif menggunakan Human Design sebagai framework untuk optimasi performa dan produktivitas.'
   },
   {
     question: 'Apa bedanya dengan konsultasi psikolog atau life coach?',
-    answer: 'Human Design Report memberikan blueprint unik tentang cara kerja energi Anda yang sudah ditentukan sejak lahir. Ini bukan pengganti psikolog (untuk terapi mental health) atau life coach (untuk goal setting), tapi complementary tool yang memberikan self-knowledge mendalam. Dengan harga one-time yang jauh lebih terjangkau dibanding sesi coaching berulang (Rp 500k-2jt per sesi), Anda mendapat panduan komprehensif yang bisa dibaca berulang kali.'
+    answer: 'Human Design Report memberikan blueprint unik tentang cara kerja energi kamu yang sudah ditentukan sejak lahir. Ini bukan pengganti psikolog (untuk terapi mental health) atau life coach (untuk goal setting), tapi complementary tool yang memberikan self-knowledge mendalam. Dengan harga one-time yang jauh lebih terjangkau dibanding sesi coaching berulang (Rp 500k-2jt per sesi), kamu mendapat panduan komprehensif yang bisa dibaca berulang kali.'
   },
   {
     question: 'Apakah waktu lahir harus akurat?',
-    answer: 'Idealnya ya, karena waktu lahir mempengaruhi posisi planet yang menentukan chart-mu. Waktu lahir sangat penting untuk akurasi maksimal, terutama untuk menentukan Otoritas (cara membuat keputusan) Anda. Jika tidak yakin, coba cek akte kelahiran atau tanya orang tua/rumah sakit tempat lahir. Jika benar-benar tidak tahu, gunakan perkiraan terdekat - Anda tetap bisa mendapat insight berharga dari Tipe dan Profil.',
+    answer: 'Idealnya ya, karena waktu lahir mempengaruhi posisi planet yang menentukan chart-mu. Waktu lahir sangat penting untuk akurasi maksimal, terutama untuk menentukan Otoritas (cara membuat keputusan) kamu. Jika tidak yakin, coba cek akte kelahiran atau tanya orang tua/rumah sakit tempat lahir. Jika benar-benar tidak tahu, gunakan perkiraan terdekat - kamu tetap bisa mendapat insight berharga dari Tipe dan Profil.',
   },
 ];
 

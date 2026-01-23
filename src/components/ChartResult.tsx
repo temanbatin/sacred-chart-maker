@@ -238,7 +238,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       await navigator.clipboard.writeText(shareUrl);
       toast({
         title: "Link chart berhasil disalin!",
-        description: "Anda bisa membagikannya ke orang lain."
+        description: "Kamu bisa membagikannya ke orang lain."
       });
     } catch (err) {
       toast({
@@ -288,7 +288,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         } else {
           toast({
             title: "Akun berhasil dibuat!",
-            description: "Silakan cek email Anda untuk verifikasi setelah pembayaran.",
+            description: "Silakan cek email kamu untuk verifikasi setelah pembayaran.",
           });
         }
       }
@@ -890,7 +890,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 <p className="text-amber-400 text-sm font-medium mb-1">🔥 Harga promo terbatas untuk waktu singkat</p>
                 <p className="text-white/60 text-xs mb-3">{soldCount}+ orang telah mendapatkan panduan mereka</p>
                 <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
-                  Chart Anda Adalah Peta.<br />Full Report Adalah Kompasnya.
+                  Chart Kamu Adalah Kode dan Peta.<br />Full Report Adalah Kunci Membacanya.
                 </h3>
                 <p className="text-white/90 text-lg">
                   Melihat gambar Bodygraph di atas tanpa penjelasan ibarat memiliki peta harta karun tapi tidak bisa membacanya.
@@ -946,8 +946,8 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                     <CheckCircle2 className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <p className="text-white font-semibold mb-1">Arti Center Putih (Undefined) Anda</p>
-                    <p className="text-white/70 text-sm">Temukan di mana Anda rentan menyerap emosi orang lain dan cara melindunginya.</p>
+                    <p className="text-white font-semibold mb-1">Arti Center Putih (Undefined) Kamu</p>
+                    <p className="text-white/70 text-sm">Temukan di mana kamu rentan menyerap emosi orang lain dan cara melindunginya.</p>
                   </div>
                 </div>
 
@@ -967,7 +967,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                   </div>
                   <div>
                     <p className="text-white font-semibold mb-1">Misi Jiwa (Incarnation Cross)</p>
-                    <p className="text-white/70 text-sm">Cetak biru tujuan hidup Anda yang sesungguhnya—bukan karir, tapi peran jiwa.</p>
+                    <p className="text-white/70 text-sm">Cetak biru tujuan hidup kamu yang sesungguhnya—bukan karir, tapi peran jiwa.</p>
                   </div>
                 </div>
                 <p className="text-center text-white/70 text-sm italic mt-4">
@@ -983,7 +983,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                   }}
                   className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(245,158,11,0.5)] border-2 border-amber-400/50 animate-pulse-slow w-full md:w-auto"
                 >
-                  Dapatkan Full Report Sekarang
+                  Dapatkan Full Report Kamu
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
                 <div className="flex items-center justify-center gap-3 mt-4">
@@ -1013,11 +1013,11 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                   Full Report Tersedia
                 </h3>
                 <p className="text-muted-foreground max-w-xl mx-auto mb-8">
-                  Anda telah membuka akses penuh ke analisis chart ini. Silakan unduh dokumen PDF lengkap untuk mempelajarinya lebih dalam.
+                  Kamu telah membuka akses penuh ke analisis chart ini. Silakan unduh dokumen PDF lengkap untuk mempelajarinya lebih dalam.
                 </p>
                 <div className="flex justify-center gap-4">
                   <Button
-                    onClick={() => toast({ title: "Silakan cek dashboard atau email Anda", description: "Link download report telah dikirimkan." })}
+                    onClick={() => toast({ title: "Silakan cek dashboard atau email kamu", description: "Link download report telah dikirimkan." })}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
                     <Download className="w-4 h-4 mr-2" />
@@ -1244,7 +1244,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 }}
               >
                 <div className="flex flex-col items-center leading-tight">
-                  <span className="text-sm font-bold tracking-wide">Dapatkan Full Report Sekarang</span>
+                  <span className="text-sm font-bold tracking-wide text-center">Dapatkan Full Report Kamu</span>
                   <span className="text-[10px] opacity-80 font-medium">Investasi terbaik untuk dirimu</span>
                 </div>
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />

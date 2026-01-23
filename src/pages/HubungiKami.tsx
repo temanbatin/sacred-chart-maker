@@ -23,7 +23,7 @@ const HubungiKami = () => {
     // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    toast.success('Pesan Anda telah terkirim! Kami akan segera menghubungi Anda.');
+    toast.success('Pesan kamu telah terkirim! Kami akan segera menghubungi kamu.');
     setFormData({ name: '', email: '', subject: '', message: '' });
     setIsSubmitting(false);
   };
@@ -39,7 +39,7 @@ const HubungiKami = () => {
           </h1>
 
           <p className="text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-            Punya pertanyaan atau masukan? Kami senang mendengar dari Anda.
+            Punya pertanyaan atau masukan? Kami senang mendengar dari kamu.
           </p>
 
           <div className="grid lg:grid-cols-2 gap-12">
@@ -56,7 +56,7 @@ const HubungiKami = () => {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Masukkan nama Anda"
+                    placeholder="Masukkan nama kamu"
                     required
                   />
                 </div>
@@ -82,7 +82,7 @@ const HubungiKami = () => {
                     type="text"
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    placeholder="Topik pesan Anda"
+                    placeholder="Topik pesan kamu"
                     required
                   />
                 </div>
@@ -94,7 +94,7 @@ const HubungiKami = () => {
                   <Textarea
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder="Tulis pesan Anda di sini..."
+                    placeholder="Tulis pesan kamu di sini..."
                     rows={5}
                     required
                   />

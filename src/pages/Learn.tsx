@@ -252,10 +252,10 @@ const Learn = () => {
           {/* CTA Section */}
           <div className="mt-16 text-center glass-card rounded-xl p-8">
             <h2 className="text-2xl font-bold text-foreground mb-4">
-              Belum tahu Human Design Anda?
+              Belum tahu Human Design kamu?
             </h2>
             <p className="text-muted-foreground mb-6">
-              Dapatkan chart Human Design gratis Anda sekarang dan mulai perjalanan penemuan diri.
+              Dapatkan chart Human Design gratis kamu sekarang dan mulai perjalanan penemuan diri.
             </p>
             <button
               onClick={handleGetChart}

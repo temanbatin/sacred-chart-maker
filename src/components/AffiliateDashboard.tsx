@@ -62,7 +62,7 @@ export const AffiliateDashboard = ({ userId, email }: AffiliateDashboardProps) =
             if (error) throw error;
             if (!data.success) throw new Error(data.error || 'Failed to join');
 
-            toast.success("Berhasil bergabung! Kode kupon Anda siap digunakan.");
+            toast.success("Berhasil bergabung! Kode kupon kamu siap digunakan.");
             setAffiliate(data.data); // Update state immediately
         } catch (err: any) {
             toast.error(err.message || "Gagal mendaftar affiliate");
@@ -90,14 +90,14 @@ export const AffiliateDashboard = ({ userId, email }: AffiliateDashboardProps) =
                             <p className="text-muted-foreground">Status: <span className="text-green-500 font-medium uppercase">{affiliate.status}</span></p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                            <span className="text-sm text-muted-foreground uppercase tracking-wider">Kode Kupon Anda</span>
+                            <span className="text-sm text-muted-foreground uppercase tracking-wider">Kode Kupon Kamu</span>
                             <div className="flex items-center gap-2 bg-background/50 p-2 rounded-lg border border-border">
                                 <code className="text-xl font-mono font-bold text-primary tracking-wider">{affiliate.coupon_code}</code>
                                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => copyToClipboard(affiliate.coupon_code)}>
                                     <Copy className="w-4 h-4" />
                                 </Button>
                             </div>
-                            <p className="text-xs text-muted-foreground">Diskon 10% untuk pembeli • Komisi 20% untuk Anda</p>
+                            <p className="text-xs text-muted-foreground">Diskon 10% untuk pembeli • Komisi 20% untuk kamu</p>
                         </div>
                     </div>
                 </div>
@@ -147,7 +147,7 @@ export const AffiliateDashboard = ({ userId, email }: AffiliateDashboardProps) =
                         <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
                             <li>Bagikan kode kupon <strong>{affiliate.coupon_code}</strong> ke teman atau followers.</li>
                             <li>Mereka dapat <strong>Diskon 10%</strong> saat checkout full report.</li>
-                            <li>Anda otomatis dapat <strong>20% Komisi</strong> dari total pembayaran mereka.</li>
+                            <li>Kamu otomatis dapat <strong>20% Komisi</strong> dari total pembayaran mereka.</li>
                             <li>Komisi masuk ke saldo saat status order "PAID".</li>
                         </ul>
                     </div>
@@ -172,7 +172,7 @@ export const AffiliateDashboard = ({ userId, email }: AffiliateDashboardProps) =
                         <p className="font-bold text-lg text-foreground">Diskon 10%</p>
                     </div>
                     <div className="p-4 bg-secondary/30 rounded-xl border border-primary/30">
-                        <p className="text-xs text-primary uppercase mb-1">Komisi Anda</p>
+                        <p className="text-xs text-primary uppercase mb-1">Komisi Kamu</p>
                         <p className="font-bold text-lg text-primary">Komisi 20%</p>
                     </div>
                 </div>

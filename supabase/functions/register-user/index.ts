@@ -76,14 +76,14 @@ serve(async (req) => {
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2>Selamat Datang!</h2>
-            <p>Klik tombol di bawah untuk memverifikasi email Anda:</p>
+            <p>Klik tombol di bawah untuk memverifikasi email kamu:</p>
             <div style="margin: 30px 0;">
               <a href="${customVerifyUrl}" style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verifikasi Sekarang</a>
             </div>
             <p style="margin-top: 20px; font-size: 12px; color: #666;">Atau salin link ini: ${customVerifyUrl}</p>
           </div>
         `,
-        text: `Selamat Datang! Silakan verifikasi email Anda dengan mengklik link berikut: ${customVerifyUrl}`,
+        text: `Selamat Datang! Silakan verifikasi email kamu dengan mengklik link berikut: ${customVerifyUrl}`,
       }),
     });
 

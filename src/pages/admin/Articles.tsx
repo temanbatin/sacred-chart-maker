@@ -213,7 +213,7 @@ const AdminArticles = () => {
                   <Input
                     value={currentArticle.slug || ''}
                     onChange={(e) => setCurrentArticle({ ...currentArticle, slug: e.target.value })}
-                    placeholder="url-artikel-anda"
+                    placeholder="url-artikel-kamu"
                   />
                 </div>
               </div>

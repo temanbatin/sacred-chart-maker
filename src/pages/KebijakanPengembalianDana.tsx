@@ -22,8 +22,8 @@ const KebijakanPengembalianDana = () => {
               <div className="bg-background/50 rounded-lg p-4 mb-4">
                 <h3 className="text-lg font-semibold text-foreground mb-3">Garansi Berlaku Untuk:</h3>
                 <ul className="list-disc pl-6 space-y-2">
-                  <li>Kesalahan perhitungan dalam chart Human Design Anda</li>
-                  <li>Data report tidak sesuai dengan informasi kelahiran yang Anda berikan</li>
+                  <li>Kesalahan perhitungan dalam chart Human Design kamu</li>
+                  <li>Data report tidak sesuai dengan informasi kelahiran yang kamu berikan</li>
                   <li>Kesalahan teknis dalam pembuatan report dari pihak kami</li>
                   <li>Report tidak dapat diunduh atau diakses karena masalah dari sistem kami</li>
                 </ul>
@@ -123,7 +123,7 @@ const KebijakanPengembalianDana = () => {
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">7. Pembatalan Berlangganan</h2>
               <p>
-                Untuk layanan berlangganan, Anda dapat membatalkan kapan saja. Pembatalan akan
+                Untuk layanan berlangganan, kamu dapat membatalkan kapan saja. Pembatalan akan
                 efektif di akhir periode berlangganan yang sedang berjalan. Tidak ada pengembalian
                 dana untuk periode berlangganan yang sedang berjalan.
               </p>
@@ -149,7 +149,7 @@ const KebijakanPengembalianDana = () => {
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">10. Hubungi Kami</h2>
               <p>
-                Jika Anda memiliki pertanyaan tentang kebijakan pengembalian dana ini, silakan
+                Jika kamu memiliki pertanyaan tentang kebijakan pengembalian dana ini, silakan
                 hubungi tim dukungan kami melalui halaman Hubungi Kami atau email ke
                 Hei@temanbatin.com
               </p>

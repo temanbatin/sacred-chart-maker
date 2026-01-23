@@ -252,7 +252,7 @@ const Account = () => {
       toast.error('Gagal daftar: ' + error.message);
     } else {
       toast.success('Akun berhasil dibuat! Silakan cek email untuk verifikasi.');
-      setSignupMessage('Silakan cek email Anda untuk mengaktifkan akun.');
+      setSignupMessage('Silakan cek email kamu untuk mengaktifkan akun.');
     }
 
     setAuthLoading(false);
@@ -269,7 +269,7 @@ const Account = () => {
     if (error) {
       toast.error('Gagal mengirim email: ' + error.message);
     } else {
-      toast.success('Email verifikasi telah dikirim! Silakan cek inbox Anda.');
+      toast.success('Email verifikasi telah dikirim! Silakan cek inbox kamu.');
     }
     setResendingEmail(false);
   };;
@@ -588,7 +588,7 @@ const Account = () => {
                     Konfirmasi Email untuk Akses Penuh
                   </h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Anda belum mengkonfirmasi email. Fitur pembelian laporan tidak tersedia sampai email dikonfirmasi.
+                    Kamu belum mengkonfirmasi email. Fitur pembelian laporan tidak tersedia sampai email dikonfirmasi.
                   </p>
                   <Button
                     onClick={handleResendEmail}
@@ -624,11 +624,11 @@ const Account = () => {
                 <div className="glass-card rounded-xl p-8 text-center animate-fade-up">
                   <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground mb-4">
-                    Anda belum memiliki chart tersimpan
+                    Kamu belum memiliki chart tersimpan
                   </p>
                   <Button asChild>
                     <Link to="/">
-                      Buat Chart Pertama Anda
+                      Buat Chart Pertama Kamu
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Link>
                   </Button>
@@ -672,7 +672,7 @@ const Account = () => {
                 <div className="glass-card rounded-xl p-8 text-center animate-fade-up">
                   <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground mb-4">
-                    Anda belum membeli laporan
+                    Kamu belum membeli laporan
                   </p>
                   <Button variant="outline" asChild>
                     <Link to="/reports">
