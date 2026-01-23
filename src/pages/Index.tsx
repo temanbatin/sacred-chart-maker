@@ -15,7 +15,7 @@ import { Footer } from '@/components/Footer';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { ChartGenerationModal } from '@/components/ChartGenerationModal';
 
-import { ScrollToTop } from '@/components/ScrollToTop';
+
 
 import { useAuthSession } from '@/hooks/useAuthSession';
 import { useChartGenerator } from '@/hooks/useChartGenerator';
@@ -167,7 +167,7 @@ const Index = () => {
           }}
           isLoading={isLoading}
         />
-        <ScrollToTop />
+
       </main>
     </div>
   );
