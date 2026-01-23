@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { CheckCircle2, XCircle, Clock, Home, Mail, UserPlus, Star } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Home, Mail, UserPlus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthSession } from '@/hooks/useAuthSession';
@@ -16,63 +16,6 @@ interface OrderData {
   report_url?: string;
 }
 
-// Fancy Animated Progress Step Component
-const ProgressStep = ({
-  step,
-  title,
-  isActive,
-  isCompleted,
-  isLast
-}: {
-  step: number;
-  title: string;
-  isActive: boolean;
-  isCompleted: boolean;
-  isLast: boolean;
-}) => (
-  <div className="flex items-center">
-    <div className="flex flex-col items-center relative">
-      {/* Pulse ring for active step */}
-      {isActive && !isCompleted && (
-        <div className="absolute w-12 h-12 rounded-full bg-amber-500/30 animate-ping" />
-      )}
-
-      {/* Step circle */}
-      <div className={`
-        w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold z-10 transition-all duration-500
-        ${isCompleted
-          ? 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg shadow-green-500/30'
-          : isActive
-            ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-lg shadow-amber-500/30 animate-pulse'
-            : 'bg-secondary/50 text-muted-foreground border border-secondary'
-        }
-      `}>
-        {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : step}
-      </div>
-
-      {/* Step title */}
-      <p className={`text-xs mt-2 text-center max-w-[70px] font-medium transition-colors duration-300 ${isCompleted ? 'text-green-400' : isActive ? 'text-amber-400' : 'text-muted-foreground'
-        }`}>
-        {title}
-      </p>
-    </div>
-
-    {/* Connecting line with animation */}
-    {!isLast && (
-      <div className="w-6 md:w-12 h-1 mx-1 rounded-full overflow-hidden bg-secondary/30">
-        <div
-          className={`h-full rounded-full transition-all duration-1000 ${isCompleted
-            ? 'w-full bg-gradient-to-r from-green-400 to-green-500'
-            : isActive
-              ? 'w-1/2 bg-gradient-to-r from-amber-400 to-amber-500 animate-pulse'
-              : 'w-0'
-            }`}
-        />
-      </div>
-    )}
-  </div>
-);
-
 const PaymentResult = () => {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<PaymentStatus>('unknown');
@@ -81,75 +24,83 @@ const PaymentResult = () => {
   const [loading, setLoading] = useState(true);
   const { session } = useAuthSession();
 
+  // Polling refs
+  const pollCountRef = useRef(0);
+  const maxPolls = 20; // 20 * 3s = 60s max polling
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
-    const fetchOrderStatus = async () => {
-      const refId = searchParams.get('ref') || searchParams.get('reference_id');
-      setReferenceId(refId);
+    const refId = searchParams.get('ref') || searchParams.get('reference_id');
+    setReferenceId(refId);
 
-      if (refId) {
-        // Fetch actual order status from database
-        const { data, error } = await supabase
-          .from('orders')
-          .select('customer_email, customer_name, status, report_url')
-          .eq('reference_id', refId)
-          .single();
+    const checkStatus = async () => {
+      if (!refId) {
+        setStatus('pending');
+        setLoading(false);
+        return;
+      }
 
-        if (data && !error) {
-          setOrderData(data as OrderData);
-          if (data.status === 'PAID' && data.report_url) {
-            setStatus('success'); // Report sent
-            // Track Purchase (Once per session)
-            const trackKey = `tracked_purchase_${refId}`;
-            if (window.fbq && !sessionStorage.getItem(trackKey)) {
-              window.fbq('track', 'Purchase', { value: 199000, currency: 'IDR' });
-              sessionStorage.setItem(trackKey, 'true');
-            }
-          } else if (data.status === 'PAID') {
-            setStatus('success'); // Paid, processing
-            // Track Purchase (Once per session)
-            const trackKey = `tracked_purchase_${refId}`;
-            if (window.fbq && !sessionStorage.getItem(trackKey)) {
-              window.fbq('track', 'Purchase', { value: 199000, currency: 'IDR' });
-              sessionStorage.setItem(trackKey, 'true');
-            }
-          } else if (data.status === 'FAILED') {
-            setStatus('failed');
-          } else {
-            setStatus('pending');
+      const { data, error } = await supabase
+        .from('orders')
+        .select('customer_email, customer_name, status, report_url')
+        .eq('reference_id', refId)
+        .single();
+
+      if (data && !error) {
+        setOrderData(data as OrderData);
+
+        if (data.status === 'PAID') {
+          setStatus('success');
+          // Start tracking purchase if needed
+          const trackKey = `tracked_purchase_${refId}`;
+          if (window.fbq && !sessionStorage.getItem(trackKey)) {
+            window.fbq('track', 'Purchase', { value: 199000, currency: 'IDR' });
+            sessionStorage.setItem(trackKey, 'true');
           }
+          // Stop polling if successful
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        } else if (data.status === 'FAILED') {
+          setStatus('failed');
+          // Stop polling if failed
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         } else {
-          // Fallback to URL params
-          const statusParam = searchParams.get('status');
-          if (statusParam === '1' || statusParam === 'success') {
-            setStatus('success');
-          } else if (statusParam === '-1' || statusParam === 'failed') {
-            setStatus('failed');
-          } else {
-            setStatus('pending');
-          }
+          // Still pending
+          setStatus('pending');
         }
       } else {
-        setStatus('pending');
+        // Fallback or error fetching
+        const statusParam = searchParams.get('status');
+        if (statusParam === '1' || statusParam === 'success') {
+          setStatus('success');
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        } else if (statusParam === '-1' || statusParam === 'failed') {
+          setStatus('failed');
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        } else {
+          setStatus('pending');
+        }
       }
       setLoading(false);
     };
 
-    fetchOrderStatus();
+    // Initial check
+    checkStatus();
+
+    // Start polling
+    pollIntervalRef.current = setInterval(() => {
+      pollCountRef.current += 1;
+      if (pollCountRef.current >= maxPolls) {
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      } else {
+        checkStatus();
+      }
+    }, 3000); // Poll every 3 seconds
+
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
   }, [searchParams]);
 
-  // Determine progress based on status
-  const getProgress = () => {
-    if (status === 'success' && orderData?.report_url) {
-      return 3; // Laporan terkirim
-    } else if (status === 'success') {
-      return 2; // Sedang disusun
-    } else if (status === 'pending') {
-      return 0; // Menunggu pembayaran
-    }
-    return 0;
-  };
-
-  const progress = getProgress();
 
   const renderContent = () => {
     if (loading) {
@@ -178,16 +129,7 @@ const PaymentResult = () => {
               Laporan akan dikirim ke <span className="text-accent font-medium">{orderData?.customer_email || 'email kamu'}</span> secara instan (dalam hitungan menit).
             </p>
 
-            {/* Progress Tracker */}
-            <div className="bg-secondary/30 rounded-2xl p-6 mb-8 max-w-xl mx-auto">
-              <h3 className="font-semibold text-foreground mb-6">Status Pesanan</h3>
-              <div className="flex justify-center items-start">
-                <ProgressStep step={1} title="Pembayaran Diterima" isActive={progress >= 1} isCompleted={progress >= 1} isLast={false} />
-                <ProgressStep step={2} title="Laporan Disusun" isActive={progress >= 2} isCompleted={progress >= 3} isLast={false} />
-                <ProgressStep step={3} title="Terkirim" isActive={progress >= 3} isCompleted={progress >= 3} isLast={false} />
-                <ProgressStep step={4} title="Review & Diskon" isActive={progress >= 4} isCompleted={false} isLast={true} />
-              </div>
-            </div>
+            {/* REMOVED PROGRESS TRACKER HERE */}
 
             {referenceId && (
               <div className="bg-secondary/20 rounded-lg p-3 mb-6 max-w-xs mx-auto">
@@ -230,8 +172,12 @@ const PaymentResult = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Menunggu Pembayaran
             </h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-md mx-auto">
+            <p className="text-lg text-muted-foreground mb-4 max-w-md mx-auto">
               Selesaikan pembayaran sebelum batas waktu (24 jam).
+            </p>
+            <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Mengecek status pembayaran otomatis...
             </p>
 
             {referenceId && (
@@ -240,16 +186,6 @@ const PaymentResult = () => {
                 <p className="text-lg font-mono font-semibold text-accent">{referenceId}</p>
               </div>
             )}
-
-            {/* Progress Tracker - Step 0 */}
-            <div className="bg-secondary/30 rounded-2xl p-6 mb-8 max-w-xl mx-auto">
-              <div className="flex justify-center items-start opacity-50">
-                <ProgressStep step={1} title="Pembayaran Diterima" isActive={false} isCompleted={false} isLast={false} />
-                <ProgressStep step={2} title="Laporan Disusun" isActive={false} isCompleted={false} isLast={false} />
-                <ProgressStep step={3} title="Terkirim" isActive={false} isCompleted={false} isLast={false} />
-                <ProgressStep step={4} title="Review & Diskon" isActive={false} isCompleted={false} isLast={true} />
-              </div>
-            </div>
 
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-8 max-w-md mx-auto">
               <Mail className="w-6 h-6 text-amber-400 mx-auto mb-2" />
