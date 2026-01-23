@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,7 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
     User, Mail, Phone, Lock, Calendar, Clock, MapPin,
-    Loader2, CreditCard, ChevronRight, CheckCircle2, Shield
+    Loader2, CreditCard, ChevronRight, CheckCircle2, Shield,
+    ScrollText, HeartHandshake, Baby
 } from 'lucide-react';
 import { formatPrice } from '@/config/pricing';
 import { PRODUCTS } from '@/config/pricing';
@@ -379,12 +381,14 @@ export function UnifiedCheckoutModal({
                         </section>
                     )}
 
+
+
                     {/* Section 3: Summary & Agreements */}
                     <section className="bg-secondary/20 rounded-xl p-4 border border-border/50 space-y-4">
                         <div className="flex justify-between items-center">
                             <div>
                                 <h4 className="font-bold text-lg">Full Personal Report</h4>
-                                <p className="text-xs text-muted-foreground">Human Design + Bazi (100+ Halaman)</p>
+                                <p className="text-xs text-muted-foreground">Blueprint Personal Human Design (100+ Halaman)</p>
                             </div>
                             <div className="text-right">
                                 <div className="text-xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</div>
@@ -393,25 +397,83 @@ export function UnifiedCheckoutModal({
                         </div>
 
                         <div className="space-y-3 pt-2 border-t border-border/50">
-                            <div className="flex items-start space-x-2">
-                                <Checkbox
-                                    id="term1"
-                                    checked={agreedToTerms}
-                                    onCheckedChange={(c) => setAgreedToTerms(c as boolean)}
-                                />
-                                <label htmlFor="term1" className="text-xs text-muted-foreground leading-snug cursor-pointer">
-                                    Saya menyetujui Syarat & Ketentuan dan Kebijakan Privasi
-                                </label>
+                            {/* Add-on Section (Inserted) */}
+                            <div className="pb-2">
+                                <Accordion type="single" collapsible className="w-full">
+                                    <AccordionItem value="addons" className="border-b-0">
+                                        <AccordionTrigger className="hover:no-underline py-2">
+                                            <div className="flex items-center gap-2 opacity-60">
+                                                <div className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-bold">3</div>
+                                                <h3 className="font-semibold text-muted-foreground text-left text-sm">Add-on (Segera Hadir)</h3>
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent>
+                                            <div className="grid grid-cols-1 gap-3 pt-2 pb-2">
+                                                <div className="flex items-center justify-between p-3 border border-dashed border-border/60 rounded-lg bg-secondary/10 opacity-60 cursor-not-allowed">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-background/50 rounded-md">
+                                                            <ScrollText className="w-4 h-4 text-muted-foreground" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-sm text-foreground/80">Bazi Chart Analysis</p>
+                                                            <p className="text-[10px] text-muted-foreground">Detail elemen keberuntungan</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] font-medium px-2 py-1 bg-secondary rounded-full text-secondary-foreground">Coming Soon</span>
+                                                </div>
+
+                                                <div className="flex items-center justify-between p-3 border border-dashed border-border/60 rounded-lg bg-secondary/10 opacity-60 cursor-not-allowed">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-background/50 rounded-md">
+                                                            <HeartHandshake className="w-4 h-4 text-muted-foreground" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-sm text-foreground/80">Relationship Chart</p>
+                                                            <p className="text-[10px] text-muted-foreground">Kecocokan pasangan</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] font-medium px-2 py-1 bg-secondary rounded-full text-secondary-foreground">Coming Soon</span>
+                                                </div>
+
+                                                <div className="flex items-center justify-between p-3 border border-dashed border-border/60 rounded-lg bg-secondary/10 opacity-60 cursor-not-allowed">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-background/50 rounded-md">
+                                                            <Baby className="w-4 h-4 text-muted-foreground" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-sm text-foreground/80">Parenting Chart</p>
+                                                            <p className="text-[10px] text-muted-foreground">Panduan mengasuh anak</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] font-medium px-2 py-1 bg-secondary rounded-full text-secondary-foreground">Coming Soon</span>
+                                                </div>
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
                             </div>
-                            <div className="flex items-start space-x-2">
-                                <Checkbox
-                                    id="term2"
-                                    checked={agreedToTnc}
-                                    onCheckedChange={(c) => setAgreedToTnc(c as boolean)}
-                                />
-                                <label htmlFor="term2" className="text-xs text-muted-foreground leading-snug cursor-pointer">
-                                    Data kelahiran saya sudah benar (Akurasi report bergantung pada data ini)
-                                </label>
+
+                            <div className="pt-2 border-t border-border/50">
+                                <div className="flex items-start space-x-2">
+                                    <Checkbox
+                                        id="term1"
+                                        checked={agreedToTerms}
+                                        onCheckedChange={(c) => setAgreedToTerms(c as boolean)}
+                                    />
+                                    <label htmlFor="term1" className="text-xs text-muted-foreground leading-snug cursor-pointer">
+                                        Saya menyetujui Syarat & Ketentuan dan Kebijakan Privasi
+                                    </label>
+                                </div>
+                                <div className="flex items-start space-x-2">
+                                    <Checkbox
+                                        id="term2"
+                                        checked={agreedToTnc}
+                                        onCheckedChange={(c) => setAgreedToTnc(c as boolean)}
+                                    />
+                                    <label htmlFor="term2" className="text-xs text-muted-foreground leading-snug cursor-pointer">
+                                        Data kelahiran saya sudah benar (Akurasi report bergantung pada data ini)
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </section>

@@ -577,6 +577,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       // @ts-ignore
       const { error: orderError } = await supabase
         .from('orders')
+        // @ts-ignore
         .insert({
           user_id: userId || null,
           reference_id: referenceId,
@@ -643,6 +644,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         // @ts-ignore
         await supabase
           .from('orders')
+          // @ts-ignore
           .update({ payment_url: result.redirect_url })
           .eq('reference_id', referenceId);
 

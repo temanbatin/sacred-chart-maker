@@ -71,7 +71,7 @@ export const MainNavbar = () => {
             </Link>
 
             <Link
-              to="/shop"
+              to="/personal-report"
               className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
             >
               <ShoppingBag className="w-4 h-4" />
@@ -133,7 +133,7 @@ export const MainNavbar = () => {
                 Learn
               </Link>
               <Link
-                to="/shop"
+                to="/personal-report"
                 className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >

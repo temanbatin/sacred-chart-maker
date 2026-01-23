@@ -175,7 +175,7 @@ const PaymentResult = () => {
               Terima kasih, <span className="text-foreground font-medium">{orderData?.customer_name || 'Kamu'}</span>!
             </p>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Laporan akan dikirim ke <span className="text-accent font-medium">{orderData?.customer_email || 'email kamu'}</span> dalam 24 jam.
+              Laporan akan dikirim ke <span className="text-accent font-medium">{orderData?.customer_email || 'email kamu'}</span> secara instan (dalam hitungan menit).
             </p>
 
             {/* Progress Tracker */}

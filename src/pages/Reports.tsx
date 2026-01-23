@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { FAQSection } from '@/components/FAQSection';
 import { ComparisonTable } from '@/components/ComparisonTable';
 import { UnifiedCheckoutModal, UnifiedCheckoutData } from '@/components/UnifiedCheckoutModal';
+import { TrustBadgeSection } from '@/components/TrustBadgeSection';
 
 interface SavedChart {
   id: string;
@@ -691,6 +692,9 @@ const Reports = () => {
         {/* Preview Section */}
         <ReportPreviewSection hideCta={true} />
 
+        {/* Trust Badge Section - Algorithm Assurance */}
+        <TrustBadgeSection />
+
         {/* Comparison Table */}
         <ComparisonTable className="bg-gradient-to-b from-transparent to-secondary/30" />
 
@@ -718,19 +722,19 @@ const Reports = () => {
                   <div className="w-5 h-5 md:w-6 md:h-6 bg-accent/20 rounded-full flex items-center justify-center border border-accent/30 group-hover:bg-accent/30 transition-colors">
                     <Check className="w-3 h-3 md:w-4 md:h-4 text-accent" />
                   </div>
-                  <span>Navigasi Hidup Akurat</span>
+                  <span>Pengiriman Instan</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs md:text-sm lg:text-base text-foreground font-medium group">
                   <div className="w-5 h-5 md:w-6 md:h-6 bg-accent/20 rounded-full flex items-center justify-center border border-accent/30 group-hover:bg-accent/30 transition-colors">
                     <Check className="w-3 h-3 md:w-4 md:h-4 text-accent" />
                   </div>
-                  <span>Radical Self-Acceptance</span>
+                  <span>100+ Halaman</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs md:text-sm lg:text-base text-foreground font-medium group">
                   <div className="w-5 h-5 md:w-6 md:h-6 bg-accent/20 rounded-full flex items-center justify-center border border-accent/30 group-hover:bg-accent/30 transition-colors">
                     <Check className="w-3 h-3 md:w-4 md:h-4 text-accent" />
                   </div>
-                  <span>Harmoni & Koneksi</span>
+                  <span>Full Personalized</span>
                 </div>
               </div>
 
@@ -994,7 +998,7 @@ const Reports = () => {
                 <div className="text-sm">
                   <p className="font-semibold text-foreground mb-1">Waktu Pemrosesan</p>
                   <p className="text-muted-foreground">
-                    Full Report akan dikirim ke email Anda dalam waktu <strong className="text-foreground">maksimal 24 jam</strong> setelah pembayaran dikonfirmasi.
+                    Full Report akan dikirim ke email Anda <strong className="text-foreground">secara instan (otomatis)</strong> setelah pembayaran dikonfirmasi.
                   </p>
                 </div>
               </div>
@@ -1092,7 +1096,7 @@ const Reports = () => {
               1. <strong>Data Kelahiran:</strong> Akurasi report sangat bergantung pada data kelahiran (jam & menit). Pastikan data yang Anda masukkan akurat.
             </p>
             <p>
-              2. <strong>Waktu Layanan:</strong> Report akan dikirimkan ke email Anda dalam waktu maksimal 24 jam setelah pembayaran dikonfirmasi.
+              2. <strong>Waktu Layanan:</strong> Report akan dikirimkan ke email Anda secara instan (otomatis dalam hitungan menit) setelah pembayaran dikonfirmasi.
             </p>
             <p>
               3. <strong>Kebijakan Garansi:</strong> Kami memberikan garansi 100% pembuatan report ulang jika ada kesalahan dalam perhitungan atau report tidak sesuai dengan data yang Anda berikan.

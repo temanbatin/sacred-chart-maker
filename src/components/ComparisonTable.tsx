@@ -1,4 +1,4 @@
-import { Check, X } from 'lucide-react';
+import { Check, X, Clock, Target, RotateCcw, AlertTriangle, Heart, HelpCircle, Repeat, ArrowUpRight } from 'lucide-react';
 
 const comparisons = [
     {
@@ -27,7 +27,7 @@ const comparisons = [
         psychologist: '3-6 bulan',
         coach: '1-3 bulan',
         trialError: 'Bertahun-tahun',
-        humanDesign: '24 jam',
+        humanDesign: 'Instan (menit)',
     },
     {
         category: 'Fokus',
@@ -72,7 +72,7 @@ export const ComparisonTable = ({ className = '' }: ComparisonTableProps) => {
                         </div>
                         <div className="space-y-3">
                             {[
-                                'Hasil dalam 24 jam',
+                                'Hasil Instan (hitungan menit)',
                                 'Blueprint unik Anda',
                                 'Lifetime access',
                                 '100+ halaman komprehensif',
@@ -91,9 +91,18 @@ export const ComparisonTable = ({ className = '' }: ComparisonTableProps) => {
                         <p className="text-xl font-bold text-foreground mb-2">Rp 5-10jt</p>
                         <p className="text-sm text-muted-foreground mb-4">10 sesi @ Rp 500k-1jt</p>
                         <div className="space-y-2 text-sm text-muted-foreground">
-                            <p>⏰ Hasil: 3-6 bulan</p>
-                            <p>🎯 Fokus: Mental health & trauma</p>
-                            <p>♻️ Akses: Per sesi (habis pakai)</p>
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-accent/70" />
+                                <span>Hasil: 3-6 bulan</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Target className="w-4 h-4 text-accent/70" />
+                                <span>Fokus: Mental health & trauma</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <ArrowUpRight className="w-4 h-4 text-accent/70" />
+                                <span>Akses: Per sesi (habis pakai)</span>
+                            </div>
                         </div>
                     </div>
 
@@ -102,9 +111,18 @@ export const ComparisonTable = ({ className = '' }: ComparisonTableProps) => {
                         <p className="text-xl font-bold text-foreground mb-2">Rp 6-15jt</p>
                         <p className="text-sm text-muted-foreground mb-4">3 bulan @ Rp 2-5jt/bln</p>
                         <div className="space-y-2 text-sm text-muted-foreground">
-                            <p>⏰ Hasil: 1-3 bulan</p>
-                            <p>🎯 Fokus: Goal setting & action</p>
-                            <p>♻️ Akses: Subscription based</p>
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-accent/70" />
+                                <span>Hasil: 1-3 bulan</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Target className="w-4 h-4 text-accent/70" />
+                                <span>Fokus: Goal setting & action</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Repeat className="w-4 h-4 text-accent/70" />
+                                <span>Akses: Subscription based</span>
+                            </div>
                         </div>
                     </div>
 
@@ -113,9 +131,18 @@ export const ComparisonTable = ({ className = '' }: ComparisonTableProps) => {
                         <p className="text-xl font-bold text-foreground mb-2">Gratis?</p>
                         <p className="text-sm text-muted-foreground mb-4">Tapi dengan cost tersembunyi...</p>
                         <div className="space-y-2 text-sm text-muted-foreground">
-                            <p>⏰ Waktu: Bertahun-tahun</p>
-                            <p>💔 Emotional & opportunity cost</p>
-                            <p>🎲 Hasil: Hit or miss</p>
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-accent/70" />
+                                <span>Waktu: Bertahun-tahun</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Heart className="w-4 h-4 text-accent/70" />
+                                <span>Emotional & opportunity cost</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <HelpCircle className="w-4 h-4 text-accent/70" />
+                                <span>Hasil: Hit or miss</span>
+                            </div>
                         </div>
                     </div>
                 </div>

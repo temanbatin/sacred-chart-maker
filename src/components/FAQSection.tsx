@@ -22,7 +22,7 @@ const faqs = [
   },
   {
     question: 'Berapa lama laporan dikirim?',
-    answer: 'Laporan personal kamu akan dikirim ke email dalam maksimal 24 jam setelah pembayaran terverifikasi. Biasanya lebih cepat dari itu!',
+    answer: 'Laporan personal kamu akan dikirim ke email secara instan (otomatis dalam hitungan menit) setelah pembayaran terverifikasi.',
   },
   {
     question: 'Bagaimana jika laporan tidak sesuai harapan?',
