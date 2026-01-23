@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { LoadingAnimation } from "./components/LoadingAnimation";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { WhatsAppFloatingButton } from "./components/WhatsAppFloatingButton";
 
 // Lazy loading components
 const Index = lazy(() => import("./pages/Index"));
@@ -48,6 +49,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <WhatsAppFloatingButton />
       <ErrorBoundary>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Suspense fallback={<LoadingAnimation />}>

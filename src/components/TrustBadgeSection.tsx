@@ -26,7 +26,7 @@ export const TrustBadgeSection = () => {
                                 Akurasi Tinggi, Tanpa Waktu Tunggu
                             </h3>
                             <p className="text-muted-foreground leading-relaxed text-base md:text-lg text-justify">
-                                "Algoritma kami menghitung ribuan data astrologi dan mekanik energi Anda dengan presisi matematika, bukan tebakan. Teknologi AI kami memastikan setiap kalimat dalam report dipersonalisasi khusus untuk Anda—bebas dari <span className="text-accent font-medium italic">human error</span> dan bias subjektif. Dapatkan panduan hidup Anda saat ini juga, tanpa perlu menunggu berhari-hari."
+                                Algoritma kami menghitung posisi planet dan mekanik energi kamu berdasarkan sistem yang sama dengan para praktisi Human Design profesional. Setiap report dipersonalisasi berdasarkan data kelahiranmu—<span className="text-accent font-medium">langsung dikirim ke email</span>, tanpa perlu antri atau menunggu berhari-hari.
                             </p>
                         </div>
                     </div>

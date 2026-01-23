@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Star, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HeroSectionProps {
   onScrollToCalculator: () => void;
@@ -11,6 +13,28 @@ export const HeroSection = ({
   onScrollToCalculator,
   userName
 }: HeroSectionProps) => {
+  // Dynamic user count - base + real orders (modest start for credibility)
+  const BASE_USER_COUNT = 50;
+  const [userCount, setUserCount] = useState(BASE_USER_COUNT);
+
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'PAID');
+
+        if (!error && count !== null) {
+          setUserCount(BASE_USER_COUNT + count);
+        }
+      } catch (err) {
+        console.error('Error fetching user count:', err);
+      }
+    };
+    fetchUserCount();
+  }, []);
+
   return <section className="relative pt-32 pb-16 px-4">
     <div className="max-w-4xl mx-auto text-center animate-fade-up">
       {/* Decorative element */}
@@ -58,7 +82,7 @@ export const HeroSection = ({
       {/* Trust indicator */}
       <p className="mt-8 text-sm text-muted-foreground/60 flex items-center justify-center gap-2">
         <Star className="w-4 h-4 fill-accent text-accent" />
-        Bergabunglah dengan 230 orang yang sudah membaca desain tubuh, jiwa dan pikiran mereka.
+        Bergabunglah dengan {userCount.toLocaleString('id-ID')}+ orang yang sudah membaca desain mereka.
       </p>
     </div>
   </section>;

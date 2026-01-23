@@ -14,6 +14,7 @@ import {
 import { formatPrice } from '@/config/pricing';
 import { PRODUCTS } from '@/config/pricing';
 import { toast } from '@/hooks/use-toast';
+import { LiveSocialProof } from './LiveSocialProof';
 
 interface City {
     display_name: string;
@@ -477,6 +478,9 @@ export function UnifiedCheckoutModal({
                                     </label>
                                 </div>
                             </div>
+
+                            {/* Live Social Proof */}
+                            <LiveSocialProof className="pt-3 border-t border-border/30" />
                         </div>
                     </section>
                 </div>
@@ -495,14 +499,14 @@ export function UnifiedCheckoutModal({
                             </>
                         ) : (
                             <>
-                                Bayar & Dapatkan Report
+                                Mulai Transformasi Sekarang
                                 <Shield className="w-5 h-5 ml-2 opacity-80" />
                             </>
                         )}
                     </Button>
                     <div className="text-center mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                         <Shield className="w-3 h-3" />
-                        <span>Garansi 100% Uang Kembali jika report error</span>
+                        <span>Garansi 100% Uang Kembali 7 Hari</span>
                     </div>
                 </div>
             </DialogContent>

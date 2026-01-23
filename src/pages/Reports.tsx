@@ -749,7 +749,7 @@ const Reports = () => {
               {/* Urgency Element */}
               <div className="inline-flex items-center gap-2 bg-destructive/20 text-destructive px-4 py-2 rounded-full">
                 <Clock className="w-4 h-4" />
-                <span className="text-sm font-semibold">Penawaran Terbatas: Tersisa 8 slot hari ini</span>
+                <span className="text-sm font-semibold">Harga promo bisa berakhir kapan saja</span>
               </div>
             </div>
 
@@ -1345,7 +1345,7 @@ const Reports = () => {
             <div className="flex flex-col gap-2 items-center">
               <div className="bg-white text-[hsl(160_84%_5%)] text-xs md:text-sm font-bold py-1.5 px-3 md:px-4 rounded-full flex items-center gap-1.5 shadow-lg border border-[hsl(160_84%_5%)]/10">
                 <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 animate-pulse text-[hsl(160_84%_5%)]" />
-                Penawaran Terbatas: Tersisa {MARKETING_CONFIG.REMAINING_SLOTS} slot hari ini
+                Harga promo bisa berakhir kapan saja
               </div>
               <Button
                 size="lg"

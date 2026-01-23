@@ -887,8 +887,8 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           <>
             <div id="cta-section" className="bg-emerald-900/60 border border-amber-400/40 rounded-3xl p-6 md:p-8 mb-8 mt-8 animate-fade-up">
               <div className="text-center mb-6">
-                <p className="text-amber-400 text-sm font-medium mb-1">🔥 Hanya {MARKETING_CONFIG.REMAINING_SLOTS} slot tersisa bulan ini</p>
-                <p className="text-white/60 text-xs mb-3">{soldCount} orang telah memesan minggu ini</p>
+                <p className="text-amber-400 text-sm font-medium mb-1">🔥 Harga promo terbatas untuk waktu singkat</p>
+                <p className="text-white/60 text-xs mb-3">{soldCount}+ orang telah mendapatkan panduan mereka</p>
                 <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
                   Chart Anda Adalah Peta.<br />Full Report Adalah Kompasnya.
                 </h3>
@@ -1234,7 +1234,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             <div className="flex flex-col gap-2 items-center">
               <div className="bg-white text-[hsl(160_84%_5%)] text-xs md:text-sm font-bold py-1.5 px-3 md:px-4 rounded-full flex items-center gap-1.5 shadow-lg border border-[hsl(160_84%_5%)]/10">
                 <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 animate-pulse text-[hsl(160_84%_5%)]" />
-                Penawaran Terbatas: Tersisa {MARKETING_CONFIG.REMAINING_SLOTS} slot hari ini
+                Harga promo bisa berakhir kapan saja
               </div>
               <Button
                 size="lg"
