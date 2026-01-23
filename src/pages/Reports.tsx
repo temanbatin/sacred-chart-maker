@@ -28,6 +28,7 @@ import { ComparisonTable } from '@/components/ComparisonTable';
 import { UnifiedCheckoutModal, UnifiedCheckoutData } from '@/components/UnifiedCheckoutModal';
 import { TrustBadgeSection } from '@/components/TrustBadgeSection';
 import { PRICING_CONFIG, PRODUCTS, MARKETING_CONFIG, formatPrice } from "@/config/pricing";
+import { formatBirthDataForMetadata } from '@/lib/checkout-helpers';
 
 interface SavedChart {
   id: string;
@@ -344,17 +345,48 @@ const Reports = () => {
     setIsProcessingPayment(true);
 
     try {
+      // 1. Fetch chart details for selected charts
+      const { data: chartDetails, error: fetchError } = await supabase
+        .from('saved_charts')
+        .select('*')
+        .in('id', selectedCharts);
+
+      if (fetchError || !chartDetails || chartDetails.length === 0) {
+        toast.error('Gagal memuat data chart');
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      // 2. Use first chart for birth data (assumption: same person for all charts)
+      const firstChart = chartDetails[0];
+
+      // Parse birth date and time
+      const birthDate = new Date(firstChart.birth_date);
+      const [hour, minute] = (firstChart.birth_time || '00:00:00').split(':').map(Number);
+
+      // 3. Format birth data using helper
+      const birthDataForMetadata = formatBirthDataForMetadata({
+        name: firstChart.name,
+        year: birthDate.getFullYear(),
+        month: birthDate.getMonth() + 1,
+        day: birthDate.getDate(),
+        hour,
+        minute,
+        place: firstChart.birth_place || '',
+        gender: firstChart.chart_data?.general?.gender || 'male'  // Extract from chart_data
+      });
+
       const selectedChartDetails = getSelectedChartDetails();
       const productNames = selectedChartDetails.map(c => `Full Report Human Design: ${c.name}`).join(', ');
 
       // Generate Reference ID uniquely
       const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-      // 1. Save order to database first
+      // 4. Save order to database with birth data and chart snapshot
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
-          user_id: user?.id || null, // Handle guest or logged in
+          user_id: user?.id || null,
           reference_id: referenceId,
           customer_name: billingName,
           customer_email: billingEmail,
@@ -362,7 +394,12 @@ const Reports = () => {
           product_name: productNames,
           amount: getTotalPrice(),
           status: 'PENDING',
-          metadata: { chart_ids: selectedCharts }
+          metadata: {
+            chart_ids: selectedCharts,
+            products: [PRODUCTS.FULL_REPORT.id],
+            birth_data: birthDataForMetadata,     // ✅ Added
+            chart_snapshot: firstChart.chart_data  // ✅ Added
+          }
         });
 
       if (orderError) {
@@ -372,16 +409,27 @@ const Reports = () => {
         return;
       }
 
-      // 2. Call Payment Gateway
+      // 5. Call Payment Gateway with birth data
       const { data, error } = await supabase.functions.invoke('midtrans-checkout', {
         body: {
-          referenceId: referenceId, // Pass the SAME ID
+          referenceId: referenceId,
           customerName: billingName,
           customerEmail: billingEmail,
           customerPhone: billingWhatsapp,
           amount: getTotalPrice(),
           productName: productNames,
           chartIds: selectedCharts,
+          products: [PRODUCTS.FULL_REPORT.id],
+          birthData: {  // ✅ Added for consistency
+            name: birthDataForMetadata.name,
+            year: birthDataForMetadata.year,
+            month: birthDataForMetadata.month,
+            day: birthDataForMetadata.day,
+            hour: birthDataForMetadata.hour,
+            minute: birthDataForMetadata.minute,
+            place: birthDataForMetadata.place,
+            gender: birthDataForMetadata.gender
+          }
         },
       });
 
@@ -1182,7 +1230,7 @@ const Reports = () => {
               }
             }
 
-            // 2. Prepare Date Strings
+            // 2. Parse and validate date/time
             const [year, month, day] = data.birthDate.split('-').map(Number);
             const [hour, minute] = data.birthTime.split(':').map(Number);
 
@@ -1201,7 +1249,19 @@ const Reports = () => {
 
             const birthDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-            // Submit Lead
+            // 3. Format birth data using helper
+            const birthDataForMetadata = formatBirthDataForMetadata({
+              name: data.name,
+              year,
+              month,
+              day,
+              hour,
+              minute,
+              place: data.birthCity,
+              gender: data.gender
+            });
+
+            // 4. Submit Lead (optional, fire-and-forget)
             try {
               await supabase.functions.invoke('submit-lead', {
                 body: {
@@ -1216,54 +1276,18 @@ const Reports = () => {
               console.warn("Lead submission failed, continuing...", leadError);
             }
 
-            // 3. Calculate Chart
-            const { data: chartResult, error: chartError } = await supabase.functions.invoke('calculate-chart', {
-              body: {
-                year, month, day, hour, minute,
-                place: data.birthCity,
-                gender: data.gender,
-              },
-            });
+            // ⚡ SKIP: No calculate-chart call (N8N will do this)
+            // ⚡ SKIP: No saved_charts insert (no need for chart yet)
 
-            if (chartError) throw chartError;
-
-            // 4. Save Chart to DB
-            const { data: { user: freshUser } } = await supabase.auth.getUser();
-            currentUser = freshUser || currentUser;
-
-            if (!currentUser) {
-              toast.error("Silakan cek email untuk konfirmasi akun, lalu login kembali.");
-              setIsGeneratingChart(false);
-              return;
-            }
-
-            const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
-
-            const { data: savedChart, error: saveError } = await supabase.from('saved_charts').insert({
-              user_id: currentUser.id,
-              name: data.name,
-              birth_date: birthDateStr,
-              birth_time: timeStr,
-              birth_place: data.birthCity,
-              chart_data: chartResult,
-            })
-              .select()
-              .single();
-
-            if (saveError) throw saveError;
-
-            setCurrentChartId(savedChart.id);
-
-            // 5. Create Order & Trigger Midtrans
-            const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+            // 5. Create Order (lightweight, fast!)
+            const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, '0')}`;
             const productName = 'Human Design Full Personal Report';
 
-            // Create Order
             // @ts-ignore
             const { error: orderError } = await supabase
               .from('orders')
               .insert({
-                user_id: user?.id || null,
+                user_id: currentUser?.id || null,
                 reference_id: referenceId,
                 customer_name: data.name,
                 customer_email: data.email,
@@ -1272,36 +1296,34 @@ const Reports = () => {
                 amount: PRODUCTS.FULL_REPORT.price,
                 status: 'PENDING',
                 metadata: {
-                  chart_ids: [savedChart.id],
-                  products: ['full_report'],
-                  birth_data: {
-                    name: data.name,
-                    date: data.birthDate,
-                    time: data.birthTime,
-                    city: data.birthCity,
-                    gender: data.gender
-                  }
+                  chart_ids: [],  // Empty - no chart yet, N8N will generate
+                  products: [PRODUCTS.FULL_REPORT.id],
+                  birth_data: birthDataForMetadata
+                  // NO chart_snapshot - N8N will generate chart
                 }
               });
 
             if (orderError) throw orderError;
 
-            // Call Midtrans
+            // 6. Call Midtrans (fast redirect!)
             const { data: paymentData, error: paymentError } = await supabase.functions.invoke('midtrans-checkout', {
               body: {
-                referenceId: referenceId,
+                referenceId,
                 customerName: data.name,
                 customerEmail: data.email,
                 customerPhone: formattedWhatsapp,
                 amount: PRODUCTS.FULL_REPORT.price,
-                productName: productName,
-                chartIds: [savedChart.id],
-                products: ['full_report'],
-                birthData: {
+                productName,
+                chartIds: [],  // Empty
+                products: [PRODUCTS.FULL_REPORT.id],
+                birthData: {  // Send for N8N to use
                   name: data.name,
-                  date: data.birthDate,
-                  time: data.birthTime,
-                  city: data.birthCity,
+                  year,
+                  month,
+                  day,
+                  hour,
+                  minute,
+                  place: data.birthCity,
                   gender: data.gender
                 }
               }

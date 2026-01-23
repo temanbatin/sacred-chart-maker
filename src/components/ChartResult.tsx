@@ -16,6 +16,7 @@ import { PRICING_CONFIG, PRODUCTS, MARKETING_CONFIG, formatPrice } from "@/confi
 import { TestimonialsSection } from "./TestimonialsSection";
 import { ComparisonTable } from "./ComparisonTable";
 import { TrustBadgeSection } from "./TrustBadgeSection";
+import { formatBirthDataForMetadata } from "@/lib/checkout-helpers";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -280,6 +281,18 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       const productName = `Full Report Human Design: ${checkoutData.name}`;
       const finalChartIds = chartId ? [chartId] : [];
 
+      // Format birth data using helper function
+      const birthDataForMetadata = formatBirthDataForMetadata({
+        name: checkoutData.name,
+        year: birthData?.year,
+        month: birthData?.month,
+        day: birthData?.day,
+        hour: birthData?.hour,
+        minute: birthData?.minute,
+        place: birthData?.place,
+        gender: checkoutData.gender
+      });
+
       // 1. Save order to database first (same as Reports.tsx)
       // @ts-ignore
       const { error: orderError } = await supabase
@@ -296,7 +309,11 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           status: 'PENDING',
           metadata: {
             chart_ids: finalChartIds,
-            products: [PRODUCTS.FULL_REPORT.id]
+            products: [PRODUCTS.FULL_REPORT.id],
+            // Birth data in standard format (year/month/day as numbers)
+            birth_data: birthDataForMetadata,
+            // Save full chart snapshot so N8N can generate report without re-calculating
+            chart_snapshot: data
           }
         });
 

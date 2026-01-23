@@ -149,9 +149,16 @@ serve(async (req) => {
                     const { data: orderData } = await supabase.from('orders').select('*').eq('reference_id', order_id).single();
                     const chartIds = orderData?.metadata?.chart_ids || [];
                     let chartsData: any[] = [];
+                    // Priority 1: Fetch from saved_charts (Registered Users)
                     if (Array.isArray(chartIds) && chartIds.length > 0) {
                         const { data: fetchedCharts } = await supabase.from('saved_charts').select('*').in('id', chartIds);
                         chartsData = fetchedCharts || [];
+                    }
+
+                    // Priority 2: Use snapshot from metadata (Guest Users)
+                    if (chartsData.length === 0 && orderData?.metadata?.chart_snapshot) {
+                        console.log('Using chart_snapshot from metadata for Guest Order');
+                        chartsData = [orderData.metadata.chart_snapshot];
                     }
 
                     let report_type = 'personal-comprehensive';
