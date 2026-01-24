@@ -131,7 +131,7 @@ serve(async (req) => {
                     if (couponCode) {
                         const { data: affiliate } = await supabase.from('affiliates').select('*').eq('coupon_code', couponCode).single();
                         if (affiliate) {
-                            const commissionAmount = Math.round(Number(gross_amount) * 0.20);
+                            const commissionAmount = Math.round(Number(gross_amount) * 0.15);
                             await supabase.from('commissions').insert({
                                 affiliate_id: affiliate.id, order_id: orderData.id, amount: commissionAmount, status: 'paid'
                             });
