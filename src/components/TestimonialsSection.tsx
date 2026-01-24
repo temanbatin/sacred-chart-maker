@@ -48,7 +48,7 @@ const VideoPlaceholder = ({ video }: { video: typeof videoTestimonials[0] }) => 
         <iframe
           width="100%"
           height="100%"
-          src={`${video.videoUrl}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1`}
+          src={`${video.videoUrl}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&controls=0&loop=1&playlist=RWWWmWbBz4A`}
           title="YouTube video player"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
