@@ -14,6 +14,7 @@ import { BirthData as BirthDataForChart } from '@/components/MultiStepForm';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AffiliateDashboard } from "@/components/AffiliateDashboard";
+import methodologyHero from '@/assets/methodology-hero.png';
 
 interface SavedChart {
   id: string;
@@ -258,26 +259,25 @@ const Account = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+        {/* Simple Gradient Background like Homepage */}
+        <div className="absolute top-0 left-0 w-full h-[500px] bg-secondary/20 blur-[120px] rounded-full mix-blend-screen pointer-events-none -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-accent/5 blur-[100px] rounded-full mix-blend-screen pointer-events-none translate-y-1/3" />
+
         <MainNavbar />
 
-        <main className="flex-1 flex items-center justify-center pt-24 pb-16 px-4">
+        <main className="flex-1 flex items-center justify-center pt-32 pb-16 px-4 relative z-10">
           <div className="max-w-[480px] w-full animate-fade-up">
-            <div className="glass-card rounded-[2.5rem] p-10 md:p-14 text-center relative overflow-hidden border-white/10 shadow-2xl">
-              {/* Background decoration */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-accent/10 blur-[100px] -z-10" />
+            <div className="glass-card rounded-[2.5rem] p-8 md:p-12 text-center relative overflow-hidden border-border/50 shadow-2xl backdrop-blur-xl">
 
-              <div className="flex justify-center mb-8 relative z-10">
-                <div className="bg-gradient-to-b from-primary/10 to-transparent p-6 rounded-full border border-primary/20 shadow-[0_0_30px_rgba(234,88,12,0.15)] animate-fade-up">
-                  <Fingerprint className="w-16 h-16 text-primary stroke-[1.5]" />
-                </div>
-              </div>
+              {/* Icon removed as requested */}
 
-              <h1 className="text-3xl md:text-5xl font-bold font-serif mb-4 tracking-tight leading-tight">
-                <span className="text-gradient-fire">Akses Dashboard</span>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight leading-tight">
+                Portal <span className="text-gradient-fire">Dashboard</span>
               </h1>
-              <p className="text-muted-foreground mb-12 text-lg leading-relaxed max-w-sm mx-auto">
-                Kelola chart dan download laporan premium kamu dalam satu tempat yang aman dan terintegrasi.
+
+              <p className="text-xl md:text-2xl text-muted-foreground mb-10 leading-relaxed max-w-sm mx-auto">
+                Masuk untuk mengakses chart dan laporan premium kamu.
               </p>
 
               <div className="space-y-8">

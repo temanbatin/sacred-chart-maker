@@ -42,6 +42,10 @@ const VideoPlaceholder = ({ video }: { video: typeof videoTestimonials[0] }) => 
   const [isHovered, setIsHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // Extract video ID safely
+  const videoId = video.videoUrl.split('embed/')[1]?.split('?')[0] || video.videoUrl.split('v=')[1];
+  const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
+
   if (isPlaying && video.videoUrl) {
     return (
       <div className="relative w-full rounded-2xl overflow-hidden bg-black animate-fade-in mx-auto max-w-[315px]" style={{ aspectRatio: '9/16' }}>
@@ -66,11 +70,22 @@ const VideoPlaceholder = ({ video }: { video: typeof videoTestimonials[0] }) => 
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => video.videoUrl && setIsPlaying(true)}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary to-accent/20 transition-all duration-500 ease-out ${isHovered ? 'brightness-75 scale-110' : 'brightness-100 scale-100'}`} />
-      <div className="absolute inset-0 opacity-20" style={{
-        backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-        backgroundSize: '20px 20px'
-      }} />
+      {thumbnailUrl ? (
+        <img
+          src={thumbnailUrl}
+          alt={video.name}
+          className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out ${isHovered ? 'scale-110' : 'scale-100'}`}
+          onError={(e) => {
+            // Fallback to hqdefault if maxresdefault doesn't exist (common for shorts)
+            e.currentTarget.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+          }}
+        />
+      ) : (
+        <div className={`absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary to-accent/20 transition-all duration-500 ease-out ${isHovered ? 'brightness-75 scale-110' : 'brightness-100 scale-100'}`} />
+      )}
+
+      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />
+
       <div className="absolute inset-0 flex items-center justify-center">
         <div className={`w-16 h-16 rounded-full bg-white/90 flex items-center justify-center transition-all duration-300 shadow-xl ${isHovered ? 'scale-125 bg-accent' : 'scale-100'}`}>
           <Play className={`w-7 h-7 ml-1 transition-colors ${isHovered ? 'text-white fill-white' : 'text-primary fill-primary'}`} />

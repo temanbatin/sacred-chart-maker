@@ -8,10 +8,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
     User as UserIcon, Mail, Phone, Calendar, Clock, MapPin,
-    Loader2, Shield, ScrollText, HeartHandshake, Baby
+    Loader2, Shield, ScrollText, HeartHandshake, Baby, TicketPercent
 } from 'lucide-react';
 import { formatPrice } from '@/config/pricing';
-import { PRODUCTS } from '@/config/pricing';
+import { PRODUCTS, COUPONS } from '@/config/pricing';
 import { toast } from '@/hooks/use-toast';
 import { LiveSocialProof } from './LiveSocialProof';
 
@@ -31,6 +31,7 @@ interface City {
 }
 
 import { User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface UnifiedCheckoutData {
     // Personal & Account
@@ -48,6 +49,11 @@ export interface UnifiedCheckoutData {
     // Agreements
     agreedToTerms: boolean;
     agreedToTnc: boolean;
+
+    // Coupon
+    couponCode?: string;
+    discountAmount?: number;
+    finalPrice?: number;
 }
 
 interface UnifiedCheckoutModalProps {
@@ -126,6 +132,79 @@ export function UnifiedCheckoutModal({
             }
         }
     }, [user, open, prefillBirthData, name]);
+
+    // Coupon State
+    const [couponCode, setCouponCode] = useState('');
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [isCouponValid, setIsCouponValid] = useState(false);
+    const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+    const [couponMessage, setCouponMessage] = useState('');
+
+    // Debounce coupon validation
+    useEffect(() => {
+        const cleanCode = couponCode.replace(/\s/g, '').toUpperCase();
+
+        if (!cleanCode) {
+            setDiscountAmount(0);
+            setIsCouponValid(false);
+            setCouponMessage('');
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setIsValidatingCoupon(true);
+            setCouponMessage('');
+
+            try {
+                // 1. Check General Coupons Table
+                const { data: couponData, error: couponError } = await supabase
+                    .from('coupons')
+                    .select('*')
+                    .eq('code', cleanCode)
+                    .eq('is_active', true)
+                    .maybeSingle();
+
+                if (couponData) {
+                    setDiscountAmount(couponData.discount_value);
+                    setIsCouponValid(true);
+                    setCouponMessage('Kupon berhasil digunakan!');
+                    setIsValidatingCoupon(false);
+                    return;
+                }
+
+                // 2. Check Affiliate Coupons (via Secure RPC)
+                const { data: rpcData, error: rpcError } = await supabase
+                    .rpc('validate_affiliate_coupon', { lookup_code: cleanCode });
+
+                // Check if RPC returned valid data
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (rpcData && (rpcData as any).valid) {
+                    // Affiliate Discount Policy: 10%
+                    const originalPrice = PRODUCTS.FULL_REPORT.price;
+                    const affiliateDiscount = Math.round(originalPrice * 0.10); // 10%
+
+                    setDiscountAmount(affiliateDiscount);
+                    setIsCouponValid(true);
+                    setCouponMessage('Kode referal affiliate valid!');
+                    setIsValidatingCoupon(false);
+                    return;
+                }
+
+                // If neither found
+                setDiscountAmount(0);
+                setIsCouponValid(false);
+                setCouponMessage('Kode kupon tidak ditemukan atau tidak aktif');
+
+            } catch (err) {
+                console.error('Error validating coupon:', err);
+                setIsCouponValid(false);
+            } finally {
+                setIsValidatingCoupon(false);
+            }
+        }, 800); // 800ms debounce
+
+        return () => clearTimeout(timer);
+    }, [couponCode]);
 
     // City Autocomplete Logic
     const searchCities = useCallback(async (query: string) => {
@@ -212,7 +291,11 @@ export function UnifiedCheckoutModal({
             birthCity,
             gender,
             agreedToTerms,
-            agreedToTnc
+
+            agreedToTnc,
+            couponCode: isCouponValid ? couponCode : undefined,
+            discountAmount,
+            finalPrice: PRODUCTS.FULL_REPORT.price - discountAmount
         });
     };
 
@@ -377,9 +460,53 @@ export function UnifiedCheckoutModal({
                                 <p className="text-xs text-muted-foreground">Blueprint Personal Human Design (100+ Halaman)</p>
                             </div>
                             <div className="text-right">
-                                <div className="text-xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</div>
-                                <div className="text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</div>
+                                {isCouponValid ? (
+                                    <>
+                                        <div className="text-sm text-muted-foreground line-through decoration-red-500/50">{formatPrice(PRODUCTS.FULL_REPORT.price)}</div>
+                                        <div className="text-xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price - discountAmount)}</div>
+                                        <div className="text-[10px] text-green-500 font-medium animate-pulse">Hemat {formatPrice(discountAmount)}</div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="text-xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</div>
+                                        <div className="text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</div>
+                                    </>
+                                )}
                             </div>
+                        </div>
+
+                        {/* Coupon Input Field */}
+                        <div className="pb-3 border-b border-border/50">
+                            <div className="relative">
+                                <TicketPercent className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isCouponValid ? 'text-green-500' : 'text-muted-foreground'}`} />
+                                <Input
+                                    placeholder="Punya kode kupon / referal?"
+                                    value={couponCode}
+                                    onChange={(e) => setCouponCode(e.target.value)}
+                                    className={`pl-9 border-dashed bg-background/50 ${isCouponValid
+                                        ? 'border-green-500/50 text-green-500 focus-visible:ring-green-500'
+                                        : couponCode.length > 3 && !isValidatingCoupon && !isCouponValid
+                                            ? 'border-red-500/50 text-red-500 focus-visible:ring-red-500'
+                                            : ''
+                                        }`}
+                                />
+                                {isValidatingCoupon && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                                    </div>
+                                )}
+                                {isCouponValid && !isValidatingCoupon && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full font-medium animate-in fade-in zoom-in">
+                                        Applied
+                                    </div>
+                                )}
+                            </div>
+                            {/* Coupon Feedback Message */}
+                            {couponMessage && (
+                                <p className={`text-[10px] mt-1.5 ml-1 ${isCouponValid ? 'text-green-600' : 'text-red-500'}`}>
+                                    {couponMessage}
+                                </p>
+                            )}
                         </div>
 
                         <div className="space-y-3 pt-2 border-t border-border/50">

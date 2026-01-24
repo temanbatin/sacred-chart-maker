@@ -41,3 +41,9 @@ export const getDiscountPercentage = () => {
 export const MARKETING_CONFIG = {
     REMAINING_SLOTS: 8
 };
+
+export const COUPONS: Record<string, { type: 'fixed' | 'percent', value: number }> = {
+    'HEMAT50': { type: 'fixed', value: 50000 },
+    'TEMANBATIN': { type: 'percent', value: 10 }, // 10% off
+    'LAUNCH': { type: 'fixed', value: 99000 }, // Special price reduction
+};
