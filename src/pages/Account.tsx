@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
 import { User, FileText, Clock, ArrowRight, LogIn, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, Calendar, MapPin, CreditCard, CheckCircle2, Sparkles, Fingerprint } from 'lucide-react';
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
-import { ChartResult } from '@/components/ChartResult';
+import { ChartResult, ChartData } from '@/components/ChartResult';
 import { BirthData as BirthDataForChart } from '@/components/MultiStepForm';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,8 +21,21 @@ interface SavedChart {
   birth_date: string;
   birth_time: string | null;
   birth_place: string | null;
-  chart_data: any;
+  chart_data: ChartData;
   created_at: string;
+}
+
+interface Order {
+  id: string;
+  reference_id: string;
+  created_at: string;
+  product_name: string;
+  status: string;
+  amount: number;
+  payment_url?: string;
+  paid_at?: string;
+  report_url?: string;
+  [key: string]: unknown;
 }
 
 const Account = () => {
@@ -34,49 +47,49 @@ const Account = () => {
   const [authLoading, setAuthLoading] = useState(false);
   const [savedCharts, setSavedCharts] = useState<SavedChart[]>([]);
   const [selectedChart, setSelectedChart] = useState<SavedChart | null>(null);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
 
   // Get email from URL params (for signup from payment result)
   const urlEmail = searchParams.get('email') || '';
   const urlRef = searchParams.get('ref') || '';
 
-  const checkAdminRole = async (userId: string) => {
+  const checkAdminRole = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
       .select('role')
       .eq('user_id', userId)
       .single();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!error && data && (data as any).role === 'admin') {
       toast.success('Selamat datang, Admin!');
       navigate('/admin');
     }
-  };
+  }, [navigate]);
 
   /* Purchased Reports - fetch by user_id OR email */
-  const fetchOrders = async (userEmail?: string) => {
-    if (!userEmail && !user?.id) return;
+  const fetchOrders = useCallback(async (userEmail?: string, userId?: string) => {
+    if (!userEmail && !userId) return;
 
     // Fetch orders where user_id matches OR customer_email matches
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .or(`user_id.eq.${user?.id},customer_email.eq.${userEmail}`)
+      .or(`user_id.eq.${userId},customer_email.eq.${userEmail}`)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching orders:', error);
     } else {
-      setOrders(data || []);
+      setOrders((data || []) as unknown as Order[]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (user) {
-      fetchOrders(user.email);
+      fetchOrders(user.email, user.id);
     }
-  }, [user]);
-
+  }, [user, fetchOrders]);
 
 
   // Function to save pending chart from sessionStorage after login/signup
@@ -86,8 +99,8 @@ const Account = () => {
 
     try {
       const chart = JSON.parse(pendingChartData);
-      const { error } = await (supabase
-        .from('saved_charts') as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('saved_charts') as any)
         .insert({
           user_id: userId,
           name: chart.name,
@@ -142,7 +155,7 @@ const Account = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkAdminRole]);
 
   const fetchSavedCharts = async () => {
     const { data, error } = await supabase
@@ -154,13 +167,16 @@ const Account = () => {
       console.error('Error fetching charts:', error);
     } else {
       const uniqueCharts = (data || []).reduce((acc: SavedChart[], current) => {
-        const signature = `${current.name}|${current.birth_date}|${current.birth_time}|${current.birth_place}`;
+        // Force cast to match interface if needed, or rely on loose matching if simple
+        const chartItem = current as unknown as SavedChart;
+
+        const signature = `${chartItem.name}|${chartItem.birth_date}|${chartItem.birth_time}|${chartItem.birth_place}`;
         const isDuplicate = acc.some(item =>
           `${item.name}|${item.birth_date}|${item.birth_time}|${item.birth_place}` === signature
         );
 
         if (!isDuplicate) {
-          acc.push(current);
+          acc.push(chartItem);
         }
         return acc;
       }, []);

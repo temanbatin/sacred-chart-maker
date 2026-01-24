@@ -42,7 +42,7 @@ export const Footer = () => {
           {/* Social Icons */}
           <div className="flex gap-4">
             <a
-              href="https://www.instagram.com/humandesign.my.id/"
+              href="https://www.instagram.com/temanbatin/"
               target="_blank"
               rel="noopener noreferrer"
               className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-accent hover:bg-secondary/80 transition-colors"

@@ -12,7 +12,7 @@ import { ChartGenerationModal } from '@/components/ChartGenerationModal';
 import { BirthData } from '@/components/CalculatorForm';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { LoadingAnimation } from '@/components/LoadingAnimation';
-import { ChartResult } from '@/components/ChartResult';
+import { ChartResult, ChartData } from '@/components/ChartResult';
 import { ReportPreviewSection } from '@/components/ReportPreviewSection';
 import {
   Dialog,
@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { FAQSection } from '@/components/FAQSection';
 import { ComparisonTable } from '@/components/ComparisonTable';
 import { UnifiedCheckoutModal, UnifiedCheckoutData } from '@/components/UnifiedCheckoutModal';
+import { AuthorsNoteSummary } from '@/components/AuthorsNoteSummary';
 import { TrustBadgeSection } from '@/components/TrustBadgeSection';
 import { PRICING_CONFIG, PRODUCTS, MARKETING_CONFIG, formatPrice } from "@/config/pricing";
 import { formatBirthDataForMetadata } from '@/lib/checkout-helpers';
@@ -37,6 +38,15 @@ interface SavedChart {
   birth_time: string | null;
   birth_place: string | null;
   created_at: string;
+}
+
+interface Order {
+  status: string;
+  metadata?: {
+    chart_ids?: string[];
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
 }
 
 // ... constants ...
@@ -185,7 +195,7 @@ const Reports = () => {
     const paidIds = new Set<string>();
     const pendingIds = new Set<string>();
 
-    ordersData?.forEach((order: any) => {
+    ordersData?.forEach((order: Order) => {
       const chartIds = order.metadata?.chart_ids || [];
       if (Array.isArray(chartIds)) {
         chartIds.forEach((id: string) => {
@@ -221,7 +231,7 @@ const Reports = () => {
       .single();
 
     if (profileData) {
-      setUserProfile(profileData as any);
+      setUserProfile(profileData as { name: string | null; whatsapp: string | null });
     }
 
     setIsLoading(false);
@@ -346,8 +356,8 @@ const Reports = () => {
 
     try {
       // 1. Fetch chart details for selected charts
-      const { data: chartDetails, error: fetchError } = await supabase
-        .from('saved_charts')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: chartDetails, error: fetchError } = await (supabase.from('saved_charts') as any)
         .select('*')
         .in('id', selectedCharts);
 
@@ -383,8 +393,8 @@ const Reports = () => {
       const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
       // 4. Save order to database with birth data and chart snapshot
-      const { error: orderError } = await supabase
-        .from('orders')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: orderError } = await (supabase.from('orders') as any)
         .insert({
           user_id: user?.id || null,
           reference_id: referenceId,
@@ -431,7 +441,8 @@ const Reports = () => {
             gender: birthDataForMetadata.gender
           }
         },
-      });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
 
       if (error) {
         console.error('Payment function error:', error);
@@ -442,8 +453,8 @@ const Reports = () => {
       if (data?.success && data?.paymentUrl) {
 
         // Optional: Update order with payment URL
-        await supabase
-          .from('orders')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('orders') as any)
           .update({ payment_url: data.paymentUrl })
           .eq('reference_id', referenceId);
 
@@ -468,8 +479,8 @@ const Reports = () => {
 
   // New states for result view
   const [showResultModal, setShowResultModal] = useState(false);
-  const [currentChartData, setCurrentChartData] = useState<any>(null);
-  const [currentBirthData, setCurrentBirthData] = useState<any>(null);
+  const [currentChartData, setCurrentChartData] = useState<ChartData | null>(null);
+  const [currentBirthData, setCurrentBirthData] = useState<BirthData | null>(null);
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(undefined);
 
   const handleAddNewChart = () => {
@@ -526,7 +537,8 @@ const Reports = () => {
 
         // Update profile manual check
         if (currentUser) {
-          await supabase.from('profiles').update({ name: birthDataInput.name, whatsapp }).eq('user_id', currentUser.id);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from('profiles') as any).update({ name: birthDataInput.name, whatsapp }).eq('user_id', currentUser.id);
         }
       }
 
@@ -567,7 +579,8 @@ const Reports = () => {
       currentUser = freshUser || currentUser;
 
       if (currentUser) {
-        const { data: savedChart, error: saveError } = await supabase.from('saved_charts').insert({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: savedChart, error: saveError } = await (supabase.from('saved_charts') as any).insert({
           user_id: currentUser.id,
           name: birthDataInput.name,
           birth_date: birthDateStr,
@@ -605,9 +618,9 @@ const Reports = () => {
         // Still close modal
         setShowLeadCapture(false);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error:', error);
-      const errorMessage = error.message || error.toString();
+      const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error(`Terjadi kesalahan saat membuat chart: ${errorMessage}`);
     } finally {
       setIsGeneratingChart(false);
@@ -1045,7 +1058,7 @@ const Reports = () => {
                 <div className="text-sm">
                   <p className="font-semibold text-foreground mb-1">Waktu Pemrosesan</p>
                   <p className="text-muted-foreground">
-                    Full Report akan dikirim ke email kamu <strong className="text-foreground">secara instan (otomatis)</strong> setelah pembayaran dikonfirmasi.
+                    Full Report akan dikirim ke email kamu <strong className="text-foreground">secara instan (hanya 10 menit)</strong> setelah pembayaran dikonfirmasi.
                   </p>
                 </div>
               </div>
@@ -1143,7 +1156,7 @@ const Reports = () => {
               1. <strong>Data Kelahiran:</strong> Akurasi report sangat bergantung pada data kelahiran (jam & menit). Pastikan data yang kamu masukkan akurat.
             </p>
             <p>
-              2. <strong>Waktu Layanan:</strong> Report akan dikirimkan ke email kamu secara instan (otomatis dalam hitungan menit) setelah pembayaran dikonfirmasi.
+              2. <strong>Waktu Layanan:</strong> Report akan dikirimkan ke email kamu secara instan (hanya 10 menit) setelah pembayaran dikonfirmasi.
             </p>
             <p>
               3. <strong>Kebijakan Garansi:</strong> Kami memberikan garansi 100% pembuatan report ulang jika ada kesalahan dalam perhitungan atau report tidak sesuai dengan data yang kamu berikan.
@@ -1170,7 +1183,7 @@ const Reports = () => {
         onSubmit={async (data) => {
           setIsGeneratingChart(true);
           try {
-            let currentUser = user;
+            const currentUser = user;
 
             // Helper: Format WhatsApp (08xx -> 628xx)
             const formatWhatsApp = (number: string): string => {
@@ -1196,39 +1209,9 @@ const Reports = () => {
 
             const formattedWhatsapp = formatWhatsApp(data.whatsapp);
 
-            // 1. Handle Auth (Signup) if not logged in
-            if (!currentUser && data.password) {
-              const { data: authData, error: authError } = await supabase.auth.signUp({
-                email: data.email,
-                password: data.password,
-                options: {
-                  data: { name: data.name, whatsapp: formattedWhatsapp },
-                },
-              });
-
-              if (authError) {
-                if (authError.message.includes('User already registered') || authError.status === 422) {
-                  toast.error('Email sudah terdaftar. Silakan Log In di menu untuk melanjutkan.', {
-                    duration: 5000,
-                    action: {
-                      label: 'Log In',
-                      onClick: () => navigate('/login')
-                    }
-                  });
-                  setIsGeneratingChart(false);
-                  return;
-                }
-                throw new Error(authError.message);
-              }
-              currentUser = authData.user;
-
-              if (currentUser) {
-                await supabase.from('profiles').update({
-                  name: data.name,
-                  whatsapp: formattedWhatsapp
-                }).eq('user_id', currentUser.id);
-              }
-            }
+            // 1. Handle Auth (Signup) - REMOVED as password is no longer collected
+            // If needed, we can implement passwordless signup or just rely on guest checkout linking later.
+            // For now, if no currentUser, we proceed as guest.
 
             // 2. Parse and validate date/time
             const [year, month, day] = data.birthDate.split('-').map(Number);
@@ -1280,12 +1263,12 @@ const Reports = () => {
             // ⚡ SKIP: No saved_charts insert (no need for chart yet)
 
             // 5. Create Order (lightweight, fast!)
-            const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, '0')}`;
+            // 5. Create Order (lightweight, fast!)
+            const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
             const productName = 'Human Design Full Personal Report';
 
-            // @ts-ignore
-            const { error: orderError } = await supabase
-              .from('orders')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { error: orderError } = await (supabase.from('orders') as any)
               .insert({
                 user_id: currentUser?.id || null,
                 reference_id: referenceId,
@@ -1327,7 +1310,8 @@ const Reports = () => {
                   gender: data.gender
                 }
               }
-            });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any);
 
             if (paymentError) throw paymentError;
 
@@ -1347,9 +1331,10 @@ const Reports = () => {
               */
             }
 
-          } catch (error: any) {
+          } catch (error: unknown) {
             console.error(error);
-            toast.error('Terjadi kesalahan: ' + (error.message || "Unknown error"));
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            toast.error('Terjadi kesalahan: ' + (errorMessage || "Unknown error"));
           } finally {
             setIsGeneratingChart(false);
           }
@@ -1358,6 +1343,7 @@ const Reports = () => {
         user={user}
       />
 
+      <AuthorsNoteSummary />
       <Footer />
 
       {/* Floating CTA Button */}

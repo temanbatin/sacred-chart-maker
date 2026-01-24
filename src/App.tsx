@@ -11,6 +11,7 @@ import { WhatsAppFloatingButton } from "./components/WhatsAppFloatingButton";
 // Lazy loading components
 const Index = lazy(() => import("./pages/Index"));
 const TentangKami = lazy(() => import("./pages/TentangKami"));
+const AuthorsNote = lazy(() => import("./pages/AuthorsNote"));
 const KebijakanPrivasi = lazy(() => import("./pages/KebijakanPrivasi"));
 const SyaratKetentuan = lazy(() => import("./pages/SyaratKetentuan"));
 const HubungiKami = lazy(() => import("./pages/HubungiKami"));
@@ -84,6 +85,7 @@ const App = () => (
 
               {/* About & Legal */}
               <Route path="/tentang-kami" element={<TentangKami />} />
+              <Route path="/authors-note" element={<AuthorsNote />} />
               <Route path="/methodology" element={<Methodology />} />
               <Route path="/kebijakan-privasi" element={<KebijakanPrivasi />} />
               <Route path="/syarat-ketentuan" element={<SyaratKetentuan />} />

@@ -38,7 +38,9 @@ const AdminLayout = () => {
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      if (error || !profile || (profile as any).role !== 'admin') {
+      const userRole = (profile as { role?: string })?.role;
+
+      if (error || !profile || userRole !== 'admin') {
         toast.error('Akses ditolak. Area khusus admin.');
         navigate('/');
         return;

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
-    User, Mail, Phone, Calendar, Clock, MapPin,
+    User as UserIcon, Mail, Phone, Calendar, Clock, MapPin,
     Loader2, Shield, ScrollText, HeartHandshake, Baby
 } from 'lucide-react';
 import { formatPrice } from '@/config/pricing';
@@ -29,6 +29,8 @@ interface City {
         country?: string;
     };
 }
+
+import { User } from '@supabase/supabase-js';
 
 export interface UnifiedCheckoutData {
     // Personal & Account
@@ -53,7 +55,7 @@ interface UnifiedCheckoutModalProps {
     onOpenChange: (open: boolean) => void;
     onSubmit: (data: UnifiedCheckoutData) => Promise<void>;
     isLoading: boolean;
-    user: any; // User object from supabase (optional pre-fill)
+    user: User | null; // User object from supabase (optional pre-fill)
     skipBirthData?: boolean; // Skip birth data input (for saved charts)
     prefillBirthData?: {
         birthDate: string;
@@ -123,7 +125,7 @@ export function UnifiedCheckoutModal({
                 if (prefillBirthData.name && !name) setName(prefillBirthData.name);
             }
         }
-    }, [user, open, prefillBirthData]);
+    }, [user, open, prefillBirthData, name]);
 
     // City Autocomplete Logic
     const searchCities = useCallback(async (query: string) => {
@@ -239,7 +241,7 @@ export function UnifiedCheckoutModal({
                             <div className="space-y-2">
                                 <Label>Nama (untuk ditulis dalam reading)</Label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Nama kamu"
                                         value={name}

@@ -40,11 +40,10 @@ const PaymentResult = () => {
         return;
       }
 
+      // Use RPC to bypass RLS for guest users
       const { data, error } = await supabase
-        .from('orders')
-        .select('customer_email, customer_name, status, report_url')
-        .eq('reference_id', refId)
-        .single();
+        .rpc('get_order_status_public', { order_ref_id: refId })
+        .maybeSingle();
 
       if (data && !error) {
         setOrderData(data as OrderData);
@@ -126,7 +125,7 @@ const PaymentResult = () => {
               Terima kasih, <span className="text-foreground font-medium">{orderData?.customer_name || 'Kamu'}</span>!
             </p>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Laporan akan dikirim ke <span className="text-accent font-medium">{orderData?.customer_email || 'email kamu'}</span> secara instan (dalam hitungan menit).
+              Laporan akan dikirim ke <span className="text-accent font-medium">{orderData?.customer_email || 'email kamu'}</span> secara instan (hanya 10 menit).
             </p>
 
             {/* REMOVED PROGRESS TRACKER HERE */}

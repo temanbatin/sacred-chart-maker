@@ -14,8 +14,20 @@ import { Input } from "@/components/ui/input";
 import { Search, Eye } from 'lucide-react';
 import { formatPrice } from '@/config/pricing';
 
+interface Order {
+  id: string;
+  reference_id: string;
+  customer_name: string;
+  customer_email: string;
+  product_name: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  metadata?: Record<string, unknown>;
+}
+
 const AdminOrders = () => {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -47,7 +59,7 @@ const AdminOrders = () => {
     }
   };
 
-  const filteredOrders = orders.filter(order => 
+  const filteredOrders = orders.filter(order =>
     order.reference_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -59,8 +71,8 @@ const AdminOrders = () => {
         <h1 className="text-3xl font-bold">Orders Management</h1>
         <div className="relative w-72">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search ID, Email, Name..." 
+          <Input
+            placeholder="Search ID, Email, Name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8"

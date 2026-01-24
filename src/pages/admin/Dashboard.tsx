@@ -63,7 +63,10 @@ const AdminDashboard = () => {
       const totalUsr = profiles?.length || 0;
 
       // Affiliate Stats (Orders with coupon_code in metadata)
-      const affiliateOrders = orders?.filter(o => o.metadata && (o.metadata as any).coupon_code) || [];
+      const affiliateOrders = orders?.filter(o => {
+        const metadata = o.metadata as { coupon_code?: string } | null;
+        return metadata?.coupon_code;
+      }) || [];
       const affRev = affiliateOrders.reduce((acc, order) => acc + (Number(order.amount) || 0), 0) || 0;
 
       setStats({
@@ -99,8 +102,11 @@ const AdminDashboard = () => {
             const stat = dailyStatsMap.get(key)!;
             stat.revenue += Number(order.amount) || 0;
             stat.orders += 1;
-            if (order.metadata && (order.metadata as any).coupon_code) {
-              stat.affiliateOrders += 1;
+            if (order.metadata) {
+              const metadata = order.metadata as { coupon_code?: string };
+              if (metadata.coupon_code) {
+                stat.affiliateOrders += 1;
+              }
             }
           }
         }

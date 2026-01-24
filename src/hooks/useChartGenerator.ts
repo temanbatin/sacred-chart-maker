@@ -4,9 +4,11 @@ import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
 import type { BirthData } from '@/components/MultiStepForm';
 
+import { ChartData } from '@/types/chart';
+
 export const useChartGenerator = (user: User | null) => {
     const [isLoading, setIsLoading] = useState(false);
-    const [chartData, setChartData] = useState<any>(null);
+    const [chartData, setChartData] = useState<ChartData | null>(null);
     const [userName, setUserName] = useState('');
     const [userEmail, setUserEmail] = useState('');
     const [userPhone, setUserPhone] = useState('');

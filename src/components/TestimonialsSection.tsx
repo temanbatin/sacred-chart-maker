@@ -34,22 +34,8 @@ const videoTestimonials = [
     name: "Nurul",
     type: "Projektor",
     duration: "1:24",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
-  },
-  {
-    id: 2,
-    name: "Devi",
-    type: "Projector",
-    duration: "2:05",
-    videoUrl: ""
-  },
-  {
-    id: 3,
-    name: "Galuh Amelia",
-    type: "Manifestor",
-    duration: "1:48",
-    videoUrl: ""
-  },
+    videoUrl: "https://www.youtube.com/embed/RWWWmWbBz4A"
+  }
 ];
 
 const VideoPlaceholder = ({ video }: { video: typeof videoTestimonials[0] }) => {
@@ -58,29 +44,24 @@ const VideoPlaceholder = ({ video }: { video: typeof videoTestimonials[0] }) => 
 
   if (isPlaying && video.videoUrl) {
     return (
-      <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-black animate-fade-in">
+      <div className="relative w-full rounded-2xl overflow-hidden bg-black animate-fade-in mx-auto max-w-[315px]" style={{ aspectRatio: '9/16' }}>
         <iframe
-          src={`${video.videoUrl}?autoplay=1`}
-          title={`Testimoni ${video.name}`}
-          className="w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          width="100%"
+          height="100%"
+          src={`${video.videoUrl}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1`}
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
-          loading="lazy"
-        />
-        <button
-          onClick={() => setIsPlaying(false)}
-          className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white/70 hover:text-white transition-colors"
-        >
-          <span className="sr-only">Close Video</span>
-          ×
-        </button>
+        ></iframe>
       </div>
     );
   }
 
   return (
     <div
-      className="relative aspect-[9/16] rounded-2xl overflow-hidden cursor-pointer group shadow-lg"
+      className="relative w-full rounded-2xl overflow-hidden cursor-pointer group shadow-lg mx-auto max-w-[315px]"
+      style={{ aspectRatio: '9/16' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => video.videoUrl && setIsPlaying(true)}
@@ -117,7 +98,7 @@ export const TestimonialsSection = ({ className }: { className?: string }) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Set this to true when you want to show video testimonials again
-  const SHOW_VIDEOS = false;
+  const SHOW_VIDEOS = true;
 
   const scrollNext = useCallback(() => {
     if (emblaApi) emblaApi.scrollNext();
@@ -174,7 +155,7 @@ export const TestimonialsSection = ({ className }: { className?: string }) => {
         {/* Video Testimonials */}
         {SHOW_VIDEOS && (
           <div className="mb-16">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-6 max-w-5xl mx-auto">
               {videoTestimonials.map((video) => (
                 <VideoPlaceholder key={video.id} video={video} />
               ))}

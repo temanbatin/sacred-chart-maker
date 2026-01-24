@@ -11,6 +11,7 @@ import { TestimonialsSection } from '@/components/TestimonialsSection';
 import { FAQSection } from '@/components/FAQSection';
 import { ReportPreviewSection } from '@/components/ReportPreviewSection';
 import { NewsletterSection } from '@/components/NewsletterSection';
+import { AuthorsNoteSummary } from '@/components/AuthorsNoteSummary';
 import { Footer } from '@/components/Footer';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { ChartGenerationModal } from '@/components/ChartGenerationModal';
@@ -156,6 +157,7 @@ const Index = () => {
             onReset={handleReset}
           />
         )}
+        <AuthorsNoteSummary />
         <Footer />
 
         <ChartGenerationModal

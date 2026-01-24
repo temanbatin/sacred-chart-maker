@@ -57,7 +57,7 @@ const ExpandableText = ({ text, limit = 150 }: { text: string; limit?: number })
   );
 };
 
-interface ChartData {
+export interface ChartData {
   general: {
     energy_type?: string;
     strategy?: string;

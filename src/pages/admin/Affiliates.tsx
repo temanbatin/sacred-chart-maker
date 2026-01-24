@@ -94,9 +94,10 @@ const Affiliates = () => {
 
             setAffiliates(mergedData);
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error fetching affiliate data:', error);
-            toast.error('Gagal mengambil data affiliate');
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            toast.error(`Gagal mengambil data affiliate: ${errorMessage}`);
         } finally {
             setLoading(false);
         }

@@ -57,9 +57,11 @@ const Users = () => {
 
             if (error) throw error;
             setUsers(data || []);
-        } catch (error: any) {
+            setUsers(data || []);
+        } catch (error: unknown) {
             console.error('Error fetching users:', error);
-            toast.error('Gagal mengambil data user');
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            toast.error('Gagal mengambil data user: ' + errorMessage);
         } finally {
             setLoading(false);
         }
@@ -79,9 +81,12 @@ const Users = () => {
             toast.success(`Role user ${selectedUser.name} berhasil diupdate ke ${newRole}`);
             setIsDialogOpen(false);
             fetchUsers(); // Refresh list
-        } catch (error: any) {
+            setIsDialogOpen(false);
+            fetchUsers(); // Refresh list
+        } catch (error: unknown) {
             console.error('Error updating role:', error);
-            toast.error('Gagal update role');
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            toast.error('Gagal update role: ' + errorMessage);
         }
     };
 

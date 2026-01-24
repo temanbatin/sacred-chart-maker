@@ -89,6 +89,9 @@ export const MainNavbar = () => {
                   <Link to="/tentang-kami" className="cursor-pointer">Our Story</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/authors-note" className="cursor-pointer">Author's Note</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/methodology" className="cursor-pointer">Methodology</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -157,6 +160,13 @@ export const MainNavbar = () => {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Our Story
+                    </Link>
+                    <Link
+                      to="/authors-note"
+                      className="text-sm text-muted-foreground hover:text-accent transition-colors py-2 block"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Author's Note
                     </Link>
                     <Link
                       to="/methodology"

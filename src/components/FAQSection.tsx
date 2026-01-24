@@ -22,7 +22,7 @@ const faqs = [
   },
   {
     question: 'Berapa lama laporan dikirim?',
-    answer: 'Laporan personal kamu akan dikirim ke email secara instan (otomatis dalam hitungan menit) setelah pembayaran terverifikasi.',
+    answer: 'Laporan personal kamu akan dikirim ke email secara instan (hanya 10 menit) setelah pembayaran terverifikasi.',
   },
   {
     question: 'Bagaimana jika laporan tidak sesuai harapan?',

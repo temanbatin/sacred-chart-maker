@@ -14,10 +14,22 @@ const MOCK_ARTICLES = [
   { id: '2', title: '5 Tipe Energi', category: 'Basics', status: 'draft' },
 ];
 
+interface Article {
+  id?: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt?: string;
+  category: string;
+  is_published: boolean;
+  image_url?: string;
+  created_at?: string;
+}
+
 const AdminArticles = () => {
-  const [articles, setArticles] = useState<any[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentArticle, setCurrentArticle] = useState<any>({
+  const [currentArticle, setCurrentArticle] = useState<Article>({
     title: '',
     slug: '',
     content: '',
@@ -68,8 +80,9 @@ const AdminArticles = () => {
 
       setCurrentArticle({ ...currentArticle, image_url: data.publicUrl });
       toast.success('Gambar berhasil diupload');
-    } catch (error: any) {
-      toast.error('Gagal upload: ' + error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error('Gagal upload: ' + errorMessage);
     } finally {
       setIsUploading(false);
     }
@@ -95,8 +108,9 @@ const AdminArticles = () => {
       toast.success('Artikel berhasil disimpan!');
       setIsEditing(false);
       fetchArticles();
-    } catch (err: any) {
-      toast.error('Gagal menyimpan: ' + err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error('Gagal menyimpan: ' + errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -110,8 +124,9 @@ const AdminArticles = () => {
       if (error) throw error;
       toast.success('Artikel dihapus');
       fetchArticles();
-    } catch (err: any) {
-      toast.error('Gagal menghapus: ' + err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error('Gagal menghapus: ' + errorMessage);
     }
   };
 
@@ -137,9 +152,10 @@ const AdminArticles = () => {
         });
         toast.success('Artikel berhasil digenerate AI!');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('AI Error:', err);
-      toast.error('Gagal generate AI: ' + err.message);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error('Gagal generate AI: ' + errorMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -166,9 +182,10 @@ const AdminArticles = () => {
         });
         toast.success('Gambar berhasil digenerate AI!');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Image AI Error:', err);
-      toast.error('Gagal generate gambar: ' + err.message);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error('Gagal generate gambar: ' + errorMessage);
     } finally {
       setIsGeneratingImage(false);
     }
