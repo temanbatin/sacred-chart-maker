@@ -119,7 +119,83 @@ serve(async (req) => {
             console.error('Failed to increment coupon usage:', updateError);
         }
 
-        // 4. TRIGGER N8N WORKFLOW (Simulate Paid Order)
+        // 4. UPDATE WHATSAPP_SESSIONS (Same logic as midtrans-webhook)
+        try {
+            if (customerPhone) {
+                // Clean phone number
+                let cleanPhone = customerPhone.replace(/[^\d]/g, '');
+                if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.substring(1);
+                if (!cleanPhone.startsWith('62') && cleanPhone.startsWith('8')) cleanPhone = '62' + cleanPhone;
+
+                console.log(`Updating whatsapp_session for FREE order: ${cleanPhone}`);
+
+                // Get chart data from birthData if available
+                let targetChartId: string | null = null;
+                let targetChartData: any = null;
+
+                // Priority 1: From saved_charts (if chartIds provided)
+                if (Array.isArray(chartIds) && chartIds.length > 0) {
+                    const { data: chartRecord } = await supabase
+                        .from('saved_charts')
+                        .select('id, chart_data')
+                        .eq('id', chartIds[0])
+                        .maybeSingle();
+                    if (chartRecord) {
+                        targetChartId = chartRecord.id;
+                        targetChartData = chartRecord.chart_data;
+                    }
+                }
+                // Priority 2: From birthData (Guest checkout)
+                else if (birthData) {
+                    targetChartData = birthData;
+                }
+
+                // Fetch existing session to check current expiration
+                const { data: existingSession } = await supabase
+                    .from('whatsapp_sessions')
+                    .select('subscription_end_at, is_lifetime')
+                    .eq('whatsapp', cleanPhone)
+                    .maybeSingle();
+
+                const now = new Date();
+                let newEndAt = existingSession?.subscription_end_at ? new Date(existingSession.subscription_end_at) : now;
+                // If expired (date in past), reset to now
+                if (newEndAt < now) newEndAt = now;
+
+                const productNameLower = (productName || '').toLowerCase();
+                let daysToAdd = 0;
+                const isLifetime = existingSession?.is_lifetime || false;
+
+                // Logic: Full Report/Bundle -> Bonus 30 Days
+                if (productNameLower.includes('full') || productNameLower.includes('bundle')) {
+                    daysToAdd = 30;
+                }
+
+                if (daysToAdd > 0) {
+                    newEndAt.setDate(newEndAt.getDate() + daysToAdd);
+                    console.log(`Adding ${daysToAdd} days to subscription for ${cleanPhone}. New End: ${newEndAt.toISOString()}`);
+                }
+
+                // Upsert into whatsapp_sessions
+                const { error: sessionError } = await supabase.from('whatsapp_sessions')
+                    .upsert({
+                        whatsapp: cleanPhone,
+                        chart_id: targetChartId,
+                        json_chart: targetChartData,
+                        name: customerName,
+                        last_active: new Date().toISOString(),
+                        subscription_end_at: newEndAt.toISOString(),
+                        is_lifetime: isLifetime
+                    }, { onConflict: 'whatsapp' });
+
+                if (sessionError) console.error('Error updating whatsapp_session:', sessionError);
+                else console.log('Updated whatsapp_session subscription for', cleanPhone);
+            }
+        } catch (e) {
+            console.error('Whatsapp Session Update Error:', e);
+        }
+
+        // 5. TRIGGER N8N WORKFLOW (Simulate Paid Order)
         let n8nResponse;
         let responseText;
         let n8n_debug: any = {};

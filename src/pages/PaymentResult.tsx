@@ -138,7 +138,7 @@ const PaymentResult = () => {
                 <p className="text-muted-foreground mb-4 max-w-md mx-auto">
                   Kira AI Mentor kamu sudah aktif dan siap digunakan via WhatsApp.
                 </p>
-                <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-4 mb-6 max-w-md mx-auto">
+                <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-4 mb-6 max-w-md mx-auto">
                   <p className="text-sm text-muted-foreground mb-2">
                     💬 Chat Kira sekarang di WhatsApp untuk mulai konsultasi personal tentang Human Design & Bazi-mu.
                   </p>
@@ -151,7 +151,7 @@ const PaymentResult = () => {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white mb-8 shadow-lg"
+                  className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:bg-white hover:from-white hover:to-white hover:text-teal-600 text-white mb-8 shadow-lg transition-all"
                 >
                   <a
                     href="https://wa.me/6285739444131?text=Halo%20Kira"
@@ -164,10 +164,35 @@ const PaymentResult = () => {
                 </Button>
               </>
             ) : (
-              // Message for Report purchases
-              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                Laporan akan dikirim ke <span className="text-accent font-medium">{orderData?.customer_email || 'email kamu'}</span> secara instan (hanya 10 menit).
-              </p>
+              // Message for Report purchases (Bundle/Bazi)
+              <>
+                <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                  Laporan akan dikirim ke <span className="text-accent font-medium">{orderData?.customer_email || 'email kamu'}</span> secara instan (hanya 10 menit).
+                </p>
+
+                {/* Chat Kira while waiting */}
+                <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-4 mb-6 max-w-md mx-auto">
+                  <p className="text-sm text-muted-foreground">
+                    💡 Sambil menunggu report dikirim ke email, kamu sudah bisa langsung tanya ke <span className="font-semibold text-teal-400">Kira</span> lo!
+                  </p>
+                </div>
+
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="border-teal-500/50 text-teal-400 hover:bg-white hover:text-teal-600 hover:border-teal-400 mb-8 transition-all"
+                >
+                  <a
+                    href="https://wa.me/6285739444131?text=Halo%20Kira"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="w-5 h-5 mr-2" />
+                    Chat Kira Sekarang
+                  </a>
+                </Button>
+              </>
             )}
 
             {referenceId && (
