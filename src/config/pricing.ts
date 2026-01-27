@@ -1,68 +1,75 @@
 export const PRICING_CONFIG = {
-    REPORT_PRICE: 199000, // Legacy support (Full Report)
-    ORIGINAL_PRICE: 500000, // Legacy support
+    REPORT_PRICE: 249000, // Full Bundle Premium
+    ORIGINAL_PRICE: 750000, // Legacy support
     CURRENCY: 'IDR',
     LOCALE: 'id-ID'
 };
 
 export const PRODUCTS = {
+    // Main Product - Full Bundle Premium (HD + Bazi + Audio + WA AI)
     FULL_REPORT: {
-        id: 'full_report',
-        name: 'Full Report Human Design',
-        price: 199000,
-        original_price: 500000,
+        id: 'bundle-full-bazi',
+        name: 'Full Bundle Premium (Human Design + Bazi)',
+        price: 249000,
+        original_price: 750000,
+        report_type: 'bundle-full-bazi',
         features: [
-            'Analisis Mendalam (100+ Halaman)',
-            'Termasuk: Bazi Chart Analysis (Weather Report)',
-            'BONUS: 30 Hari Kira AI Mentor (Gratis)',
+            '📖 Human Design Report (100+ Halaman)',
+            '📊 Bazi Report Lengkap (30+ Halaman)',
+            '🎧 Audio Summary Report (15-20 Menit)',
+            '🤖 BONUS: 30 Hari Kira AI Mentor',
             'Tipe, Strategi & Otoritas',
             'Incarnation Cross (Misi Hidup)',
             'Analisis 9 Energy Center',
-            'Panduan Karir & Relasi',
-            'Peta Potensi Tersembunyi',
-            'Tips Kesehatan & Vitalitas'
+            'Day Master & 5 Elemen Bazi',
+            'Luck Pillars (Siklus Keberuntungan)',
+            'Panduan Karir, Relasi & Kesehatan'
         ]
     },
-    BAZI_REPORT: {
-        id: 'bazi_report',
-        name: 'Bazi + Human Design Full Report Bundle',
-        price: 299000,
-        original_price: 750000,
-        features: [
-            'Includes EVERYTHING in Full HD Report',
-            'Analisis Elemen Diri (Day Master)',
-            'Prakiraan Keberuntungan (Luck Pillars)',
-            'Analisis Karir & Kekayaan (Wealth Element)',
-            'Harmoni Hubungan (Compatibility)',
-            'Strategi Tahunan (Annual Forecast)',
-            'Kekuatan & Kelemahan Elemen'
-        ]
-    },
+    // Bazi Only - For users who only want Bazi
     BAZI_ONLY: {
-        id: 'bazi_only',
-        name: 'Bazi Chart Analysis Only',
+        id: 'bazi-only',
+        name: 'Bazi Report Only',
         price: 149000,
         original_price: 300000,
+        report_type: 'bazi',
         features: [
-            'Includes: 30 Hari Kira AI Mentor (Gratis)',
-            'Analisis Elemen Diri (Day Master)',
+            '📊 Bazi Report Lengkap (30+ Halaman)',
+            '🤖 BONUS: 30 Hari Kira AI Mentor',
+            'Analisis Day Master',
             'Prakiraan Keberuntungan (Luck Pillars)',
-            'Analisis Karir & Kekayaan (Wealth Element)',
+            'Analisis Karir & Kekayaan',
             'Kekuatan & Kelemahan Elemen',
             'Tanpa Human Design Report'
         ]
     },
+    // WhatsApp AI Subscription - Alumni Only
     WHATSAPP_KIRA_SUBSCRIPTION: {
-        id: 'whatsapp_kira_subscription',
-        name: 'Kira AI Mentor Subscription (Monthly)',
+        id: 'whatsapp-kira-subscription',
+        name: 'Kira AI Mentor (Bulanan)',
         price: 49000,
         original_price: 150000,
+        report_type: null,
         features: [
             'Unlimited Chat 24/7',
-            'Personalisasi Human Design & Bazi',
-            'Daily Energy Updates',
-            'Privacy First (Ruang Aman)',
-            'Cancel Anytime'
+            'Custom AI Sesuai Bazi dan Human Design-mu',
+            'Tanya seputar kehidupan sesuai hari',
+            'Ruang aman (privasi terjaga)'
+        ],
+        eligibility: 'alumni-only' // Must have purchased report before
+    },
+    // Legacy alias for backwards compatibility
+    BAZI_REPORT: {
+        id: 'bundle-full-bazi',
+        name: 'Full Bundle Premium (Human Design + Bazi)',
+        price: 249000,
+        original_price: 750000,
+        report_type: 'bundle-full-bazi',
+        features: [
+            '📖 Human Design Report (100+ Halaman)',
+            '📊 Bazi Report Lengkap (30+ Halaman)',
+            '🎧 Audio Summary Report (15-20 Menit)',
+            '🤖 BONUS: 30 Hari Kira AI Mentor'
         ]
     }
 };

@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
     User as UserIcon, Mail, Phone, Calendar, Clock, MapPin,
     Loader2, Shield, ScrollText, HeartHandshake, Baby, TicketPercent,
-    Sparkles, Flame
+    Sparkles, Flame, MessageCircle, Fingerprint, CalendarDays, Lock, Check
 } from 'lucide-react';
 import { formatPrice } from '@/config/pricing';
 import { PRODUCTS, COUPONS } from '@/config/pricing';
@@ -60,30 +60,105 @@ export interface UnifiedCheckoutData {
 interface UnifiedCheckoutModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: UnifiedCheckoutData) => Promise<void>;
-    isLoading: boolean;
-    user: User | null; // User object from supabase (optional pre-fill)
+    onSubmit?: (data: UnifiedCheckoutData) => Promise<void>; // Optional - if not provided, uses built-in checkout
+    isLoading?: boolean; // Optional - managed internally if not provided
+    user?: User | null; // Optional - fetched internally if not provided
     skipBirthData?: boolean; // Skip birth data input (for saved charts)
     prefillBirthData?: {
         birthDate: string;
         birthTime: string;
         birthCity: string;
         gender: 'male' | 'female';
-        name?: string; // Additional prefill support
+        name?: string;
+        whatsapp?: string;
+        email?: string;
     };
     selectedProductId?: string;
+}
+
+// Helper function to get product info based on selectedProductId
+function getProductInfo(productId?: string) {
+    switch (productId) {
+        case PRODUCTS.BAZI_ONLY.id:
+            return {
+                product: PRODUCTS.BAZI_ONLY,
+                title: 'Dapatkan Analisis Bazi Lengkap',
+                description: 'Weather & Fuel Report untuk navigasi hidup Anda.',
+                skipBirthData: false,
+                showBonus: true,
+                bonusType: 'bazi' as const,
+                // Custom labels for Bazi - simplified
+                labels: {
+                    name: 'Nama',
+                    gender: 'Jenis Kelamin',
+                    birthTimeHint: null // No hint for Bazi
+                }
+            };
+        case PRODUCTS.WHATSAPP_KIRA_SUBSCRIPTION.id:
+            return {
+                product: PRODUCTS.WHATSAPP_KIRA_SUBSCRIPTION,
+                title: 'Aktivasi Kira AI Mentor',
+                description: 'Mentor personal 24/7 via WhatsApp yang paham Design & Bazi kamu.',
+                skipBirthData: true, // No birth data needed for subscription
+                showBonus: false,
+                bonusType: 'subscription' as const,
+                labels: {
+                    name: 'Nama',
+                    gender: 'Jenis Kelamin',
+                    birthTimeHint: null
+                }
+            };
+        default:
+            return {
+                product: PRODUCTS.FULL_REPORT,
+                title: 'Langkah Terakhir Menuju Kejelasan',
+                description: 'Lengkapi detail penerima report di bawah ini.',
+                skipBirthData: false,
+                showBonus: true,
+                bonusType: 'bundle' as const,
+                // Custom labels for Full Report Bundle - detailed
+                labels: {
+                    name: 'Nama (untuk ditulis dalam reading)',
+                    gender: 'Jenis Kelamin (untuk personalisasi cover)',
+                    birthTimeHint: 'Agar reading akurat, pastikan jam lahir sesuai'
+                }
+            };
+    }
 }
 
 export function UnifiedCheckoutModal({
     open,
     onOpenChange,
     onSubmit,
-    isLoading,
-    user,
-    skipBirthData = false,
+    isLoading: isLoadingProp,
+    user: userProp,
+    skipBirthData: skipBirthDataProp = false,
     prefillBirthData,
     selectedProductId
 }: UnifiedCheckoutModalProps) {
+    // Get product-specific info
+    const productInfo = getProductInfo(selectedProductId);
+    const selectedProduct = productInfo.product;
+    // Skip birth data if prop says so OR if product doesn't need it (like subscription)
+    const skipBirthData = skipBirthDataProp || productInfo.skipBirthData;
+
+    // Internal state for standalone mode
+    const [internalLoading, setInternalLoading] = useState(false);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+    // Use provided values or internal state
+    const isLoading = isLoadingProp !== undefined ? isLoadingProp : internalLoading;
+    const user = userProp !== undefined ? userProp : currentUser;
+
+    // Fetch current user on mount if not provided
+    useEffect(() => {
+        if (userProp === undefined && open) {
+            supabase.auth.getUser().then(({ data }) => {
+                setCurrentUser(data?.user || null);
+            });
+        }
+    }, [open, userProp]);
+
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [whatsapp, setWhatsapp] = useState('');
@@ -132,9 +207,11 @@ export function UnifiedCheckoutModal({
 
                 if (prefillBirthData.gender) setGender(prefillBirthData.gender);
                 if (prefillBirthData.name && !name) setName(prefillBirthData.name);
+                if (prefillBirthData.whatsapp && !whatsapp) setWhatsapp(prefillBirthData.whatsapp);
+                if (prefillBirthData.email && !email) setEmail(prefillBirthData.email);
             }
         }
-    }, [user, open, prefillBirthData, name]);
+    }, [user, open, prefillBirthData, name, whatsapp, email]);
 
     // Coupon State
     const [couponCode, setCouponCode] = useState('');
@@ -159,16 +236,37 @@ export function UnifiedCheckoutModal({
             setCouponMessage('');
 
             try {
-                // 1. Check General Coupons Table
-                const { data: couponData, error: couponError } = await supabase
-                    .from('coupons')
-                    .select('*')
-                    .eq('code', cleanCode)
-                    .eq('is_active', true)
-                    .maybeSingle();
+                // 1. Check General Coupons via RPC (bypasses RLS, case-insensitive)
+                // @ts-ignore - RPC function exists in database
+                const { data: couponResult, error: couponError } = await supabase
+                    .rpc('check_coupon_validity', { coupon_code: cleanCode });
 
-                if (couponData) {
-                    setDiscountAmount(couponData.discount_value);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const couponData = couponResult as any;
+
+                if (couponData && couponData.valid) {
+                    // Handle full_free coupons (100% discount)
+                    if (couponData.discount_type === 'full_free') {
+                        setDiscountAmount(selectedProduct.price); // Full discount
+                        setIsCouponValid(true);
+                        setCouponMessage('🎉 Kupon gratis berhasil digunakan!');
+                        setIsValidatingCoupon(false);
+                        return;
+                    }
+
+                    // Handle percentage discount
+                    if (couponData.discount_type === 'percentage') {
+                        const discountPercent = Number(couponData.discount_value) || 0;
+                        const discountAmt = Math.round(selectedProduct.price * (discountPercent / 100));
+                        setDiscountAmount(discountAmt);
+                        setIsCouponValid(true);
+                        setCouponMessage(`Kupon diskon ${discountPercent}% berhasil!`);
+                        setIsValidatingCoupon(false);
+                        return;
+                    }
+
+                    // Handle fixed amount discount
+                    setDiscountAmount(Number(couponData.discount_value) || 0);
                     setIsCouponValid(true);
                     setCouponMessage('Kupon berhasil digunakan!');
                     setIsValidatingCoupon(false);
@@ -183,7 +281,7 @@ export function UnifiedCheckoutModal({
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 if (rpcData && (rpcData as any).valid) {
                     // Affiliate Discount Policy: 10%
-                    const originalPrice = PRODUCTS.FULL_REPORT.price;
+                    const originalPrice = selectedProduct.price;
                     const affiliateDiscount = Math.round(originalPrice * 0.10); // 10%
 
                     setDiscountAmount(affiliateDiscount);
@@ -193,10 +291,10 @@ export function UnifiedCheckoutModal({
                     return;
                 }
 
-                // If neither found
+                // If neither found - show appropriate message
                 setDiscountAmount(0);
                 setIsCouponValid(false);
-                setCouponMessage('Kode kupon tidak ditemukan atau tidak aktif');
+                setCouponMessage(couponData?.message || 'Kode kupon tidak ditemukan atau tidak aktif');
 
             } catch (err) {
                 console.error('Error validating coupon:', err);
@@ -207,7 +305,7 @@ export function UnifiedCheckoutModal({
         }, 800); // 800ms debounce
 
         return () => clearTimeout(timer);
-    }, [couponCode]);
+    }, [couponCode, selectedProduct.price]);
 
     // City Autocomplete Logic
     const searchCities = useCallback(async (query: string) => {
@@ -318,7 +416,8 @@ export function UnifiedCheckoutModal({
 
         const birthCity = selectedCity?.display_name || '';
 
-        await onSubmit({
+        // Prepare checkout data
+        const checkoutData: UnifiedCheckoutData = {
             name,
             email,
             whatsapp,
@@ -327,12 +426,217 @@ export function UnifiedCheckoutModal({
             birthCity,
             gender,
             agreedToTerms,
-
             agreedToTnc,
             couponCode: isCouponValid ? couponCode : undefined,
             discountAmount,
-            finalPrice: PRODUCTS.FULL_REPORT.price - discountAmount
-        });
+            finalPrice: selectedProduct.price - discountAmount
+        };
+
+        // If external onSubmit is provided, use it
+        if (onSubmit) {
+            await onSubmit(checkoutData);
+            return;
+        }
+
+        // ============ Built-in checkout logic (standalone mode) ============
+        setInternalLoading(true);
+        try {
+            // Helper: Format WhatsApp (08xx -> 628xx)
+            const formatWhatsApp = (number: string): string => {
+                if (!number || number.trim() === '') {
+                    throw new Error('WhatsApp number is required');
+                }
+                let cleaned = number.replace(/\D/g, ''); // Remove non-digits
+                if (cleaned.startsWith('0')) {
+                    cleaned = '62' + cleaned.slice(1);
+                }
+                if (!cleaned.startsWith('62')) {
+                    cleaned = '62' + cleaned;
+                }
+                return '+' + cleaned;
+            };
+
+            const formattedWhatsapp = formatWhatsApp(checkoutData.whatsapp);
+
+            // Parse and validate date/time
+            const [year, month, day] = checkoutData.birthDate.split('-').map(Number);
+            const [hour, minute] = checkoutData.birthTime.split(':').map(Number);
+
+            if (!skipBirthData && (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute))) {
+                toast({
+                    title: "Format tanggal atau waktu tidak valid",
+                    variant: "destructive"
+                });
+                setInternalLoading(false);
+                return;
+            }
+
+            const birthDateStr = skipBirthData ? '' : `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+            // Format birth data for metadata
+            const birthDataForMetadata = skipBirthData ? null : {
+                name: checkoutData.name,
+                year,
+                month,
+                day,
+                hour,
+                minute,
+                place: checkoutData.birthCity,
+                gender: checkoutData.gender
+            };
+
+            // Submit Lead (optional, fire-and-forget)
+            if (!skipBirthData) {
+                try {
+                    await supabase.functions.invoke('submit-lead', {
+                        body: {
+                            name: checkoutData.name,
+                            email: checkoutData.email,
+                            whatsapp: formattedWhatsapp,
+                            birth_date: birthDateStr,
+                            birth_place: checkoutData.birthCity,
+                        }
+                    });
+                } catch (leadError) {
+                    console.warn("Lead submission failed, continuing...", leadError);
+                }
+            }
+
+            // Calculate Chart to get Snapshot (only for non-subscription products)
+            let chartSnapshot = null;
+            if (!skipBirthData && birthDataForMetadata) {
+                try {
+                    const { data: chartData, error: chartError } = await supabase.functions.invoke('calculate-chart', {
+                        body: {
+                            year,
+                            month,
+                            day,
+                            hour,
+                            minute,
+                            place: checkoutData.birthCity,
+                            gender: checkoutData.gender,
+                        },
+                    });
+                    if (!chartError && chartData) {
+                        chartSnapshot = chartData;
+                    }
+                } catch (err) {
+                    console.warn("Failed to calculate chart snapshot:", err);
+                }
+            }
+
+            // Check if FREE coupon (finalPrice === 0)
+            const isFreeOrder = checkoutData.finalPrice === 0 && checkoutData.couponCode;
+
+            // Use product config for correct naming and report_type
+            const productName = `${selectedProduct.name}: ${checkoutData.name}`;
+            const reportType = selectedProduct.report_type;
+
+            if (isFreeOrder) {
+                // --- FREE COUPON FLOW: Call redeem-free-order directly ---
+                console.log('🎁 Free coupon detected, calling redeem-free-order...');
+
+                const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+                const redeemPayload = {
+                    couponCode: checkoutData.couponCode,
+                    referenceId: referenceId,
+                    customerName: checkoutData.name,
+                    customerEmail: checkoutData.email,
+                    customerPhone: formattedWhatsapp,
+                    productName: productName,
+                    reportType: reportType,
+                    chartIds: [],
+                    birthData: birthDataForMetadata,
+                    userId: user?.id || null
+                };
+
+                const { data: redeemResult, error: redeemError } = await supabase.functions.invoke('redeem-free-order', {
+                    body: redeemPayload
+                });
+
+                if (redeemError) {
+                    console.error('Redeem error:', redeemError);
+                    throw new Error(redeemError.message || 'Gagal menggunakan kupon gratis');
+                }
+
+                if (redeemResult?.success && redeemResult?.redirect_url) {
+                    sessionStorage.setItem('paymentRefId', referenceId);
+                    onOpenChange(false);
+
+                    toast({
+                        title: '🎉 Kupon berhasil digunakan!',
+                        description: 'Report kamu sedang diproses...'
+                    });
+
+                    window.location.href = redeemResult.redirect_url;
+                    return;
+                } else {
+                    throw new Error(redeemResult?.error || 'Gagal menggunakan kupon');
+                }
+            }
+
+            // --- PAID FLOW: Create Order and Call Midtrans ---
+            const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+            // Create Order
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { error: orderError } = await (supabase.from('orders') as any)
+                .insert({
+                    user_id: user?.id || null,
+                    reference_id: referenceId,
+                    customer_name: checkoutData.name,
+                    customer_email: checkoutData.email,
+                    customer_phone: formattedWhatsapp,
+                    product_name: productName,
+                    amount: selectedProduct.price,
+                    status: 'PENDING',
+                    metadata: {
+                        chart_ids: [],
+                        products: [selectedProduct.id],
+                        report_type: reportType,
+                        birth_data: birthDataForMetadata,
+                        chart_snapshot: chartSnapshot
+                    }
+                });
+
+            if (orderError) throw orderError;
+
+            // Call Midtrans
+            const { data: paymentData, error: paymentError } = await supabase.functions.invoke('midtrans-checkout', {
+                body: {
+                    referenceId,
+                    customerName: checkoutData.name,
+                    customerEmail: checkoutData.email,
+                    customerPhone: formattedWhatsapp,
+                    amount: selectedProduct.price,
+                    productName,
+                    reportType: reportType,
+                    chartIds: [],
+                    products: [selectedProduct.id],
+                    birthData: birthDataForMetadata
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any);
+
+            if (paymentError) throw paymentError;
+
+            if (paymentData && paymentData.redirect_url) {
+                onOpenChange(false);
+                window.location.href = paymentData.redirect_url;
+            }
+
+        } catch (error: unknown) {
+            console.error(error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            toast({
+                title: 'Terjadi kesalahan',
+                description: errorMessage || "Unknown error",
+                variant: "destructive"
+            });
+        } finally {
+            setInternalLoading(false);
+        }
     };
 
     return (
@@ -341,10 +645,10 @@ export function UnifiedCheckoutModal({
                 {/* Header */}
                 <div className="p-6 pb-4 border-b border-border/50">
                     <DialogTitle className="text-2xl font-bold text-gradient-fire">
-                        Langkah Terakhir Menuju Kejelasan
+                        {productInfo.title}
                     </DialogTitle>
                     <DialogDescription className="text-muted-foreground mt-1">
-                        Lengkapi detail penerima report di bawah ini.
+                        {productInfo.description}
                     </DialogDescription>
                 </div>
 
@@ -358,7 +662,7 @@ export function UnifiedCheckoutModal({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Nama (untuk ditulis dalam reading)</Label>
+                                <Label>{productInfo.labels.name}</Label>
                                 <div className="relative">
                                     <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
@@ -433,6 +737,11 @@ export function UnifiedCheckoutModal({
                                             className="pl-9"
                                         />
                                     </div>
+                                    {productInfo.labels.birthTimeHint && (
+                                        <p className="text-xs text-amber-500/80 mt-1">
+                                            ⚡ {productInfo.labels.birthTimeHint}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2 relative md:col-span-2">
@@ -469,7 +778,7 @@ export function UnifiedCheckoutModal({
 
                             {/* Gender Selection */}
                             <div className="space-y-2">
-                                <Label>Jenis Kelamin (untuk personalisasi cover)</Label>
+                                <Label>{productInfo.labels.gender}</Label>
                                 <RadioGroup
                                     value={gender}
                                     onValueChange={(v) => setGender(v as 'male' | 'female')}
@@ -492,101 +801,138 @@ export function UnifiedCheckoutModal({
                     <section className="bg-secondary/20 rounded-xl p-4 border border-border/50 space-y-4">
                         <div className="flex justify-between items-center">
                             <div>
-                                <h4 className="font-bold text-lg">Full Personal Report</h4>
-                                <p className="text-xs text-muted-foreground">Blueprint Personal Human Design (100+ Halaman)</p>
+                                <h4 className="font-bold text-lg">{selectedProduct.name}</h4>
+                                <p className="text-xs text-muted-foreground">
+                                    {productInfo.bonusType === 'subscription'
+                                        ? 'Langganan Mentor AI Personal via WhatsApp'
+                                        : productInfo.bonusType === 'bazi'
+                                            ? 'Analisis Bazi & Weather Forecast'
+                                            : 'Blueprint Personal Human Design (100+ Halaman)'}
+                                </p>
                             </div>
                             <div className="text-right">
                                 {isCouponValid ? (
                                     <>
-                                        <div className="text-sm text-muted-foreground line-through decoration-red-500/50">{formatPrice(PRODUCTS.FULL_REPORT.price)}</div>
-                                        <div className="text-xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price - discountAmount)}</div>
+                                        <div className="text-sm text-muted-foreground line-through decoration-red-500/50">{formatPrice(selectedProduct.price)}</div>
+                                        <div className="text-xl font-bold text-accent">{formatPrice(selectedProduct.price - discountAmount)}</div>
                                         <div className="text-[10px] text-green-500 font-medium animate-pulse">Hemat {formatPrice(discountAmount)}</div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="text-xl font-bold text-accent">{formatPrice(PRODUCTS.FULL_REPORT.price)}</div>
-                                        <div className="text-xs text-muted-foreground line-through">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</div>
+                                        <div className="text-xl font-bold text-accent">{formatPrice(selectedProduct.price)}</div>
+                                        <div className="text-xs text-muted-foreground line-through">{formatPrice(selectedProduct.original_price)}</div>
                                     </>
                                 )}
                             </div>
                         </div>
 
-                        {/* Coupon Input Field */}
-                        <div className="pb-3 border-b border-border/50">
-                            <div className="relative">
-                                <TicketPercent className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isCouponValid ? 'text-green-500' : 'text-muted-foreground'}`} />
-                                <Input
-                                    placeholder="Punya kode kupon / referal?"
-                                    value={couponCode}
-                                    onChange={(e) => setCouponCode(e.target.value)}
-                                    className={`pl-9 border-dashed bg-background/50 ${isCouponValid
-                                        ? 'border-green-500/50 text-green-500 focus-visible:ring-green-500'
-                                        : couponCode.length > 3 && !isValidatingCoupon && !isCouponValid
-                                            ? 'border-red-500/50 text-red-500 focus-visible:ring-red-500'
-                                            : ''
-                                        }`}
-                                />
-                                {isValidatingCoupon && (
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                                    </div>
-                                )}
-                                {isCouponValid && !isValidatingCoupon && (
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full font-medium animate-in fade-in zoom-in">
-                                        Applied
-                                    </div>
+                        {/* Coupon Input Field - Hide for subscription */}
+                        {productInfo.bonusType !== 'subscription' && (
+                            <div className="pb-3 border-b border-border/50">
+                                <div className="relative">
+                                    <TicketPercent className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isCouponValid ? 'text-green-500' : 'text-muted-foreground'}`} />
+                                    <Input
+                                        placeholder="Punya kode kupon / referal?"
+                                        value={couponCode}
+                                        onChange={(e) => setCouponCode(e.target.value)}
+                                        className={`pl-9 border-dashed bg-background/50 ${isCouponValid
+                                            ? 'border-green-500/50 text-green-500 focus-visible:ring-green-500'
+                                            : couponCode.length > 3 && !isValidatingCoupon && !isCouponValid
+                                                ? 'border-red-500/50 text-red-500 focus-visible:ring-red-500'
+                                                : ''
+                                            }`}
+                                    />
+                                    {isValidatingCoupon && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                                        </div>
+                                    )}
+                                    {isCouponValid && !isValidatingCoupon && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full font-medium animate-in fade-in zoom-in">
+                                            Applied
+                                        </div>
+                                    )}
+                                </div>
+                                {/* Coupon Feedback Message */}
+                                {couponMessage && (
+                                    <p className={`text-[10px] mt-1.5 ml-1 ${isCouponValid ? 'text-green-600' : 'text-red-500'}`}>
+                                        {couponMessage}
+                                    </p>
                                 )}
                             </div>
-                            {/* Coupon Feedback Message */}
-                            {couponMessage && (
-                                <p className={`text-[10px] mt-1.5 ml-1 ${isCouponValid ? 'text-green-600' : 'text-red-500'}`}>
-                                    {couponMessage}
-                                </p>
-                            )}
-                        </div>
+                        )}
 
                         <div className="space-y-3 pt-2 border-t border-border/50">
-                            {/* Add-on Teasers (Optional) remain same */}
-                            <div className="pb-2">
-                                <Accordion type="single" collapsible className="w-full">
-                                    <AccordionItem value="included" className="border-b-0">
-                                        <AccordionTrigger className="hover:no-underline py-2">
-                                            <div className="flex items-center gap-2">
-                                                <h3 className="font-medium text-foreground text-left text-xs">🎁 Bonus Spesial (Termasuk)</h3>
-                                            </div>
-                                        </AccordionTrigger>
-                                        <AccordionContent>
-                                            <div className="grid grid-cols-1 gap-3 pt-2 pb-2">
-                                                <div className="flex items-center justify-between p-3 border border-indigo-500/30 rounded-lg bg-indigo-500/5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-indigo-500/10 rounded-md">
-                                                            <Sparkles className="w-4 h-4 text-indigo-500" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-medium text-sm text-foreground">Kira AI Mentor (30 Hari)</p>
-                                                            <p className="text-[10px] text-muted-foreground">Chat 24/7 dengan mentor personal kamu</p>
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-[10px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-full">FREE</span>
+                            {/* Bonus Section - Product Specific */}
+                            {productInfo.showBonus && (
+                                <div className="pb-2">
+                                    <h3 className="font-medium text-foreground text-xs mb-3">🎁 Bonus Spesial (Termasuk)</h3>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {/* Kira AI Bonus - Show for bundle and bazi-only */}
+                                        <div className="flex items-center justify-between p-3 border border-indigo-500/30 rounded-lg bg-indigo-500/5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-indigo-500/10 rounded-md">
+                                                    <Sparkles className="w-4 h-4 text-indigo-500" />
                                                 </div>
+                                                <div>
+                                                    <p className="font-medium text-sm text-foreground">Kira AI Mentor (30 Hari)</p>
+                                                    <p className="text-[10px] text-muted-foreground">Chat 24/7 dengan mentor personal kamu</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-full">GRATIS</span>
+                                        </div>
 
-                                                <div className="flex items-center justify-between p-3 border border-red-500/30 rounded-lg bg-red-500/5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-red-500/10 rounded-md">
-                                                            <Flame className="w-4 h-4 text-red-500" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-medium text-sm text-foreground">Bazi Chart Analysis</p>
-                                                            <p className="text-[10px] text-muted-foreground">Analisis keberuntungan & elemen</p>
-                                                        </div>
+                                        {/* Bazi Bonus - Only show for bundle */}
+                                        {productInfo.bonusType === 'bundle' && (
+                                            <div className="flex items-center justify-between p-3 border border-red-500/30 rounded-lg bg-red-500/5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-red-500/10 rounded-md">
+                                                        <Flame className="w-4 h-4 text-red-500" />
                                                     </div>
-                                                    <span className="text-[10px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-full">INCLUDED</span>
+                                                    <div>
+                                                        <p className="font-medium text-sm text-foreground">Bazi Chart Analysis</p>
+                                                        <p className="text-[10px] text-muted-foreground">Analisis keberuntungan & elemen</p>
+                                                    </div>
                                                 </div>
+                                                <span className="text-[10px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-full">GRATIS</span>
                                             </div>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                </Accordion>
-                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Subscription Features - Show for subscription */}
+                            {productInfo.bonusType === 'subscription' && (
+                                <div className="pb-2">
+                                    <h3 className="font-medium text-foreground text-xs mb-3">Yang Kamu Dapatkan</h3>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        <div className="flex items-start gap-3 p-3 border border-indigo-500/20 rounded-lg bg-indigo-500/5">
+                                            <MessageCircle className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="text-sm font-medium text-foreground">Unlimited Chat 24/7</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-3 p-3 border border-purple-500/20 rounded-lg bg-purple-500/5">
+                                            <Fingerprint className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="text-sm font-medium text-foreground">Custom AI Sesuai Bazi dan Human Design-mu</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-3 p-3 border border-amber-500/20 rounded-lg bg-amber-500/5">
+                                            <CalendarDays className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="text-sm font-medium text-foreground">Tanya seputar kehidupan sesuai hari</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-3 p-3 border border-emerald-500/20 rounded-lg bg-emerald-500/5">
+                                            <Lock className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="text-sm font-medium text-foreground">Ruang aman (privasi terjaga)</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="pt-2 border-t border-border/50">
                                 <div className="flex items-start space-x-2">

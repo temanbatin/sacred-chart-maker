@@ -16,19 +16,27 @@ interface PlanetColumnProps {
     hideHeader?: boolean;
 }
 
+// Bodygraph matching colors
+const DESIGN_COLOR = "#CD7F32"; // Bronze/Orange
+const PERSONALITY_COLOR = "#20B2AA"; // Teal
+
 export const PlanetColumn = ({ planets, title, side, hideHeader = false }: PlanetColumnProps) => {
     const isDesign = side === "left";
+    const accentColor = isDesign ? DESIGN_COLOR : PERSONALITY_COLOR;
 
     return (
         <div className={`flex flex-col ${isDesign ? "items-end" : "items-start"}`}>
             {/* Header with arrow - Conditionally Rendered */}
             {!hideHeader && (
                 <div className={`flex items-center gap-1 mb-2 pb-1 border-b border-muted w-full ${isDesign ? "justify-end" : "justify-start"}`}>
-                    {isDesign && <span className="text-primary text-xs">←</span>}
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isDesign ? "text-primary" : "text-muted-foreground"}`}>
+                    {isDesign && <span style={{ color: accentColor }} className="text-xs">←</span>}
+                    <span
+                        style={{ color: accentColor }}
+                        className="text-[10px] font-bold uppercase tracking-wider"
+                    >
                         {title}
                     </span>
-                    {!isDesign && <span className="text-muted-foreground text-xs">→</span>}
+                    {!isDesign && <span style={{ color: accentColor }} className="text-xs">→</span>}
                 </div>
             )}
             {/* Planet rows - aligned */}
@@ -39,11 +47,11 @@ export const PlanetColumn = ({ planets, title, side, hideHeader = false }: Plane
                             className={`flex items-center gap-1.5 py-0.5 cursor-pointer hover:bg-muted/30 rounded px-1 transition-colors ${isDesign ? "flex-row-reverse" : "flex-row"}`}
                         >
                             {/* Gate.Line */}
-                            <span className="text-xs font-medium text-foreground">
+                            <span style={{ color: accentColor }} className="text-xs font-medium">
                                 {planet.Gate}.{planet.Line}
                             </span>
                             {/* Planet symbol */}
-                            <span className={`text-xs ${isDesign ? "text-primary" : "text-muted-foreground"}`}>
+                            <span style={{ color: accentColor }} className="text-xs opacity-80">
                                 {planetSymbols[planet.Planet] || planet.Planet[0]}
                             </span>
                         </div>

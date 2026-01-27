@@ -78,6 +78,7 @@ export interface ChartData {
     utc_datetime?: string;
     utc_date?: string;
     utc_time?: string;
+    birth_date?: string; // API V2 sends this in ISO format
     variables?: {
       top_left?: { value: string };
       bottom_left?: { value: string };
@@ -116,6 +117,85 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const [bodygraphLoading, setBodygraphLoading] = useState(false);
   const [bodygraphError, setBodygraphError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // Type Explainer Data - warm, relatable tone per systemprompt guidelines
+  const TYPE_EXPLAINER: Record<string, {
+    emoji: string;
+    headline: string;
+    description: string;
+    population: string;
+    strategyTip: string;
+    publicFigure?: {
+      name: string;
+      text: string;
+      highlightText?: string;
+      videoUrl?: string;
+      suffixText?: string;
+    };
+  }> = {
+    'Generator': {
+      emoji: '⚡',
+      headline: 'Kamu adalah Mesin Energi Dunia',
+      description: 'Energi kerjamu luar biasa besar. Saat kamu mengerjakan hal yang benar-benar kamu sukai, kamu bisa terus berkarya tanpa kenal lelah. Kunci hidupmu? Tunggu sampai sesuatu datang yang membuatmu bersemangat, lalu responlah dengan sepenuh hati.',
+      population: '37%',
+      strategyTip: 'Jangan memaksakan diri untuk memulai—biarkan peluang datang kepadamu, lalu rasakan responmu.',
+      publicFigure: {
+        name: 'Deddy Corbuzier',
+        text: 'Salah satunya adalah Deddy Corbuzier. Tidak heran jika ia menyebut pantang menyerah sebagai',
+        highlightText: 'kunci suksesnya',
+        videoUrl: 'https://www.youtube.com/watch?v=4oyH-ubQc7I&t=156s',
+        suffixText: '. Karena sebagai Generator, Cakra Sakral yang aktif merupakan baterai alami yang tidak akan habis SELAMA dia melakukan apa yang dia cintai.'
+      }
+    },
+    'Manifesting Generator': {
+      emoji: '🔥',
+      headline: 'Kamu Multi-Talented dengan Energi Berlimpah',
+      description: 'Kamu punya banyak passion dan bisa menguasai berbagai bidang sekaligus. Jangan khawatir kalau kamu sering loncat dari satu minat ke minat lain—itu justru kekuatanmu. Kamu belajar lebih cepat dari kebanyakan orang.',
+      population: '32%',
+      strategyTip: 'Ikuti ketertarikanmu, tapi ingat untuk cek respons tubuhmu sebelum commit ke hal baru.',
+      publicFigure: {
+        name: 'Elon Musk',
+        text: 'Contohnya Elon Musk—punya banyak perusahaan sekaligus (Tesla, SpaceX, X) dan terus melompat dari satu proyek ke proyek lainnya. Sebagai Manifesting Generator, ia belajar cepat dan tidak takut untuk pivot.',
+      }
+    },
+    'Projector': {
+      emoji: '🎯',
+      headline: 'Kamu Ahli Membaca Potensi Orang Lain',
+      description: 'Kamu punya kemampuan unik untuk melihat cara kerja sistem dan orang lain dengan sangat jelas. Energimu berbeda—kamu tidak dirancang untuk bekerja keras. Kekuatanmu ada di kemampuan memandu dan mengarahkan.',
+      population: '21%',
+      strategyTip: 'Tunggu sampai kamu diundang atau diakui sebelum memberikan saran—itu kunci agar idemu diterima.',
+      publicFigure: {
+        name: 'Prilly Latuconsina',
+        text: 'Salah satunya Prilly Latuconsina, Prilly "memandu" masyarakat lewat pesan-pesan mendalam di filmnya sebagai',
+        highlightText: 'produser',
+        videoUrl: 'https://www.youtube.com/watch?v=aAO3zUuLBuE',
+        suffixText: '. Bagi Prilly, kepuasan tertingginya bukanlah sekadar popularitas, melainkan \'Success\'—saat ia tahu karyanya memberikan dampak nyata dan mengubah hidup orang lain.'
+      }
+    },
+    'Manifestor': {
+      emoji: '🚀',
+      headline: 'Kamu Inisiator yang Membuka Jalan',
+      description: 'Kamu satu-satunya tipe yang dirancang untuk memulai sesuatu tanpa menunggu. Ide-idemu sering mendahului zamannya. Orang mungkin tidak selalu mengerti visimu di awal, dan itu tidak apa-apa.',
+      population: '8%',
+      strategyTip: 'Informasikan orang-orang terdekat sebelum kamu bertindak—bukan minta izin, tapi memberi tahu.',
+      publicFigure: {
+        name: 'Steve Jobs',
+        text: 'Steve Jobs adalah Manifestor sejati—memulai revolusi komputer personal dan smartphone tanpa menunggu siapapun. Visinya sering tidak dipahami di awal, tapi ia tetap maju.',
+      }
+    },
+    'Reflector': {
+      emoji: '🌙',
+      headline: 'Kamu Cermin yang Menilai Kesehatan Komunitas',
+      description: 'Kamu sangat langka dan sensitif terhadap lingkungan. Kamu bisa merasakan kesehatan sebuah tempat atau komunitas lebih baik dari siapapun. Jangan buru-buru mengambil keputusan—waktu adalah sahabatmu.',
+      population: '1%',
+      strategyTip: 'Berikan dirimu waktu 28 hari (satu siklus bulan) sebelum membuat keputusan besar.',
+      publicFigure: {
+        name: 'Sandra Bullock',
+        text: 'Sandra Bullock adalah Reflector—sangat selektif dalam memilih proyek dan dikenal karena kemampuannya "menyerap" karakter yang ia mainkan. Sebagai tipe terlangka, ia butuh waktu untuk membuat keputusan.',
+      }
+    }
+  };
+
   /* const [isProductModalOpen, setIsProductModalOpen] = useState(false); // Deprecated */
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
@@ -225,7 +305,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
 
     const params = new URLSearchParams();
     params.set('action', 'generate');
-    params.set('n', birthData.name);
+    params.set('n', birthData.name || userName || 'Unknown');
     // Format date d-m-y
     const dateStr = `${birthData.day}-${birthData.month}-${birthData.year}`;
     params.set('d', dateStr);
@@ -236,7 +316,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
     }
 
     params.set('p', birthData.place);
-    params.set('g', birthData.gender);
+    params.set('g', birthData.gender || 'male');
 
     const shareUrl = `${window.location.origin}/?${params.toString()}`;
 
@@ -283,7 +363,9 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       // Generate Reference ID uniquely
       const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-      const productName = `Full Report Human Design: ${checkoutData.name}`;
+      // Use product config for correct naming and report_type
+      const productName = `${PRODUCTS.FULL_REPORT.name}: ${checkoutData.name}`;
+      const reportType = PRODUCTS.FULL_REPORT.report_type; // 'bundle-full-bazi'
       const finalChartIds = chartId ? [chartId] : [];
 
       // Format birth data using helper function
@@ -298,6 +380,60 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         gender: checkoutData.gender
       });
 
+      // Check if this is a FREE coupon (finalPrice === 0)
+      const isFreeOrder = checkoutData.finalPrice === 0 && checkoutData.couponCode;
+
+      if (isFreeOrder) {
+        // --- FREE COUPON FLOW: Call redeem-free-order directly ---
+        console.log('🎁 Free coupon detected, calling redeem-free-order...');
+
+        const redeemPayload = {
+          couponCode: checkoutData.couponCode,
+          referenceId: referenceId,
+          customerName: checkoutData.name,
+          customerEmail: checkoutData.email,
+          customerPhone: checkoutData.whatsapp,
+          productName: productName,
+          reportType: reportType, // Explicit report_type
+          chartIds: finalChartIds,
+          birthData: birthDataForMetadata,
+          userId: activeUserId || null
+        };
+
+        const { data: redeemResult, error: redeemError } = await supabase.functions.invoke('redeem-free-order', {
+          body: redeemPayload
+        });
+
+        if (redeemError) {
+          console.error('Redeem error:', redeemError);
+          throw new Error(redeemError.message || 'Gagal menggunakan kupon gratis');
+        }
+
+        if (redeemResult?.success && redeemResult?.redirect_url) {
+          // Track free conversion
+          if (window.fbq) {
+            window.fbq('track', 'Purchase', {
+              value: 0,
+              currency: 'IDR',
+              content_name: productName
+            });
+          }
+
+          sessionStorage.setItem('paymentRefId', referenceId);
+
+          toast({
+            title: '🎉 Kupon berhasil digunakan!',
+            description: 'Report kamu sedang diproses...'
+          });
+
+          window.location.href = redeemResult.redirect_url;
+          return;
+        } else {
+          throw new Error(redeemResult?.error || 'Gagal menggunakan kupon');
+        }
+      }
+
+      // --- PAID FLOW: Proceed to Midtrans ---
       // 1. Save order to database first (same as Reports.tsx)
       // @ts-ignore
       const { error: orderError } = await supabase
@@ -315,6 +451,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
           metadata: {
             chart_ids: finalChartIds,
             products: [PRODUCTS.FULL_REPORT.id],
+            report_type: reportType, // Store report_type in metadata
             // Birth data in standard format (year/month/day as numbers)
             birth_data: birthDataForMetadata,
             // Save full chart snapshot so N8N can generate report without re-calculating
@@ -341,6 +478,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
         customerPhone: checkoutData.whatsapp,
         amount: PRODUCTS.FULL_REPORT.price,
         productName: productName,
+        reportType: reportType, // Explicit report_type for N8N
         chartIds: finalChartIds,
         birthData: birthData, // Include birth data for report generation
         products: [PRODUCTS.FULL_REPORT.id]
@@ -388,7 +526,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
             birth_time: `${String(birthData.hour).padStart(2, '0')}:${String(birthData.minute).padStart(2, '0')}`,
             birth_place: birthData.place,
             chart_data: data,
-            gender: birthData.gender
+            gender: checkoutData.gender || birthData.gender || 'male'
           }));
         }
 
@@ -417,11 +555,17 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
     }
   };
 
-  // Fetch bodygraph image when component mounts
+  // Fetch bodygraph image when component mounts (only if not using React bodygraph)
   useEffect(() => {
     // Track Lead Event when chart is viewed
     if (window.fbq) {
       window.fbq('track', 'Lead');
+    }
+
+    // Skip API call if using React bodygraph component
+    if (USE_REACT_BODYGRAPH) {
+      setBodygraphLoading(false);
+      return;
     }
 
     const fetchBodygraph = async () => {
@@ -478,7 +622,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       );
 
       if (blob) {
-        const fileName = `temanbatin-${userName.replace(/\s+/g, "-").toLowerCase()}-story.png`;
+        const fileName = `temanbatin-${(userName || 'chart').replace(/\s+/g, "-").toLowerCase()}-story.png`;
         const file = new File([blob], fileName, { type: "image/png" });
         const canShare = navigator.canShare && navigator.canShare({ files: [file] });
 
@@ -569,17 +713,113 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
     );
   }
 
+  // Calculate UTC display string
+  const getUtcDisplayString = () => {
+    // 1. Try legacy/direct props
+    if (general?.utc_datetime) return general.utc_datetime;
+
+    // 2. Try API V2 birth_date (ISO string)
+    if (general?.birth_date) {
+      try {
+        const date = new Date(general.birth_date);
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const day = date.getUTCDate();
+        const month = monthNames[date.getUTCMonth()];
+        const year = date.getUTCFullYear();
+        const time = `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`;
+        return `${day} ${month} ${year}, ${time} UTC`;
+      } catch (e) {
+        console.error("Error parsing birth_date", e);
+      }
+    }
+
+    // 3. Fallback to individual components
+    if (general?.utc_date && general?.utc_time) {
+      return `${general.utc_date} ${general.utc_time}`;
+    }
+
+    // 4. Fallback to root prop
+    if (data?.utc) return data.utc;
+
+    return undefined;
+  };
+
+  const utcDisplayString = getUtcDisplayString();
+
   return (
     <section className={cn("py-20 px-4", className)}>
       <div className="max-w-6xl mx-auto">
         {/* Downloadable Content Area */}
         <div ref={chartRef} className="bg-background p-4 md:p-8 rounded-3xl">
           <div className="text-center mb-8 animate-fade-up">
-            <h2 className="text-3xl md:text-4xl font-bold mb-2 text-gradient-fire">Selamat, {userName}! 🌟</h2>
-            <p className="text-lg text-muted-foreground">Inilah cetak biru energi kosmikmu</p>
-
-            {/* Unsaved Chart Banner for Guest Users */}
+            <h2 className="text-3xl md:text-4xl font-bold mb-2 text-gradient-fire">Desain Unikmu Sudah Terungkap</h2>
+            <p className="text-lg text-muted-foreground">Peta energi yang hanya kamu miliki di dunia ini</p>
           </div>
+
+          {/* Type Explainer Card & Comparison Teaser */}
+          {TYPE_EXPLAINER[chartType] && (
+            <div className="mb-8 animate-fade-up">
+              {/* Type Explainer Card */}
+              <div className="glass-card rounded-2xl p-6 md:p-8 mb-4">
+                <div className="flex items-start gap-4">
+                  <span className="text-4xl">{TYPE_EXPLAINER[chartType].emoji}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-3 py-1 bg-primary/20 text-primary text-sm font-semibold rounded-full">
+                        {chartType}
+                      </span>
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold text-foreground mb-3">
+                      {TYPE_EXPLAINER[chartType].headline}
+                    </h3>
+                    <p className="text-muted-foreground leading-relaxed mb-4">
+                      {TYPE_EXPLAINER[chartType].description}
+                    </p>
+                    <div className="bg-secondary/50 rounded-xl p-4">
+                      <p className="text-sm text-foreground">
+                        <span className="font-semibold text-primary">💡 Strategi Hidupmu:</span>{' '}
+                        {TYPE_EXPLAINER[chartType].strategyTip}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Comparison Teaser with Public Figure */}
+              <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-xl p-4 md:p-5 border border-primary/20">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary font-bold">{TYPE_EXPLAINER[chartType].population}</span>
+                  </div>
+                  <p className="text-foreground">
+                    <span className="font-semibold">Hanya {TYPE_EXPLAINER[chartType].population}</span>{' '}
+                    <span className="text-muted-foreground">orang di dunia memiliki tipe sepertimu.</span>
+                  </p>
+                </div>
+
+                {/* Public Figure Example - same box */}
+                {TYPE_EXPLAINER[chartType].publicFigure && (
+                  <p className="text-sm text-muted-foreground leading-relaxed border-t border-primary/10 pt-3">
+                    {TYPE_EXPLAINER[chartType].publicFigure.text}
+                    {TYPE_EXPLAINER[chartType].publicFigure.highlightText && TYPE_EXPLAINER[chartType].publicFigure.videoUrl ? (
+                      <>
+                        {' '}
+                        <a
+                          href={TYPE_EXPLAINER[chartType].publicFigure.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary/80 underline font-medium transition-colors"
+                        >
+                          {TYPE_EXPLAINER[chartType].publicFigure.highlightText}
+                        </a>
+                        {TYPE_EXPLAINER[chartType].publicFigure.suffixText}
+                      </>
+                    ) : null}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Main Content Layout - Desktop: Sidebar + Chart | Mobile: Chart Only */}
           <div className="animate-fade-up">
@@ -599,12 +839,12 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 signature={signature}
                 notSelf={notSelf}
                 variables={general.variables}
-                utcDateTime={general.utc_datetime || (general.utc_date && general.utc_time ? `${general.utc_date} ${general.utc_time}` : (data.utc || undefined))}
+                utcDateTime={utcDisplayString}
               />
 
               {/* Right: Design + Variables + Bodygraph + Variables + Personality */}
-              {/* pt-12 to align with Birth Data section (after Properties header) */}
-              <div className="flex justify-center items-start pt-12 gap-1">
+              {/* pt-12 removed to align with Birth Data section */}
+              <div className="flex justify-center items-start gap-1">
                 {/* Design Column - fixed width for symmetry */}
                 <div className="flex-shrink-0 self-start w-[80px]">
                   <PlanetColumn planets={designPlanets} title="DESIGN" side="left" />
@@ -859,11 +1099,11 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 <p className="text-amber-400 text-sm font-medium mb-1">🔥 Harga promo terbatas untuk waktu singkat</p>
                 <p className="text-white/60 text-xs mb-3">{soldCount}+ orang telah mendapatkan panduan mereka</p>
                 <h3 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">
-                  Chart Kamu Adalah Kode dan Peta.<br />Full Report Adalah Kunci Membacanya.
+                  Desainmu sudah terungkap.<br />Sekarang saatnya memahaminya.
                 </h3>
                 <p className="text-white/90 text-lg">
-                  Melihat gambar Bodygraph di atas tanpa penjelasan ibarat memiliki peta harta karun tapi tidak bisa membacanya.
-                  Full Report 100+ Halaman akan menerjemahkan setiap simbol, garis, dan warna menjadi panduan hidup yang praktis.
+                  Peta energi yang kamu lihat di atas menyimpan jawaban untuk pertanyaan-pertanyaan yang selama ini mengganggu pikiranmu.
+                  Full Report 100+ Halaman akan menerjemahkannya menjadi panduan hidup yang praktis dan personal.
                 </p>
               </div>
 
@@ -915,8 +1155,8 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                     <CheckCircle2 className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <p className="text-white font-semibold mb-1">Arti Center Putih (Undefined) Kamu</p>
-                    <p className="text-white/70 text-sm">Temukan di mana kamu rentan menyerap emosi orang lain dan cara melindunginya.</p>
+                    <p className="text-white font-semibold mb-1">Kenapa Kamu Sering Merasa Lelah & Tidak Termotivasi</p>
+                    <p className="text-white/70 text-sm">Pahami bagaimana energimu bekerja dan kapan waktu optimal untuk bekerja, istirahat, dan mengambil keputusan.</p>
                   </div>
                 </div>
 
@@ -925,8 +1165,8 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                     <CheckCircle2 className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <p className="text-white font-semibold mb-1">Cara Menggunakan Strategi {strategy}</p>
-                    <p className="text-white/70 text-sm">Terdengar sederhana, tapi kami berikan contoh konkret penerapannya dalam karir & cinta.</p>
+                    <p className="text-white font-semibold mb-1">Kenapa Kamu Sering Salah Ambil Keputusan</p>
+                    <p className="text-white/70 text-sm">Temukan cara pengambilan keputusan yang sesuai dengan desainmu—bukan cara yang diajarkan orang lain.</p>
                   </div>
                 </div>
 
@@ -935,13 +1175,35 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                     <CheckCircle2 className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <p className="text-white font-semibold mb-1">Misi Jiwa (Incarnation Cross)</p>
-                    <p className="text-white/70 text-sm">Cetak biru tujuan hidup kamu yang sesungguhnya—bukan karir, tapi peran jiwa.</p>
+                    <p className="text-white font-semibold mb-1">Kenapa Hubunganmu Sering Tidak Berjalan Lancar</p>
+                    <p className="text-white/70 text-sm">Pelajari bagaimana cara kamu berinteraksi dan apa yang kamu butuhkan dari orang lain untuk merasa dipahami.</p>
                   </div>
                 </div>
-                <p className="text-center text-white/70 text-sm italic mt-4">
-                  ... Dan masih banyak panduan praktis lain yang tidak muat kalau kita jelaskan satu persatu.
-                </p>
+
+                {/* Bonus Section */}
+                <div className="border-t border-amber-400/30 pt-4 mt-6">
+                  <p className="text-amber-400 text-sm font-medium mb-3 text-center">🎁 BONUS EKSKLUSIF</p>
+
+                  <div className="flex items-start gap-4 bg-amber-400/10 p-4 rounded-xl border border-amber-400/30">
+                    <div className="bg-amber-400/20 p-2 rounded-full">
+                      <span className="text-amber-300 text-lg">☯</span>
+                    </div>
+                    <div>
+                      <p className="text-amber-300 font-semibold mb-1">Bazi Report (Chinese Astrology)</p>
+                      <p className="text-white/70 text-sm">Analisis mendalam dari perspektif astrologi Tiongkok—kombinasi sempurna dengan Human Design untuk pemahaman diri yang lebih lengkap.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 bg-amber-400/10 p-4 rounded-xl border border-amber-400/30 mt-3">
+                    <div className="bg-amber-400/20 p-2 rounded-full">
+                      <span className="text-amber-300 text-lg">💬</span>
+                    </div>
+                    <div>
+                      <p className="text-amber-300 font-semibold mb-1">WhatsApp AI "Kira" - Konsultasi Unlimited</p>
+                      <p className="text-white/70 text-sm">Akses AI yang sudah mempelajari reportmu—tanyakan apapun tentang desainmu kapan saja via WhatsApp.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="text-center">
@@ -959,7 +1221,7 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                   <span className="text-amber-300 font-bold text-xl">{formatPrice(PRODUCTS.FULL_REPORT.price)}</span>
                   <span className="text-white/60 line-through text-base">{formatPrice(PRODUCTS.FULL_REPORT.original_price)}</span>
                 </div>
-                <p className="text-center text-white/60 text-sm mt-2">⚡ Pengiriman Instan</p>
+                <p className="text-center text-white/60 text-sm mt-2">⚡ Pengiriman Instan dalam 10 menit</p>
               </div>
             </div>
             <div className="mt-12 mb-12">
@@ -1055,7 +1317,9 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
               birthDate: `${birthData.year}-${String(birthData.month).padStart(2, '0')}-${String(birthData.day).padStart(2, '0')}`,
               birthTime: `${String(birthData.hour).padStart(2, '0')}-${String(birthData.minute).padStart(2, '0')}`,
               birthCity: birthData.place,
-              gender: birthData.gender as 'male' | 'female'
+              gender: (birthData.gender as 'male' | 'female') || 'male',
+              whatsapp: birthData.whatsapp,
+              email: birthData.email
             }}
           />
         )}
@@ -1197,31 +1461,33 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
       </div>
 
       {/* Floating CTA Button */}
-      {showFloatingCTA && (
-        <div className="fixed bottom-6 left-0 right-0 z-50 px-4 animate-in fade-in slide-in-from-bottom-10 duration-300">
-          <div className="max-w-md mx-auto">
-            <div className="flex flex-col gap-2 items-center">
-              <div className="bg-white text-[hsl(160_84%_5%)] text-xs md:text-sm font-bold py-1.5 px-3 md:px-4 rounded-full flex items-center gap-1.5 shadow-lg border border-[hsl(160_84%_5%)]/10">
-                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 animate-pulse text-[hsl(160_84%_5%)]" />
-                Harga promo bisa berakhir kapan saja
-              </div>
-              <Button
-                size="lg"
-                className="w-full fire-glow py-7 shadow-2xl relative overflow-hidden group"
-                onClick={() => {
-                  setIsCheckoutModalOpen(true);
-                }}
-              >
-                <div className="flex flex-col items-center leading-tight">
-                  <span className="text-sm font-bold tracking-wide text-center">Dapatkan Full Report Kamu</span>
-                  <span className="text-[10px] opacity-80 font-medium">Investasi terbaik untuk dirimu</span>
+      {
+        showFloatingCTA && (
+          <div className="fixed bottom-6 left-0 right-0 z-50 px-4 animate-in fade-in slide-in-from-bottom-10 duration-300">
+            <div className="max-w-md mx-auto">
+              <div className="flex flex-col gap-2 items-center">
+                <div className="bg-white text-[hsl(160_84%_5%)] text-xs md:text-sm font-bold py-1.5 px-3 md:px-4 rounded-full flex items-center gap-1.5 shadow-lg border border-[hsl(160_84%_5%)]/10">
+                  <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 animate-pulse text-[hsl(160_84%_5%)]" />
+                  Harga promo bisa berakhir kapan saja
                 </div>
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
+                <Button
+                  size="lg"
+                  className="w-full fire-glow py-7 shadow-2xl relative overflow-hidden group"
+                  onClick={() => {
+                    setIsCheckoutModalOpen(true);
+                  }}
+                >
+                  <div className="flex flex-col items-center leading-tight">
+                    <span className="text-sm font-bold tracking-wide text-center">Dapatkan Full Report Kamu</span>
+                    <span className="text-[10px] opacity-80 font-medium">Investasi terbaik untuk dirimu</span>
+                  </div>
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Hidden Instagram Story Export View - Luxury Edition 1080x1920 */}
       <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
@@ -1357,10 +1623,10 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                 marginBottom: '24px',
                 letterSpacing: '-3px',
               }}>
-                {userName.split(' ')[0]}
-                {userName.split(' ').length > 1 && (
+                {(userName || 'Your Chart').split(' ')[0]}
+                {(userName || '').split(' ').length > 1 && (
                   <span style={{ display: 'block', fontSize: '0.5em', fontStyle: 'normal', fontWeight: '400', marginTop: '12px', letterSpacing: '0px' }}>
-                    {userName.split(' ').slice(1).join(' ')}
+                    {(userName || '').split(' ').slice(1).join(' ')}
                   </span>
                 )}
               </h1>

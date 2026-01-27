@@ -38,6 +38,7 @@ interface RedeemRequest {
     customerEmail: string;
     customerPhone: string;
     productName: string;
+    reportType?: string; // Explicit report type from frontend
     chartIds?: string[];
     birthData?: any;
     userId?: string;
@@ -50,9 +51,9 @@ serve(async (req) => {
     }
 
     try {
-        const { couponCode, referenceId, customerName, customerEmail, customerPhone, productName, chartIds, birthData, userId } = await req.json();
+        const { couponCode, referenceId, customerName, customerEmail, customerPhone, productName, reportType, chartIds, birthData, userId } = await req.json();
 
-        console.log('Processing coupon redemption:', { couponCode, referenceId, customerEmail });
+        console.log('Processing coupon redemption:', { couponCode, referenceId, customerEmail, reportType });
 
         // 1. Validate Coupon (Server-side check)
         const { data: coupons, error: couponError } = await supabase
@@ -98,7 +99,8 @@ serve(async (req) => {
                 metadata: {
                     chart_ids: chartIds,
                     birth_data: birthData,
-                    coupon_code: couponCode
+                    coupon_code: couponCode,
+                    report_type: reportType // Store explicit report_type
                 }
             });
 
@@ -145,21 +147,22 @@ serve(async (req) => {
                 chartsData = fetchedCharts || [];
             }
 
-            // Determine report_type based on product_name
-            let report_type = 'personal-comprehensive'; // Default
-            const productNameLower = (orderData?.product_name || '').toLowerCase();
+            // Use explicit reportType from request, fallback to inference from product_name
+            let report_type = reportType || orderData?.metadata?.report_type;
 
-            if (productNameLower.includes('bazi') && productNameLower.includes('human design')) {
-                if (productNameLower.includes('essential')) {
-                    report_type = 'bundle-essential-bazi';
-                } else {
-                    report_type = 'bundle-full-bazi';
+            if (!report_type) {
+                // Fallback: Determine report_type based on product_name (legacy support)
+                report_type = 'bundle-full-bazi'; // Default to bundle
+                const productNameLower = (orderData?.product_name || '').toLowerCase();
+
+                if (productNameLower.includes('bazi only') || (productNameLower.includes('bazi') && !productNameLower.includes('human design') && !productNameLower.includes('bundle'))) {
+                    report_type = 'bazi';
+                } else if (productNameLower.includes('essential')) {
+                    report_type = 'personal-essential';
                 }
-            } else if (productNameLower.includes('essential')) {
-                report_type = 'personal-essential';
-            } else if (productNameLower.includes('bazi')) {
-                report_type = 'bazi';
             }
+
+            console.log('Using report_type:', report_type);
 
             // Send to N8N
             n8nResponse = await fetch(N8N_WEBHOOK_URL, {

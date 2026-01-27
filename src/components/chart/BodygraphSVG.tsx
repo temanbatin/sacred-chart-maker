@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { GATE_TO_SPLIT_PATH } from './channelSplitPaths';
+import { GATE_DESCRIPTIONS } from './gateDescriptions';
 
 // Types for bodygraph data
 export type ActivationType = 'personality' | 'design' | 'both';
@@ -256,6 +257,28 @@ export const BodygraphSVG: React.FC<BodygraphSVGProps> = ({
     className = '',
 }) => {
     const { gateActivations, activeChannels, definedCenters } = data;
+    const [hoveredGate, setHoveredGate] = useState<number | null>(null);
+    const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
+    const [selectedCenter, setSelectedCenter] = useState<string | null>(null);
+
+    // Mapping of centers to their associated gates
+    const CENTER_GATES: Record<string, number[]> = {
+        Head: [64, 61, 63],
+        Ajna: [47, 24, 4, 17, 43, 11],
+        Throat: [62, 23, 56, 16, 20, 35, 12, 45, 31, 8, 33],
+        G: [7, 1, 13, 25, 46, 2, 15, 10],
+        Heart: [51, 21, 26, 40],
+        Spleen: [48, 57, 44, 50, 32, 28, 18, 54],
+        SolarPlexus: [36, 22, 37, 6, 49, 55, 30],
+        Sacral: [5, 14, 29, 59, 9, 3, 42, 27, 34],
+        Root: [58, 38, 53, 60, 52, 19, 39, 41],
+    };
+
+    // Get gates connected to selected center
+    const highlightedGates = useMemo(() => {
+        if (!selectedCenter) return new Set<number>();
+        return new Set(CENTER_GATES[selectedCenter] || []);
+    }, [selectedCenter]);
 
     // Create set of defined center codes
     const definedCenterSet = useMemo(() => {
@@ -347,318 +370,369 @@ export const BodygraphSVG: React.FC<BodygraphSVGProps> = ({
     };
 
     return (
-        <svg
-            viewBox="0 0 234 320"
-            width={width}
-            height={height}
-            className={className}
-            style={{ backgroundColor: 'transparent' }}
-        >
-            <defs>
-                {/* Glow filters - matching theme colors */}
-                <filter id="glow-teal" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
-                    <feFlood floodColor="#20B2AA" floodOpacity="1" result="color" />
-                    <feComposite in="color" in2="blur" operator="in" result="glow" />
-                    <feMerge>
-                        <feMergeNode in="glow" />
-                        <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                </filter>
-                <filter id="glow-gold" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
-                    <feFlood floodColor="#CD7F32" floodOpacity="1" result="color" />
-                    <feComposite in="color" in2="blur" operator="in" result="glow" />
-                    <feMerge>
-                        <feMergeNode in="glow" />
-                        <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                </filter>
-                <filter id="glow-both" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="blur" />
-                    <feFlood floodColor="#40C4B0" floodOpacity="1" result="color" />
-                    <feComposite in="color" in2="blur" operator="in" result="glow" />
-                    <feMerge>
-                        <feMergeNode in="glow" />
-                        <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                </filter>
-                {/* Subtle center glow for defined centers */}
-                <filter id="center-glow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
-                    <feFlood floodColor="#B8860B" floodOpacity="0.4" result="color" />
-                    <feComposite in="color" in2="blur" operator="in" result="glow" />
-                    <feMerge>
-                        <feMergeNode in="glow" />
-                        <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                </filter>
-                {/* Stripe pattern for both activation */}
-                <pattern id="stripe-pd" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                    <rect width="1.5" height="3" fill="#20B2AA" />
-                    <rect x="1.5" width="1.5" height="3" fill="#CD7F32" />
-                </pattern>
-            </defs>
+        <div className="relative inline-block">
+            <svg
+                viewBox="0 0 234 320"
+                width={width}
+                height={height}
+                className={className}
+                style={{ backgroundColor: 'transparent' }}
+            >
+                <defs>
+                    {/* Glow filters - matching theme colors */}
+                    <filter id="glow-teal" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+                        <feFlood floodColor="#20B2AA" floodOpacity="1" result="color" />
+                        <feComposite in="color" in2="blur" operator="in" result="glow" />
+                        <feMerge>
+                            <feMergeNode in="glow" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                    <filter id="glow-gold" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+                        <feFlood floodColor="#CD7F32" floodOpacity="1" result="color" />
+                        <feComposite in="color" in2="blur" operator="in" result="glow" />
+                        <feMerge>
+                            <feMergeNode in="glow" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                    <filter id="glow-both" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="blur" />
+                        <feFlood floodColor="#40C4B0" floodOpacity="1" result="color" />
+                        <feComposite in="color" in2="blur" operator="in" result="glow" />
+                        <feMerge>
+                            <feMergeNode in="glow" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                    {/* Subtle center glow for defined centers */}
+                    <filter id="center-glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+                        <feFlood floodColor="#B8860B" floodOpacity="0.4" result="color" />
+                        <feComposite in="color" in2="blur" operator="in" result="glow" />
+                        <feMerge>
+                            <feMergeNode in="glow" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                    {/* Stripe pattern for both activation */}
+                    <pattern id="stripe-pd" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                        <rect width="1.5" height="3" fill="#20B2AA" />
+                        <rect x="1.5" width="1.5" height="3" fill="#CD7F32" />
+                    </pattern>
+                </defs>
 
-            {/* 1. Draw inactive channel base layer - curved paths for all gates */}
-            {Object.entries(GATE_TO_CHANNEL_PATH).map(([gateIdStr, pathData]) => (
-                <path
-                    key={`base-${gateIdStr}`}
-                    d={pathData}
-                    fill="none"
-                    stroke={COLORS.inactive}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    opacity="0.4"
-                />
-            ))}
+                {/* 1. Draw inactive channel base layer - curved paths for all gates */}
+                {Object.entries(GATE_TO_CHANNEL_PATH).map(([gateIdStr, pathData]) => (
+                    <path
+                        key={`base-${gateIdStr}`}
+                        d={pathData}
+                        fill="none"
+                        stroke={COLORS.inactive}
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        opacity="0.4"
+                    />
+                ))}
 
-            {/* 2. Draw active gate paths - each active gate draws its half of the channel */}
-            {Object.entries(gateActivations).map(([gateIdStr, activation]) => {
-                const gateId = parseInt(gateIdStr);
+                {/* 2. Draw active gate paths - each active gate draws its half of the channel */}
+                {Object.entries(gateActivations).map(([gateIdStr, activation]) => {
+                    const gateId = parseInt(gateIdStr);
 
-                // Check if this is a short gate
-                const isShortGate = SHORT_GATES.has(gateId);
+                    // Check if this is a short gate
+                    const isShortGate = SHORT_GATES.has(gateId);
 
-                // For short gates: use split_path (filled shape) for visibility
-                // For long gates: use channel_path with stroke
-                const pathData = isShortGate
-                    ? GATE_TO_SPLIT_PATH[gateId]
-                    : GATE_TO_CHANNEL_PATH[gateId];
-                if (!pathData) return null;
+                    // For short gates: use split_path (filled shape) for visibility
+                    // For long gates: use channel_path with stroke
+                    const pathData = isShortGate
+                        ? GATE_TO_SPLIT_PATH[gateId]
+                        : GATE_TO_CHANNEL_PATH[gateId];
+                    if (!pathData) return null;
 
-                const pairedGate = GATE_PAIRS[gateId];
-                const pairedActivation = pairedGate ? gateActivations[pairedGate] : null;
+                    const pairedGate = GATE_PAIRS[gateId];
+                    const pairedActivation = pairedGate ? gateActivations[pairedGate] : null;
 
-                // Determine if this forms a complete channel
-                const isCompleteChannel = pairedActivation !== undefined && pairedActivation !== null;
+                    // Determine if this forms a complete channel
+                    const isCompleteChannel = pairedActivation !== undefined && pairedActivation !== null;
 
-                // Determine colors and effects
-                const color = activation === 'personality' ? COLORS.personality :
-                    activation === 'design' ? COLORS.design : COLORS.both;
-                const filter = activation === 'personality' ? 'url(#glow-teal)' :
-                    activation === 'design' ? 'url(#glow-gold)' : 'url(#glow-both)';
+                    // Determine colors and effects
+                    const color = activation === 'personality' ? COLORS.personality :
+                        activation === 'design' ? COLORS.design : COLORS.both;
+                    const filter = activation === 'personality' ? 'url(#glow-teal)' :
+                        activation === 'design' ? 'url(#glow-gold)' : 'url(#glow-both)';
 
-                // For short gates: use fill (split_path is a closed filled shape)
-                // For long gates: use stroke (channel_path is a line)
-                if (isShortGate) {
-                    // Short gate: render as filled shape
+                    // For short gates: use fill (split_path is a closed filled shape)
+                    // For long gates: use stroke (channel_path is a line)
+                    if (isShortGate) {
+                        // Short gate: render as filled shape
+                        if (activation === 'both') {
+                            return (
+                                <g key={`active-${gateId}`}>
+                                    <path
+                                        d={pathData}
+                                        fill={COLORS.personality}
+                                        stroke="none"
+                                        opacity="0.85"
+                                        transform="translate(-0.5, 0)"
+                                        filter="url(#glow-teal)"
+                                    />
+                                    <path
+                                        d={pathData}
+                                        fill={COLORS.design}
+                                        stroke="none"
+                                        opacity="0.85"
+                                        transform="translate(0.5, 0)"
+                                        filter="url(#glow-gold)"
+                                    />
+                                </g>
+                            );
+                        }
+                        return (
+                            <path
+                                key={`active-${gateId}`}
+                                d={pathData}
+                                fill={color}
+                                stroke="none"
+                                opacity="0.95"
+                                filter={filter}
+                            />
+                        );
+                    }
+
+                    // Long gates: render as stroked path
+                    // For complete channels with mixed activations, draw dual strokes
+                    if (isCompleteChannel && activation !== pairedActivation && activation !== 'both' && pairedActivation !== 'both') {
+                        return (
+                            <path
+                                key={`active-${gateId}`}
+                                d={pathData}
+                                fill="none"
+                                stroke={color}
+                                strokeWidth="2.8"
+                                strokeLinecap="round"
+                                filter={filter}
+                            />
+                        );
+                    }
+
+                    // For complete channels with same activation or hanging gates
                     if (activation === 'both') {
                         return (
                             <g key={`active-${gateId}`}>
                                 <path
                                     d={pathData}
-                                    fill={COLORS.personality}
-                                    stroke="none"
-                                    opacity="0.85"
-                                    transform="translate(-0.5, 0)"
+                                    fill="none"
+                                    stroke={COLORS.personality}
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    transform="translate(-0.8, 0)"
                                     filter="url(#glow-teal)"
                                 />
                                 <path
                                     d={pathData}
-                                    fill={COLORS.design}
-                                    stroke="none"
-                                    opacity="0.85"
-                                    transform="translate(0.5, 0)"
+                                    fill="none"
+                                    stroke={COLORS.design}
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    transform="translate(0.8, 0)"
                                     filter="url(#glow-gold)"
                                 />
                             </g>
                         );
                     }
-                    return (
-                        <path
-                            key={`active-${gateId}`}
-                            d={pathData}
-                            fill={color}
-                            stroke="none"
-                            opacity="0.95"
-                            filter={filter}
-                        />
-                    );
-                }
 
-                // Long gates: render as stroked path
-                // For complete channels with mixed activations, draw dual strokes
-                if (isCompleteChannel && activation !== pairedActivation && activation !== 'both' && pairedActivation !== 'both') {
+                    // Single color stroked path
                     return (
                         <path
                             key={`active-${gateId}`}
                             d={pathData}
                             fill="none"
                             stroke={color}
-                            strokeWidth="2.8"
+                            strokeWidth={isCompleteChannel ? "3" : "2.5"}
                             strokeLinecap="round"
                             filter={filter}
                         />
                     );
-                }
+                })}
 
-                // For complete channels with same activation or hanging gates
-                if (activation === 'both') {
-                    return (
-                        <g key={`active-${gateId}`}>
+                {/* 4. Body outline */}
+                <path
+                    d={BODY_OUTLINE}
+                    fill="none"
+                    stroke={COLORS.outline}
+                    strokeWidth="0.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.6"
+                />
+
+                {/* 5. Draw centers */}
+                {Object.entries(CENTER_PATHS).map(([name, shape]) => {
+                    const isDefined = definedCenterSet.has(name);
+                    const fillColor = isDefined ? COLORS.defined : COLORS.undefined;
+                    const strokeColor = isDefined ? '#DAA520' : '#3d3d5c';
+
+                    if (shape.type === 'path') {
+                        return (
                             <path
-                                d={pathData}
-                                fill="none"
-                                stroke={COLORS.personality}
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                transform="translate(-0.8, 0)"
-                                filter="url(#glow-teal)"
+                                key={name}
+                                d={shape.path}
+                                fill={fillColor}
+                                stroke={strokeColor}
+                                strokeWidth="1.5"
+                                transform={shape.transform ? `matrix(${shape.transform})` : undefined}
                             />
-                            <path
-                                d={pathData}
-                                fill="none"
-                                stroke={COLORS.design}
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                transform="translate(0.8, 0)"
-                                filter="url(#glow-gold)"
-                            />
-                        </g>
-                    );
-                }
+                        );
+                    }
 
-                // Single color stroked path
-                return (
-                    <path
-                        key={`active-${gateId}`}
-                        d={pathData}
-                        fill="none"
-                        stroke={color}
-                        strokeWidth={isCompleteChannel ? "3" : "2.5"}
-                        strokeLinecap="round"
-                        filter={filter}
-                    />
-                );
-            })}
-
-            {/* 4. Body outline */}
-            <path
-                d={BODY_OUTLINE}
-                fill="none"
-                stroke={COLORS.outline}
-                strokeWidth="0.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity="0.6"
-            />
-
-            {/* 5. Draw centers */}
-            {Object.entries(CENTER_PATHS).map(([name, shape]) => {
-                const isDefined = definedCenterSet.has(name);
-                const fillColor = isDefined ? COLORS.defined : COLORS.undefined;
-                const strokeColor = isDefined ? '#DAA520' : '#3d3d5c';
-
-                if (shape.type === 'path') {
                     return (
-                        <path
+                        <rect
                             key={name}
-                            d={shape.path}
+                            x={shape.x}
+                            y={shape.y}
+                            width={shape.w}
+                            height={shape.h}
+                            rx={shape.rx}
                             fill={fillColor}
                             stroke={strokeColor}
                             strokeWidth="1.5"
-                            transform={shape.transform ? `matrix(${shape.transform})` : undefined}
                         />
                     );
-                }
+                })}
 
-                return (
-                    <rect
-                        key={name}
-                        x={shape.x}
-                        y={shape.y}
-                        width={shape.w}
-                        height={shape.h}
-                        rx={shape.rx}
-                        fill={fillColor}
-                        stroke={strokeColor}
-                        strokeWidth="1.5"
-                    />
-                );
-            })}
+                {/* 6. Draw gate circles - matching Go nganjuk reference styling */}
+                {Object.entries(GATE_COORDS).map(([gateIdStr, coord]) => {
+                    const gateId = parseInt(gateIdStr);
+                    const activation = gateActivations[gateId];
+                    const isActive = activation !== undefined;
 
-            {/* 6. Draw gate circles - matching Go nganjuk reference styling */}
-            {Object.entries(GATE_COORDS).map(([gateIdStr, coord]) => {
-                const gateId = parseInt(gateIdStr);
-                const activation = gateActivations[gateId];
-                const isActive = activation !== undefined;
+                    // Gate styling matching nganjuk reference:
+                    // Inactive: white fill (70% opacity), gold stroke, dark text
+                    // Personality: dark teal fill (#134E4A), teal stroke (#20B2AA), light teal text (#5EEAD4)
+                    // Design: dark bronze fill (#5C3D2E), bronze stroke (#CD7F32), gold text (#FFD700)
+                    // Both: combined pattern with gold text
 
-                // Gate styling matching nganjuk reference:
-                // Inactive: white fill (70% opacity), gold stroke, dark text
-                // Personality: dark teal fill (#134E4A), teal stroke (#20B2AA), light teal text (#5EEAD4)
-                // Design: dark bronze fill (#5C3D2E), bronze stroke (#CD7F32), gold text (#FFD700)
-                // Both: combined pattern with gold text
+                    let fillColor: string;
+                    let strokeColor: string;
+                    let textColor: string;
+                    let opacity: number;
+                    const radius = isActive ? 5.0 : 4.5;
+                    const strokeWidth = isActive ? 0.8 : 0.5;
 
-                let fillColor: string;
-                let strokeColor: string;
-                let textColor: string;
-                let opacity: number;
-                const radius = isActive ? 5.0 : 4.5;
-                const strokeWidth = isActive ? 0.8 : 0.5;
+                    if (!isActive) {
+                        // Inactive gate - white with gold stroke
+                        fillColor = 'white';
+                        strokeColor = '#D4AF37';
+                        textColor = '#1C1917';
+                        opacity = 0.70;
+                    } else if (activation === 'personality') {
+                        // Personality - dark teal
+                        fillColor = '#134E4A';
+                        strokeColor = '#20B2AA';
+                        textColor = '#5EEAD4';
+                        opacity = 0.95;
+                    } else if (activation === 'design') {
+                        // Design - dark bronze
+                        fillColor = '#5C3D2E';
+                        strokeColor = '#CD7F32';
+                        textColor = '#FFD700';
+                        opacity = 0.95;
+                    } else {
+                        // Both - mixed pattern
+                        fillColor = '#3D4030';
+                        strokeColor = 'url(#stripe-pd)';
+                        textColor = '#FFD700';
+                        opacity = 0.95;
+                    }
 
-                if (!isActive) {
-                    // Inactive gate - white with gold stroke
-                    fillColor = 'white';
-                    strokeColor = '#D4AF37';
-                    textColor = '#1C1917';
-                    opacity = 0.70;
-                } else if (activation === 'personality') {
-                    // Personality - dark teal
-                    fillColor = '#134E4A';
-                    strokeColor = '#20B2AA';
-                    textColor = '#5EEAD4';
-                    opacity = 0.95;
-                } else if (activation === 'design') {
-                    // Design - dark bronze
-                    fillColor = '#5C3D2E';
-                    strokeColor = '#CD7F32';
-                    textColor = '#FFD700';
-                    opacity = 0.95;
-                } else {
-                    // Both - mixed pattern
-                    fillColor = '#3D4030';
-                    strokeColor = 'url(#stripe-pd)';
-                    textColor = '#FFD700';
-                    opacity = 0.95;
-                }
+                    const filterAttr = isActive ? (
+                        activation === 'personality' ? 'url(#glow-teal)' :
+                            activation === 'design' ? 'url(#glow-gold)' :
+                                'url(#glow-both)'
+                    ) : undefined;
 
-                const filterAttr = isActive ? (
-                    activation === 'personality' ? 'url(#glow-teal)' :
-                        activation === 'design' ? 'url(#glow-gold)' :
-                            'url(#glow-both)'
-                ) : undefined;
+                    const isHovered = hoveredGate === gateId;
 
-                return (
-                    <g key={`gate-${gateId}`} filter={filterAttr}>
-                        <circle
-                            cx={coord.x}
-                            cy={coord.y}
-                            r={radius}
-                            fill={fillColor}
-                            opacity={opacity}
-                            stroke={strokeColor}
-                            strokeWidth={strokeWidth}
-                        />
-                        {/* Gate number for ALL gates */}
-                        <text
-                            x={coord.x}
-                            y={coord.y + 0.3}
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            fill={textColor}
-                            fontSize="5.5"
-                            fontWeight="bold"
-                            fontFamily="'Roboto', sans-serif"
-                            className="gate-text"
+                    return (
+                        <g
+                            key={`gate-${gateId}`}
+                            filter={filterAttr}
+                            style={{ cursor: 'pointer' }}
+                            onMouseEnter={(e) => {
+                                setHoveredGate(gateId);
+                                const rect = (e.target as SVGElement).getBoundingClientRect();
+                                setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top });
+                            }}
+                            onMouseLeave={() => {
+                                setHoveredGate(null);
+                                setTooltipPos(null);
+                            }}
                         >
-                            {gateId}
-                        </text>
-                    </g>
-                );
-            })}
-        </svg>
+                            <circle
+                                cx={coord.x}
+                                cy={coord.y}
+                                r={isHovered ? radius * 1.2 : radius}
+                                fill={fillColor}
+                                opacity={isHovered ? 1 : opacity}
+                                stroke={strokeColor}
+                                strokeWidth={isHovered ? strokeWidth * 1.5 : strokeWidth}
+                                style={{
+                                    transition: 'all 0.15s ease-out',
+                                    transformOrigin: `${coord.x}px ${coord.y}px`
+                                }}
+                            />
+                            {/* Gate number for ALL gates */}
+                            <text
+                                x={coord.x}
+                                y={coord.y + 0.3}
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                                fill={textColor}
+                                fontSize={isHovered ? '6' : '5.5'}
+                                fontWeight="bold"
+                                fontFamily="'Roboto', sans-serif"
+                                className="gate-text"
+                                style={{ transition: 'font-size 0.15s ease-out', pointerEvents: 'none' }}
+                            >
+                                {gateId}
+                            </text>
+                        </g>
+                    );
+                })}
+
+                {/* Tooltip overlay - rendered outside SVG via portal would be better, but for simplicity: */}
+            </svg>
+
+            {/* Tooltip - positioned absolutely */}
+            {
+                hoveredGate !== null && GATE_DESCRIPTIONS[hoveredGate] && (
+                    <div
+                        className="absolute z-50 bg-background/95 backdrop-blur-sm border border-primary/30 rounded-lg px-3 py-2 shadow-lg pointer-events-none"
+                        style={{
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            bottom: '100%',
+                            marginBottom: '8px',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        <p className="text-xs font-bold text-primary">
+                            Gate {hoveredGate}: {GATE_DESCRIPTIONS[hoveredGate].name}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                            {GATE_DESCRIPTIONS[hoveredGate].theme}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground/70 mt-0.5">
+                            {GATE_DESCRIPTIONS[hoveredGate].center} Center
+                        </p>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 
 export default BodygraphSVG;
+

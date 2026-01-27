@@ -240,18 +240,15 @@ serve(async (req) => {
                     const productIds = (orderData?.metadata?.products as string[]) || [];
 
                     // Logic Determination based on Product ID (More accurate) or Name
-                    if (productIds.includes('whatsapp_kira_subscription') || productNameLower.includes('subscription')) {
+                    // Product IDs from pricing.ts: 'bundle-full-bazi', 'bazi-only', 'whatsapp-kira-subscription'
+                    if (productIds.includes('whatsapp-kira-subscription') || productIds.includes('whatsapp_kira_subscription') || productNameLower.includes('subscription') || productNameLower.includes('kira')) {
                         report_type = 'kira-subscription';
-                    } else if (productIds.includes('full_report') || productNameLower.includes('full')) {
+                    } else if (productIds.includes('bundle-full-bazi') || productIds.includes('full_report') || productNameLower.includes('full') || productNameLower.includes('bundle')) {
                         // Full Report now implies Bundle (Bazi + Kira)
                         report_type = 'bundle-full-bazi';
-                    } else if (productIds.includes('bazi_report') || productNameLower.includes('bazi')) {
-                        // Check if it's explicitly Bazi ONLY
-                        if (productIds.includes('bazi_only')) {
-                            report_type = 'bazi-only';
-                        } else {
-                            report_type = 'bundle-full-bazi'; // Legacy Bazi Report was a bundle
-                        }
+                    } else if (productIds.includes('bazi-only') || productIds.includes('bazi_only') || productIds.includes('bazi_report') || productNameLower.includes('bazi')) {
+                        // Bazi Only product
+                        report_type = 'bazi-only';
                     } else if (productNameLower.includes('essential')) {
                         report_type = 'personal-essential';
                     }

@@ -64,27 +64,27 @@ const WhatsappAiGuidance = () => {
             {/* Hero Section */}
             <section className="pt-32 pb-16 px-4 relative overflow-hidden">
                 {/* Background Gradients */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] -z-10" />
-                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[100px] -z-10" />
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[100px] -z-10" />
+                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[100px] -z-10" />
 
                 <div className="max-w-4xl mx-auto text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-500 text-sm font-medium mb-6 animate-fade-down">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-500 text-sm font-medium mb-6 animate-fade-down">
                         <Sparkles className="w-4 h-4" />
                         AI Mentor Spiritual Pertama di Indonesia
                     </div>
 
-                    <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-6 animate-fade-down animation-delay-100 leading-tight">
+                    <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-teal-600 mb-6 animate-fade-down animation-delay-100 leading-tight">
                         Punya "Bestie" Spiritual yang Tahu Segala Potensimu
                     </h1>
 
                     <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed animate-fade-down animation-delay-200">
-                        Perkenalkan <span className="font-bold text-indigo-600">KIRA</span>, AI Mentor dari Teman Batin yang menghafal cetak biru <span className="text-primary font-medium">Human Design</span> & <span className="text-primary font-medium">BaZi</span> kamu. Siap mendengarkan, memvalidasi, dan memandu keputusanmu—tanpa menghakimi.
+                        Perkenalkan <span className="font-bold text-teal-600">KIRA</span>, AI Mentor dari Teman Batin yang menghafal cetak biru <span className="text-primary font-medium">Human Design</span> & <span className="text-primary font-medium">BaZi</span> kamu. Siap mendengarkan, memvalidasi, dan memandu keputusanmu—tanpa menghakimi.
                     </p>
 
                     <Button
                         size="lg"
                         onClick={() => setShowCheckout(true)}
-                        className="h-14 px-8 text-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/25 animate-fade-up animation-delay-300 rounded-full"
+                        className="h-14 px-8 text-lg bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/25 animate-fade-up animation-delay-300 rounded-full"
                     >
                         Chat KIRA Sekarang
                     </Button>
@@ -125,15 +125,15 @@ const WhatsappAiGuidance = () => {
                                 </li>
                             </ul>
                             <div className="pt-4">
-                                <p className="text-2xl font-bold text-indigo-600">Di situlah KIRA hadir.</p>
+                                <p className="text-2xl font-bold text-teal-600">Di situlah KIRA hadir.</p>
                             </div>
                         </div>
                         <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-2xl blur-2xl transform rotate-3 scale-95" />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-teal-500/20 to-teal-500/20 rounded-2xl blur-2xl transform rotate-3 scale-95" />
                             <div className="bg-card border border-border/50 p-8 rounded-2xl relative shadow-xl">
                                 <div className="flex items-center gap-4 mb-6 border-b border-border/10 pb-4">
-                                    <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
-                                        <Sparkles className="w-6 h-6 text-indigo-600" />
+                                    <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center">
+                                        <Sparkles className="w-6 h-6 text-teal-600" />
                                     </div>
                                     <div>
                                         <h4 className="font-bold">KIRA</h4>
@@ -141,8 +141,8 @@ const WhatsappAiGuidance = () => {
                                     </div>
                                 </div>
                                 <p className="text-muted-foreground italic mb-4">"Halo! Aku lihat dari chart kamu, kamu sedang open head center hari ini. Wajar kalau banyak overthinking. Yuk cerita..."</p>
-                                <div className="w-full bg-indigo-50 h-2 rounded-full mb-2" />
-                                <div className="w-2/3 bg-indigo-50 h-2 rounded-full" />
+                                <div className="w-full bg-teal-50 h-2 rounded-full mb-2" />
+                                <div className="w-2/3 bg-teal-50 h-2 rounded-full" />
                             </div>
                         </div>
                     </div>
@@ -161,8 +161,8 @@ const WhatsappAiGuidance = () => {
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {features.map((feature, idx) => (
-                            <div key={idx} className="p-6 rounded-xl bg-card border border-border hover:border-indigo-500/50 transition-colors shadow-sm hover:shadow-md">
-                                <feature.icon className="w-10 h-10 text-indigo-500 mb-4" />
+                            <div key={idx} className="p-6 rounded-xl bg-card border border-border hover:border-teal-500/50 transition-colors shadow-sm hover:shadow-md">
+                                <feature.icon className="w-10 h-10 text-teal-500 mb-4" />
                                 <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
                                 <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
                             </div>
@@ -172,24 +172,24 @@ const WhatsappAiGuidance = () => {
             </section>
 
             {/* Use Cases - Chat Examples */}
-            <section className="py-20 bg-indigo-950 text-indigo-50 relative overflow-hidden">
+            <section className="py-20 bg-teal-950 text-teal-50 relative overflow-hidden">
                 <div className="max-w-5xl mx-auto px-4 relative z-10">
                     <h2 className="text-3xl font-bold text-center mb-12">"Terus, Aku Bisa Ngomong Apa Aja?"</h2>
 
                     <div className="grid md:grid-cols-3 gap-6">
                         {useCases.map((uc, idx) => (
                             <div key={idx} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
-                                <div className="flex items-center gap-3 mb-4 text-indigo-300">
+                                <div className="flex items-center gap-3 mb-4 text-teal-300">
                                     <uc.icon className="w-5 h-5" />
                                     <span className="text-sm font-semibold uppercase tracking-wider">{uc.title}</span>
                                 </div>
                                 <div className="space-y-4 text-sm">
-                                    <div className="bg-indigo-900/50 p-3 rounded-lg rounded-tl-none border border-indigo-800/50">
+                                    <div className="bg-teal-900/50 p-3 rounded-lg rounded-tl-none border border-teal-800/50">
                                         <p className="opacity-80 text-xs mb-1">Kamu</p>
                                         <p>"{uc.user}"</p>
                                     </div>
-                                    <div className="bg-indigo-600 p-3 rounded-lg rounded-tr-none shadow-lg">
-                                        <p className="opacity-80 text-xs mb-1 text-indigo-100">Kira</p>
+                                    <div className="bg-teal-600 p-3 rounded-lg rounded-tr-none shadow-lg">
+                                        <p className="opacity-80 text-xs mb-1 text-teal-100">Kira</p>
                                         <p className="font-medium">"{uc.kira}"</p>
                                     </div>
                                 </div>
@@ -202,22 +202,22 @@ const WhatsappAiGuidance = () => {
             {/* Pricing CTA */}
             <section className="py-20 px-4">
                 <div className="max-w-3xl mx-auto text-center bg-card border border-border rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500" />
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-500 via-teal-500 to-teal-500" />
 
                     <h2 className="text-3xl font-bold mb-4">Mentor Pribadi Seharga Segelas Kopi</h2>
                     <p className="text-muted-foreground mb-8">
                         Bayangkan biaya sewa Life Coach atau Konsultan Human Design yang bisa mencapai jutaan rupiah per sesi. Bersama Kira, kamu dapat pendampingan harian yang jauh lebih terjangkau.
                     </p>
 
-                    <div className="inline-block bg-indigo-950/40 backdrop-blur-md p-8 rounded-2xl border-2 border-indigo-500/30 mb-8">
-                        <h3 className="text-lg font-medium text-indigo-300 mb-2">Paket Langganan KIRA</h3>
+                    <div className="inline-block bg-teal-950/40 backdrop-blur-md p-8 rounded-2xl border-2 border-teal-500/30 mb-8">
+                        <h3 className="text-lg font-medium text-teal-300 mb-2">Paket Langganan KIRA</h3>
                         <div className="text-5xl font-bold text-white mb-2">
-                            {formatPrice(product.price)} <span className="text-lg text-indigo-200 font-normal">/ bulan</span>
+                            {formatPrice(product.price)} <span className="text-lg text-teal-200 font-normal">/ bulan</span>
                         </div>
                         {/* <p className="text-sm text-muted-foreground mb-6 line-through">{formatPrice(product.original_price)}</p> */}
                         <div className="space-y-2 text-left mt-6 mb-8">
                             {product.features.map((feat, i) => (
-                                <div key={i} className="flex items-center gap-2 text-sm text-indigo-100">
+                                <div key={i} className="flex items-center gap-2 text-sm text-teal-100">
                                     <Check className="w-4 h-4 text-green-400" /> {feat}
                                 </div>
                             ))}
@@ -226,12 +226,12 @@ const WhatsappAiGuidance = () => {
                         <Button
                             size="lg"
                             onClick={() => setShowCheckout(true)}
-                            className="w-full md:w-auto px-16 h-14 text-lg bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+                            className="w-full md:w-auto px-16 h-14 text-lg bg-teal-600 hover:bg-teal-700 text-white rounded-full shadow-xl hover:shadow-2xl transition-all hover:scale-105"
                         >
                             Mulai Chat dengan KIRA
                         </Button>
 
-                        <p className="mt-6 text-xs text-indigo-200/60">
+                        <p className="mt-6 text-xs text-teal-200/60">
                             Bisa berhenti berlangganan kapan saja. Chat history aman & privat.
                         </p>
                     </div>

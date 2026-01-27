@@ -782,7 +782,7 @@ const Reports = () => {
                   <div className="w-5 h-5 md:w-6 md:h-6 bg-accent/20 rounded-full flex items-center justify-center border border-accent/30 group-hover:bg-accent/30 transition-colors">
                     <Check className="w-3 h-3 md:w-4 md:h-4 text-accent" />
                   </div>
-                  <span>Pengiriman Instan</span>
+                  <span>Pengiriman Instan dalam 10 menit</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs md:text-sm lg:text-base text-foreground font-medium group">
                   <div className="w-5 h-5 md:w-6 md:h-6 bg-accent/20 rounded-full flex items-center justify-center border border-accent/30 group-hover:bg-accent/30 transition-colors">
@@ -1280,9 +1280,66 @@ const Reports = () => {
               console.warn("Failed to calculate chart snapshot:", err);
             }
 
-            // 5. Create Order (lightweight, fast!)
+            // 5. Check if FREE coupon (finalPrice === 0)
+            const isFreeOrder = data.finalPrice === 0 && data.couponCode;
+
+            // Use product config for correct naming and report_type
+            const productName = `${PRODUCTS.FULL_REPORT.name}: ${data.name}`;
+            const reportType = PRODUCTS.FULL_REPORT.report_type; // 'bundle-full-bazi'
+
+            if (isFreeOrder) {
+              // --- FREE COUPON FLOW: Call redeem-free-order directly ---
+              console.log('🎁 Free coupon detected, calling redeem-free-order...');
+
+              const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+              const redeemPayload = {
+                couponCode: data.couponCode,
+                referenceId: referenceId,
+                customerName: data.name,
+                customerEmail: data.email,
+                customerPhone: formattedWhatsapp,
+                productName: productName,
+                reportType: reportType, // Explicit report_type
+                chartIds: [],
+                birthData: birthDataForMetadata,
+                userId: currentUser?.id || null
+              };
+
+              const { data: redeemResult, error: redeemError } = await supabase.functions.invoke('redeem-free-order', {
+                body: redeemPayload
+              });
+
+              if (redeemError) {
+                console.error('Redeem error:', redeemError);
+                throw new Error(redeemError.message || 'Gagal menggunakan kupon gratis');
+              }
+
+              if (redeemResult?.success && redeemResult?.redirect_url) {
+                // Track free conversion
+                if (window.fbq) {
+                  window.fbq('track', 'Purchase', {
+                    value: 0,
+                    currency: 'IDR',
+                    content_name: productName
+                  });
+                }
+
+                sessionStorage.setItem('paymentRefId', referenceId);
+                setShowUnifiedCheckout(false);
+
+                toast.success('🎉 Kupon berhasil digunakan! Report kamu sedang diproses...');
+
+                window.location.href = redeemResult.redirect_url;
+                return;
+              } else {
+                throw new Error(redeemResult?.error || 'Gagal menggunakan kupon');
+              }
+            }
+
+            // --- PAID FLOW: Create Order and Call Midtrans ---
+            // 6. Create Order (lightweight, fast!)
             const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-            const productName = 'Human Design Full Personal Report';
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error: orderError } = await (supabase.from('orders') as any)
@@ -1298,6 +1355,7 @@ const Reports = () => {
                 metadata: {
                   chart_ids: [],  // Empty - no chart yet, N8N will generate/save if needed
                   products: [PRODUCTS.FULL_REPORT.id],
+                  report_type: reportType, // Store report_type in metadata
                   birth_data: birthDataForMetadata,
                   chart_snapshot: chartSnapshot // ✅ Added snapshot
                 }
@@ -1305,7 +1363,7 @@ const Reports = () => {
 
             if (orderError) throw orderError;
 
-            // 6. Call Midtrans (fast redirect!)
+            // 7. Call Midtrans (fast redirect!)
             const { data: paymentData, error: paymentError } = await supabase.functions.invoke('midtrans-checkout', {
               body: {
                 referenceId,
@@ -1314,6 +1372,7 @@ const Reports = () => {
                 customerPhone: formattedWhatsapp,
                 amount: PRODUCTS.FULL_REPORT.price,
                 productName,
+                reportType: reportType, // Explicit report_type for N8N
                 chartIds: [],  // Empty
                 products: [PRODUCTS.FULL_REPORT.id],
                 birthData: {  // Send for N8N to use

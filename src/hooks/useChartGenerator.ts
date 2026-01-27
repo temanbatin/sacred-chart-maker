@@ -47,11 +47,12 @@ export const useChartGenerator = (user: User | null) => {
         password: string | null
     ) => {
         setIsLoading(true);
-        setUserName(birthDataInput.name);
-        setUserEmail(email);
-        setUserPhone(whatsapp);
+        setUserName(birthDataInput.name || '');
+        // Use whatsapp/email from birthDataInput if provided (from form Step 2)
+        setUserEmail(email || birthDataInput.email || '');
+        setUserPhone(whatsapp || birthDataInput.whatsapp || '');
 
-        // Store birth data for bodygraph
+        // Store birth data for bodygraph - include whatsapp and email
         setBirthData({
             name: birthDataInput.name,
             year: birthDataInput.year,
@@ -61,6 +62,8 @@ export const useChartGenerator = (user: User | null) => {
             minute: birthDataInput.minute,
             place: birthDataInput.place,
             gender: birthDataInput.gender,
+            whatsapp: birthDataInput.whatsapp,
+            email: birthDataInput.email,
         });
 
         // Create birth date string for database

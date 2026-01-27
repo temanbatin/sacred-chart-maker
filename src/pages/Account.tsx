@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { User, FileText, Clock, ArrowRight, LogIn, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, Calendar, MapPin, CreditCard, CheckCircle2, Sparkles, Fingerprint } from 'lucide-react';
+import { User, FileText, Clock, ArrowRight, LogIn, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft, Calendar, MapPin, CreditCard, CheckCircle2, Sparkles, Fingerprint, Flame, Pencil, Trash2, X, Check } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,9 +51,10 @@ const Account = () => {
   const [selectedChart, setSelectedChart] = useState<SavedChart | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // Get email from URL params (for signup from payment result)
-  const urlEmail = searchParams.get('email') || '';
-  const urlRef = searchParams.get('ref') || '';
+  // Edit chart state
+  const [editingChartId, setEditingChartId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [deletingChartId, setDeletingChartId] = useState<string | null>(null);
 
   const checkAdminRole = useCallback(async (userId: string) => {
     const { data, error } = await supabase
@@ -226,6 +227,58 @@ const Account = () => {
     setSelectedChart(null);
   };
 
+  // Edit chart name
+  const handleStartEdit = (chart: SavedChart) => {
+    setEditingChartId(chart.id);
+    setEditingName(chart.name || '');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingChartId(null);
+    setEditingName('');
+  };
+
+  const handleSaveEdit = async (chartId: string) => {
+    if (!editingName.trim()) {
+      toast.error('Nama chart tidak boleh kosong');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('saved_charts')
+      .update({ name: editingName.trim() })
+      .eq('id', chartId);
+
+    if (error) {
+      console.error('Error updating chart name:', error);
+      toast.error('Gagal mengubah nama chart');
+    } else {
+      setSavedCharts(prev =>
+        prev.map(c => c.id === chartId ? { ...c, name: editingName.trim() } : c)
+      );
+      toast.success('Nama chart berhasil diubah');
+    }
+    setEditingChartId(null);
+    setEditingName('');
+  };
+
+  // Delete chart
+  const handleDeleteChart = async (chartId: string) => {
+    const { error } = await supabase
+      .from('saved_charts')
+      .delete()
+      .eq('id', chartId);
+
+    if (error) {
+      console.error('Error deleting chart:', error);
+      toast.error('Gagal menghapus chart');
+    } else {
+      setSavedCharts(prev => prev.filter(c => c.id !== chartId));
+      toast.success('Chart berhasil dihapus');
+    }
+    setDeletingChartId(null);
+  };
+
   const getBirthDataFromChart = (chart: SavedChart): BirthDataForChart | null => {
     if (!chart.birth_date) return null;
 
@@ -239,14 +292,12 @@ const Account = () => {
     }
 
     return {
-      name: chart.name,
       year,
       month,
       day,
       hour,
       minute,
       place: chart.birth_place || '',
-      gender: chart.chart_data?.gender || 'male',
     };
   };
 
@@ -458,129 +509,208 @@ const Account = () => {
                 <div className="grid gap-4 animate-fade-up">
                   {savedCharts.map((chart) => (
                     <div key={chart.id} className="glass-card rounded-xl p-6 hover:border-accent/50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <h3 className="font-semibold text-foreground text-lg">{chart.name}</h3>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              {formatDate(chart.birth_date)}
-                            </span>
-                            {chart.birth_place && (
-                              <span className="flex items-center gap-1">
-                                <MapPin className="w-4 h-4" />
-                                {chart.birth_place.split(',')[0]}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Dibuat: {formatDate(chart.created_at)}
-                          </p>
-                        </div>
-                        <Button onClick={() => handleViewChart(chart)} className="fire-glow">
-                          Lihat Chart
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="orders" className="space-y-6">
-              {orders.length === 0 ? (
-                <div className="glass-card rounded-xl p-8 text-center animate-fade-up">
-                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    Kamu belum membeli laporan
-                  </p>
-                  <Button variant="outline" asChild>
-                    <Link to="/reports">
-                      Lihat Produk Kami
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Link>
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid gap-4 animate-fade-up">
-                  {orders.map((order) => (
-                    <div key={order.id} className="glass-card rounded-xl p-6 border border-border">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        {/* Left: Order Info */}
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-foreground text-lg">
-                              {order.product_name || 'Laporan Human Design'}
-                            </h3>
-                            {getStatusBadge(order.status, order.created_at)}
-                          </div>
-                          <p className="text-sm text-muted-foreground">Order Ref: {order.reference_id}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {order.paid_at
-                              ? `Dibayar pada: ${new Date(order.paid_at).toLocaleString()}`
-                              : `Dipesan pada: ${new Date(order.created_at).toLocaleString()}`}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          {/* PENDING & NOT EXPIRED: Show Pay Button */}
-                          {order.status === 'PENDING' && order.payment_url && (new Date().getTime() - new Date(order.created_at).getTime() <= 24 * 60 * 60 * 1000) && (
-                            <Button asChild className="fire-glow" size="sm">
-                              <a href={order.payment_url} target="_blank" rel="noopener noreferrer">
-                                <CreditCard className="w-4 h-4 mr-2" />
-                                Bayar Sekarang <ArrowRight className="w-4 h-4 ml-2" />
-                              </a>
+                      {/* Delete Confirmation */}
+                      {deletingChartId === chart.id ? (
+                        <div className="flex items-center justify-between">
+                          <p className="text-red-400">Yakin hapus chart ini?</p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeletingChartId(null)}
+                            >
+                              Batal
                             </Button>
-                          )}
-
-                          {/* PAID & REPORT READY: Check for both URLs */}
-                          {order.status === 'PAID' && (
-                            <div className="flex flex-col gap-2 min-w-[200px]">
-                              {order.report_url && (
-                                <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent/10 w-full justify-start">
-                                  <a href={order.report_url} target="_blank" rel="noopener noreferrer">
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    Download Human Design
-                                  </a>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteChart(chart.id)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Hapus
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-1 flex-1">
+                            {/* Inline Edit Mode */}
+                            {editingChartId === chart.id ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={editingName}
+                                  onChange={(e) => setEditingName(e.target.value)}
+                                  className="h-9 max-w-[200px]"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveEdit(chart.id);
+                                    if (e.key === 'Escape') handleCancelEdit();
+                                  }}
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-green-500"
+                                  onClick={() => handleSaveEdit(chart.id)}
+                                >
+                                  <Check className="w-4 h-4" />
                                 </Button>
-                              )}
-
-                              {order.bazi_report_url && (
-                                <Button asChild variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10 w-full justify-start">
-                                  <a href={order.bazi_report_url} target="_blank" rel="noopener noreferrer">
-                                    <Flame className="w-4 h-4 mr-2" />
-                                    Download Bazi Report
-                                  </a>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={handleCancelEdit}
+                                >
+                                  <X className="w-4 h-4" />
                                 </Button>
-                              )}
-
-                              {/* Fallback processing state if NO URLs yet */}
-                              {!order.report_url && !order.bazi_report_url && (
-                                <div className="bg-accent/10 text-accent px-4 py-2 rounded-lg text-sm flex items-center gap-2">
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                  Report sedang disusun...
-                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold text-foreground text-lg">
+                                  {chart.name || `Chart ${formatDate(chart.birth_date)}`}
+                                </h3>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  onClick={() => handleStartEdit(chart)}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {formatDate(chart.birth_date)}
+                              </span>
+                              {chart.birth_place && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {chart.birth_place.split(',')[0]}
+                                </span>
                               )}
                             </div>
-                          )}
+                            <p className="text-xs text-muted-foreground">
+                              Dibuat: {formatDate(chart.created_at)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 text-red-400 hover:text-red-500 hover:bg-red-500/10"
+                              onClick={() => setDeletingChartId(chart.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                            <Button onClick={() => handleViewChart(chart)} className="fire-glow">
+                              Lihat Chart
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>
+                </div>
               )}
-            </TabsContent>
+          </TabsContent>
 
-            <TabsContent value="affiliate">
-              <AffiliateDashboard userId={user.id} email={user.email || ''} />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
+          <TabsContent value="orders" className="space-y-6">
+            {orders.length === 0 ? (
+              <div className="glass-card rounded-xl p-8 text-center animate-fade-up">
+                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  Kamu belum membeli laporan
+                </p>
+                <Button variant="outline" asChild>
+                  <Link to="/reports">
+                    Lihat Produk Kami
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-4 animate-fade-up">
+                {orders.map((order) => (
+                  <div key={order.id} className="glass-card rounded-xl p-6 border border-border">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      {/* Left: Order Info */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-foreground text-lg">
+                            {order.product_name || 'Laporan Human Design'}
+                          </h3>
+                          {getStatusBadge(order.status, order.created_at)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Order Ref: {order.reference_id}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.paid_at
+                            ? `Dibayar pada: ${new Date(order.paid_at).toLocaleString()}`
+                            : `Dipesan pada: ${new Date(order.created_at).toLocaleString()}`}
+                        </p>
+                      </div>
 
-      <Footer />
+                      <div className="flex items-center gap-3">
+                        {/* PENDING & NOT EXPIRED: Show Pay Button */}
+                        {order.status === 'PENDING' && order.payment_url && (new Date().getTime() - new Date(order.created_at).getTime() <= 24 * 60 * 60 * 1000) && (
+                          <Button asChild className="fire-glow" size="sm">
+                            <a href={order.payment_url} target="_blank" rel="noopener noreferrer">
+                              <CreditCard className="w-4 h-4 mr-2" />
+                              Bayar Sekarang <ArrowRight className="w-4 h-4 ml-2" />
+                            </a>
+                          </Button>
+                        )}
+
+                        {/* PAID & REPORT READY: Check for both URLs */}
+                        {order.status === 'PAID' && (
+                          <div className="flex flex-col gap-2 min-w-[200px]">
+                            {order.report_url && (
+                              <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent/10 w-full justify-start">
+                                <a href={order.report_url} target="_blank" rel="noopener noreferrer">
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Download Human Design
+                                </a>
+                              </Button>
+                            )}
+
+                            {order.bazi_report_url && (
+                              <Button asChild variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10 w-full justify-start">
+                                <a href={order.bazi_report_url} target="_blank" rel="noopener noreferrer">
+                                  <Flame className="w-4 h-4 mr-2" />
+                                  Download Bazi Report
+                                </a>
+                              </Button>
+                            )}
+
+                            {/* Fallback processing state if NO URLs yet */}
+                            {!order.report_url && !order.bazi_report_url && (
+                              <div className="bg-accent/10 text-accent px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Report sedang disusun...
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="affiliate">
+            <AffiliateDashboard userId={user.id} email={user.email || ''} />
+          </TabsContent>
+        </Tabs>
     </div>
+      </main >
+
+  <Footer />
+    </div >
   );
 };
 

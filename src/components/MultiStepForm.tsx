@@ -2,9 +2,7 @@ import { useState, useCallback, forwardRef, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Sparkles, MapPin, Loader2, Calendar, Clock, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
-import { birthDataSchema, type BirthDataInput } from '@/lib/validation';
+import { Sparkles, MapPin, Loader2, Calendar, Clock, ArrowRight, ArrowLeft, CheckCircle, Phone, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface City {
@@ -19,17 +17,21 @@ interface MultiStepFormProps {
 }
 
 export interface BirthData {
-    name: string;
     year: number;
     month: number;
     day: number;
     hour: number;
     minute: number;
     place: string;
-    gender: 'male' | 'female';
+    // Optional fields collected in step 2
+    whatsapp?: string;
+    email?: string;
+    // These may be added later during checkout
+    name?: string;
+    gender?: 'male' | 'female';
 }
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 2;
 
 export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
     onSubmit,
@@ -37,18 +39,16 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
 }, ref) => {
     const [currentStep, setCurrentStep] = useState(1);
 
-    // Step 1: Nama + Gender
-    const [name, setName] = useState('');
-    const [gender, setGender] = useState<'male' | 'female'>('male');
-
-    // Step 2: Tanggal + Waktu Lahir
+    // Step 1: Birth Data
     const [birthDate, setBirthDate] = useState('');
     const [birthTime, setBirthTime] = useState('');
-
-    // Step 3: Kota
     const [citySearch, setCitySearch] = useState('');
     const [selectedCity, setSelectedCity] = useState<City | null>(null);
     const [citySuggestions, setCitySuggestions] = useState<City[]>([]);
+
+    // Step 2: Contact Info
+    const [whatsapp, setWhatsapp] = useState('');
+    const [email, setEmail] = useState('');
 
     // Spam Protection
     const [honeypot, setHoneypot] = useState('');
@@ -102,9 +102,8 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
         setShowSuggestions(false);
     };
 
-    const canProceedToStep2 = name.trim().length > 0;
-    const canProceedToStep3 = birthDate && birthTime;
-    const canSubmit = selectedCity !== null;
+    const canProceedToStep2 = birthDate && birthTime && selectedCity !== null;
+    const canSubmit = whatsapp.length >= 10 || email.includes('@');
 
     const handleNext = () => {
         if (currentStep < TOTAL_STEPS) {
@@ -123,44 +122,39 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
 
         // Spam Check
         if (honeypot) {
-            // Bot detected
             return;
         }
 
         if (!selectedCity || !birthDate || !birthTime) {
-            toast.error("Mohon lengkapi semua data");
+            toast.error("Mohon lengkapi data kelahiran");
+            return;
+        }
+
+        if (!whatsapp && !email) {
+            toast.error("Mohon isi minimal WhatsApp atau Email");
             return;
         }
 
         const [year, month, day] = birthDate.split('-').map(Number);
         const [hour, minute] = birthTime.split(':').map(Number);
 
-        const formData = {
-            name,
+        if (!year || !month || !day || hour === undefined || minute === undefined) {
+            toast.error("Data tanggal atau waktu tidak valid");
+            return;
+        }
+
+        const finalData: BirthData = {
             year,
             month,
             day,
             hour,
             minute,
             place: selectedCity.display_name,
-            gender,
-            honeypot // should be empty string
+            whatsapp: whatsapp || undefined,
+            email: email || undefined
         };
 
-        const result = birthDataSchema.safeParse(formData);
-
-        if (!result.success) {
-            const errorMsg = result.error.errors[0]?.message || "Data tidak valid";
-            toast.error(errorMsg);
-            return;
-        }
-
-        // Clean valid data (omit honeypot)
-        const validData = result.data;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { honeypot: _, ...finalData } = validData;
-
-        onSubmit(finalData as BirthData);
+        onSubmit(finalData);
     };
 
     // Handle Enter key to proceed to next step
@@ -169,28 +163,7 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
             e.preventDefault();
             if (currentStep === 1 && canProceedToStep2) {
                 handleNext();
-            } else if (currentStep === 2 && canProceedToStep3) {
-                handleNext();
             }
-            // Step 3 uses form submit
-        }
-    };
-
-    const getStepTitle = (step: number) => {
-        switch (step) {
-            case 1: return 'Siapa Namamu?';
-            case 2: return 'Kapan Kamu Lahir?';
-            case 3: return 'Dimana Kamu Lahir?';
-            default: return '';
-        }
-    };
-
-    const getStepDescription = (step: number) => {
-        switch (step) {
-            case 1: return 'Masukkan nama dan jenis kelaminmu';
-            case 2: return 'Waktu lahir mempengaruhi akurasi chart';
-            case 3: return 'Kota kelahiranmu menentukan zona waktu';
-            default: return '';
         }
     };
 
@@ -204,188 +177,207 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                     Hanya butuh 1 menit untuk mendapatkan wawasan yang bisa mengubah caramu memandang hidup selamanya.
                 </p>
 
-                {/* Progress Bar */}
+                {/* Centered Progress Bar */}
                 <div className="mb-8">
-                    <div className="flex justify-between items-center mb-2">
-                        {[1, 2, 3].map((step) => (
-                            <div key={step} className="flex items-center">
-                                <div
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all
-                    ${currentStep > step
-                                            ? 'bg-primary text-primary-foreground'
-                                            : currentStep === step
-                                                ? 'bg-primary text-primary-foreground ring-4 ring-primary/30'
-                                                : 'bg-secondary text-muted-foreground'
-                                        }`}
-                                >
-                                    {currentStep > step ? (
-                                        <CheckCircle className="w-5 h-5" />
-                                    ) : (
-                                        step
-                                    )}
-                                </div>
-                                {step < 3 && (
-                                    <div
-                                        className={`w-16 sm:w-24 md:w-32 h-1 mx-2 rounded transition-all
-                      ${currentStep > step ? 'bg-primary' : 'bg-secondary'}`}
-                                    />
+                    <div className="flex justify-center items-center gap-0">
+                        {/* Step 1 */}
+                        <div className="flex items-center">
+                            <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all
+                                    ${currentStep > 1
+                                        ? 'bg-primary text-primary-foreground'
+                                        : currentStep === 1
+                                            ? 'bg-primary text-primary-foreground ring-4 ring-primary/30'
+                                            : 'bg-secondary text-muted-foreground'
+                                    }`}
+                            >
+                                {currentStep > 1 ? (
+                                    <CheckCircle className="w-5 h-5" />
+                                ) : (
+                                    '1'
                                 )}
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Connecting Line */}
+                        <div
+                            className={`w-16 sm:w-24 md:w-32 h-1 transition-all
+                                ${currentStep > 1 ? 'bg-primary' : 'bg-secondary'}`}
+                        />
+
+                        {/* Step 2 */}
+                        <div className="flex items-center">
+                            <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all
+                                    ${currentStep === 2
+                                        ? 'bg-primary text-primary-foreground ring-4 ring-primary/30'
+                                        : 'bg-secondary text-muted-foreground'
+                                    }`}
+                            >
+                                2
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-12">
-                    {/* Step Header */}
-                    <div className="text-center mb-6 sm:mb-8">
-                        <h3 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
-                            {getStepTitle(currentStep)}
-                        </h3>
-                        <p className="text-sm sm:text-base text-muted-foreground">
-                            {getStepDescription(currentStep)}
-                        </p>
-                    </div>
-
-                    {/* Step 1: Nama + Gender */}
+                <form onSubmit={handleSubmit} className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-10">
+                    {/* Step 1: Birth Data */}
                     {currentStep === 1 && (
-                        <div className="space-y-6 animate-fade-up">
-                            <div className="space-y-2">
-                                <Label htmlFor="name" className="text-foreground text-lg">
-                                    Nama Lengkap
-                                </Label>
-                                <Input
-                                    id="name"
-                                    type="text"
-                                    placeholder="Masukkan nama lengkapmu"
-                                    value={name}
-                                    onChange={e => setName(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    className="bg-input border-border text-foreground placeholder:text-muted-foreground h-14 rounded-xl text-lg"
-                                />
-                            </div>
-
-                            <div className="space-y-3">
-                                <Label className="text-foreground text-lg">Jenis Kelamin</Label>
-                                <RadioGroup
-                                    value={gender}
-                                    onValueChange={value => setGender(value as 'male' | 'female')}
-                                    className="flex gap-6"
-                                >
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="male" id="male" className="border-primary text-primary" />
-                                        <Label htmlFor="male" className="text-foreground cursor-pointer text-lg">
-                                            Pria
-                                        </Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="female" id="female" className="border-primary text-primary" />
-                                        <Label htmlFor="female" className="text-foreground cursor-pointer text-lg">
-                                            Wanita
-                                        </Label>
-                                    </div>
-                                </RadioGroup>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Step 2: Tanggal + Waktu Lahir */}
-                    {currentStep === 2 && (
-                        <div className="space-y-6 animate-fade-up">
-                            <div className="space-y-2">
-                                <Label htmlFor="birthDate" className="text-foreground text-lg">
-                                    Tanggal Lahir
-                                </Label>
-                                <div className="relative">
-                                    <Input
-                                        id="birthDate"
-                                        type="date"
-                                        value={birthDate}
-                                        onChange={e => setBirthDate(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        className="hd-date relative bg-input border-border text-foreground h-14 rounded-xl pr-10 text-lg"
-                                    />
-                                    <Calendar className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="birthTime" className="text-foreground text-lg">
-                                    Waktu Lahir
-                                </Label>
-                                <div className="relative">
-                                    <Input
-                                        id="birthTime"
-                                        type="time"
-                                        value={birthTime}
-                                        onChange={e => setBirthTime(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        className="hd-time relative bg-input border-border text-foreground h-14 rounded-xl pr-10 text-lg"
-                                    />
-                                    <Clock className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground" />
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                    Jika tidak tahu waktu pasti, gunakan perkiraan terdekat
+                        <>
+                            <div className="text-center mb-6 sm:mb-8">
+                                <h3 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
+                                    Kapan & Dimana Kamu Lahir?
+                                </h3>
+                                <p className="text-sm sm:text-base text-muted-foreground">
+                                    Data ini menentukan akurasi chart-mu
                                 </p>
                             </div>
-                        </div>
-                    )}
 
-                    {/* Step 3: Kota */}
-                    {currentStep === 3 && (
-                        <div className="space-y-6 animate-fade-up">
-                            <div className="space-y-2 relative">
-                                <Label htmlFor="city" className="text-foreground text-lg">
-                                    Kota Kelahiran
-                                </Label>
-                                <div className="relative">
-                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                                    <Input
-                                        id="city"
-                                        type="text"
-                                        placeholder="Ketik min. 3 huruf..."
-                                        value={citySearch}
-                                        onChange={e => {
-                                            setCitySearch(e.target.value);
-                                            setSelectedCity(null);
-                                        }}
-                                        onFocus={() => citySuggestions.length > 0 && setShowSuggestions(true)}
-                                        className="bg-input border-border text-foreground placeholder:text-muted-foreground h-14 rounded-xl pl-10 text-lg"
-                                    />
-                                    {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground animate-spin" />}
+                            <div className="space-y-5 animate-fade-up">
+                                {/* Date & Time Row */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="birthDate" className="text-foreground text-base">
+                                            Tanggal Lahir
+                                        </Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="birthDate"
+                                                type="date"
+                                                value={birthDate}
+                                                onChange={e => setBirthDate(e.target.value)}
+                                                onKeyDown={handleKeyDown}
+                                                className="hd-date relative bg-input border-border text-foreground h-12 rounded-xl pr-10 text-base"
+                                            />
+                                            <Calendar className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground" />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="birthTime" className="text-foreground text-base">
+                                            Waktu Lahir
+                                        </Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="birthTime"
+                                                type="time"
+                                                value={birthTime}
+                                                onChange={e => setBirthTime(e.target.value)}
+                                                onKeyDown={handleKeyDown}
+                                                className="hd-time relative bg-input border-border text-foreground h-12 rounded-xl pr-10 text-base"
+                                            />
+                                            <Clock className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground" />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Jika tidak tahu waktu pasti, gunakan perkiraan terdekat
+                                        </p>
+                                    </div>
                                 </div>
-                                <p className="text-xs text-muted-foreground pl-1">
-                                    {citySearch.length > 0 && citySearch.length < 3
-                                        ? "Ketikan minimal 3 huruf..."
-                                        : "Tunggu sebentar, daftar kota akan muncul otomatis."}
-                                </p>
 
-                                {/* Suggestions dropdown - Relative positioning to push content down */}
-                                {showSuggestions && citySuggestions.length > 0 && (
-                                    <div className="z-20 w-full mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2">
-                                        {citySuggestions.map((city, index) => (
-                                            <button
-                                                key={index}
-                                                type="button"
-                                                onClick={() => handleCitySelect(city)}
-                                                className="w-full text-left px-4 py-3 hover:bg-secondary text-foreground text-sm transition-colors border-b border-border last:border-0"
-                                            >
-                                                {city.display_name}
-                                            </button>
-                                        ))}
+                                {/* City Search */}
+                                <div className="space-y-2 relative">
+                                    <Label htmlFor="city" className="text-foreground text-base">
+                                        Kota Kelahiran
+                                    </Label>
+                                    <div className="relative">
+                                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                        <Input
+                                            id="city"
+                                            type="text"
+                                            placeholder="Ketik min. 3 huruf..."
+                                            value={citySearch}
+                                            onChange={e => {
+                                                setCitySearch(e.target.value);
+                                                setSelectedCity(null);
+                                            }}
+                                            onFocus={() => citySuggestions.length > 0 && setShowSuggestions(true)}
+                                            className="bg-input border-border text-foreground placeholder:text-muted-foreground h-12 rounded-xl pl-10 text-base"
+                                        />
+                                        {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground animate-spin" />}
+                                    </div>
+
+                                    {/* Suggestions dropdown */}
+                                    {showSuggestions && citySuggestions.length > 0 && (
+                                        <div className="z-20 w-full mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                            {citySuggestions.map((city, index) => (
+                                                <button
+                                                    key={index}
+                                                    type="button"
+                                                    onClick={() => handleCitySelect(city)}
+                                                    className="w-full text-left px-4 py-3 hover:bg-secondary text-foreground text-sm transition-colors border-b border-border last:border-0"
+                                                >
+                                                    {city.display_name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {selectedCity && (
+                                    <div className="bg-primary/10 rounded-xl p-4 flex items-center gap-3">
+                                        <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                                        <div className="min-w-0">
+                                            <p className="text-sm text-muted-foreground">Kota terpilih:</p>
+                                            <p className="text-foreground font-medium truncate">{selectedCity.display_name}</p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
+                        </>
+                    )}
 
-                            {selectedCity && (
-                                <div className="bg-primary/10 rounded-xl p-4 flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-primary" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Kota terpilih:</p>
-                                        <p className="text-foreground font-medium">{selectedCity.display_name}</p>
+                    {/* Step 2: Contact Info */}
+                    {currentStep === 2 && (
+                        <>
+                            <div className="text-center mb-6 sm:mb-8">
+                                <h3 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
+                                    Kemana Kami Bisa Menghubungimu?
+                                </h3>
+                                <p className="text-sm sm:text-base text-muted-foreground">
+                                    Isi minimal salah satu untuk menerima chart-mu
+                                </p>
+                            </div>
+
+                            <div className="space-y-5 animate-fade-up">
+                                <div className="space-y-2">
+                                    <Label htmlFor="whatsapp" className="text-foreground text-base">
+                                        Nomor WhatsApp
+                                    </Label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                        <Input
+                                            id="whatsapp"
+                                            type="tel"
+                                            placeholder="08123456789"
+                                            value={whatsapp}
+                                            onChange={e => setWhatsapp(e.target.value)}
+                                            className="bg-input border-border text-foreground placeholder:text-muted-foreground h-12 rounded-xl pl-10 text-base"
+                                        />
                                     </div>
                                 </div>
-                            )}
-                        </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="email" className="text-foreground text-base">
+                                        Alamat Email
+                                    </Label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="nama@email.com"
+                                            value={email}
+                                            onChange={e => setEmail(e.target.value)}
+                                            className="bg-input border-border text-foreground placeholder:text-muted-foreground h-12 rounded-xl pl-10 text-base"
+                                        />
+                                    </div>
+                                </div>
+
+                                <p className="text-xs text-muted-foreground text-center">
+                                    Data ini akan tersimpan saat checkout agar tidak perlu mengisi ulang
+                                </p>
+                            </div>
+                        </>
                     )}
 
                     {/* Honeypot Field (Hidden) - Anti-Spam */}
@@ -424,10 +416,7 @@ export const MultiStepForm = forwardRef<HTMLDivElement, MultiStepFormProps>(({
                                 type="button"
                                 size="lg"
                                 onClick={handleNext}
-                                disabled={
-                                    (currentStep === 1 && !canProceedToStep2) ||
-                                    (currentStep === 2 && !canProceedToStep3)
-                                }
+                                disabled={!canProceedToStep2}
                                 className="fire-glow bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold text-sm sm:text-base px-4 sm:px-6"
                             >
                                 Lanjut
