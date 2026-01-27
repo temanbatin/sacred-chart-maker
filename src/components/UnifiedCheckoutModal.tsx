@@ -8,7 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
     User as UserIcon, Mail, Phone, Calendar, Clock, MapPin,
-    Loader2, Shield, ScrollText, HeartHandshake, Baby, TicketPercent
+    Loader2, Shield, ScrollText, HeartHandshake, Baby, TicketPercent,
+    Sparkles, Flame
 } from 'lucide-react';
 import { formatPrice } from '@/config/pricing';
 import { PRODUCTS, COUPONS } from '@/config/pricing';
@@ -70,6 +71,7 @@ interface UnifiedCheckoutModalProps {
         gender: 'male' | 'female';
         name?: string; // Additional prefill support
     };
+    selectedProductId?: string;
 }
 
 export function UnifiedCheckoutModal({
@@ -79,7 +81,8 @@ export function UnifiedCheckoutModal({
     isLoading,
     user,
     skipBirthData = false,
-    prefillBirthData
+    prefillBirthData,
+    selectedProductId
 }: UnifiedCheckoutModalProps) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -273,11 +276,44 @@ export function UnifiedCheckoutModal({
 
         if (!isFormValid()) {
             toast({
-                title: "Data belum lengkap",
-                description: "Mohon lengkapi semua data wajib",
                 variant: "destructive"
             });
             return;
+        }
+
+        // ELIGIBILITY CHECK: Kira Subscription
+        // Only allow purchase if user has an existing record in whatsapp_sessions (meaning they are a past customer)
+        // using the cleaned phone number
+        if (open && selectedProductId === PRODUCTS.WHATSAPP_KIRA_SUBSCRIPTION.id) {
+            setIsLoading(true); // Re-use loading state if possible, or assume caller handles it?
+            // Actually, this handleSubmit calls 'onSubmit' which might be outside.
+            // We should do the check logic HERE before calling onSubmit.
+
+            try {
+                // Determine the clean phone (simplified version matching webhook logic)
+                let checkPhone = cleanPhone;
+                if (checkPhone.startsWith('0')) checkPhone = '62' + checkPhone.slice(1);
+
+                const { data: session } = await supabase
+                    .from('whatsapp_sessions')
+                    .select('id')
+                    .eq('whatsapp', checkPhone)
+                    .maybeSingle();
+
+                if (!session) {
+                    toast({
+                        title: "Maaf, khusus Alumni Teman Batin",
+                        description: "Langganan Kira hanya tersedia untuk yang pernah membeli Report Human Design / Bazi sebelumnya.",
+                        variant: "destructive"
+                    });
+                    // setIsLoading(false); // If we managed loading state
+                    return;
+                }
+            } catch (err) {
+                console.error("Eligibility check failed", err);
+                // Fallthrough or block? Block is safer.
+                return;
+            }
         }
 
         const birthCity = selectedCity?.display_name || '';
@@ -513,28 +549,38 @@ export function UnifiedCheckoutModal({
                             {/* Add-on Teasers (Optional) remain same */}
                             <div className="pb-2">
                                 <Accordion type="single" collapsible className="w-full">
-                                    <AccordionItem value="addons" className="border-b-0">
+                                    <AccordionItem value="included" className="border-b-0">
                                         <AccordionTrigger className="hover:no-underline py-2">
-                                            <div className="flex items-center gap-2 opacity-50">
-                                                <h3 className="font-medium text-muted-foreground text-left text-xs">💡 Lihat Add-on yang akan datang (opsional)</h3>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-medium text-foreground text-left text-xs">🎁 Bonus Spesial (Termasuk)</h3>
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent>
-                                            <p className="text-[10px] text-muted-foreground mb-3 italic">
-                                                Fitur tambahan ini sedang dalam pengembangan. Detailnya:
-                                            </p>
                                             <div className="grid grid-cols-1 gap-3 pt-2 pb-2">
-                                                <div className="flex items-center justify-between p-3 border border-dashed border-border/40 rounded-lg bg-secondary/5 opacity-50 cursor-not-allowed">
+                                                <div className="flex items-center justify-between p-3 border border-indigo-500/30 rounded-lg bg-indigo-500/5">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-background/50 rounded-md">
-                                                            <ScrollText className="w-4 h-4 text-muted-foreground" />
+                                                        <div className="p-2 bg-indigo-500/10 rounded-md">
+                                                            <Sparkles className="w-4 h-4 text-indigo-500" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium text-sm text-foreground/70">Bazi Chart Analysis</p>
-                                                            <p className="text-[10px] text-muted-foreground">Detail elemen keberuntungan</p>
+                                                            <p className="font-medium text-sm text-foreground">Kira AI Mentor (30 Hari)</p>
+                                                            <p className="text-[10px] text-muted-foreground">Chat 24/7 dengan mentor personal kamu</p>
                                                         </div>
                                                     </div>
-                                                    <span className="text-[10px] font-medium px-2 py-1 bg-secondary/50 rounded-full text-secondary-foreground/70">Segera Hadir</span>
+                                                    <span className="text-[10px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-full">FREE</span>
+                                                </div>
+
+                                                <div className="flex items-center justify-between p-3 border border-red-500/30 rounded-lg bg-red-500/5">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-red-500/10 rounded-md">
+                                                            <Flame className="w-4 h-4 text-red-500" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-sm text-foreground">Bazi Chart Analysis</p>
+                                                            <p className="text-[10px] text-muted-foreground">Analisis keberuntungan & elemen</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-full">INCLUDED</span>
                                                 </div>
                                             </div>
                                         </AccordionContent>

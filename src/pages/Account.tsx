@@ -36,6 +36,7 @@ interface Order {
   payment_url?: string;
   paid_at?: string;
   report_url?: string;
+  bazi_report_url?: string;
   [key: string]: unknown;
 }
 
@@ -533,22 +534,35 @@ const Account = () => {
                             </Button>
                           )}
 
-                          {/* PAID & NO REPORT: Show Processing */}
-                          {order.status === 'PAID' && !order.report_url && (
-                            <div className="bg-accent/10 text-accent px-4 py-2 rounded-lg text-sm flex items-center gap-2">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              Report sedang disusun oleh tim...
-                            </div>
-                          )}
+                          {/* PAID & REPORT READY: Check for both URLs */}
+                          {order.status === 'PAID' && (
+                            <div className="flex flex-col gap-2 min-w-[200px]">
+                              {order.report_url && (
+                                <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent/10 w-full justify-start">
+                                  <a href={order.report_url} target="_blank" rel="noopener noreferrer">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Download Human Design
+                                  </a>
+                                </Button>
+                              )}
 
-                          {/* PAID & REPORT READY: Show Download */}
-                          {order.status === 'PAID' && order.report_url && (
-                            <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent/10">
-                              <a href={order.report_url} target="_blank" rel="noopener noreferrer">
-                                <FileText className="w-4 h-4 mr-2" />
-                                Download PDF
-                              </a>
-                            </Button>
+                              {order.bazi_report_url && (
+                                <Button asChild variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10 w-full justify-start">
+                                  <a href={order.bazi_report_url} target="_blank" rel="noopener noreferrer">
+                                    <Flame className="w-4 h-4 mr-2" />
+                                    Download Bazi Report
+                                  </a>
+                                </Button>
+                              )}
+
+                              {/* Fallback processing state if NO URLs yet */}
+                              {!order.report_url && !order.bazi_report_url && (
+                                <div className="bg-accent/10 text-accent px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  Report sedang disusun...
+                                </div>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>

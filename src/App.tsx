@@ -19,6 +19,8 @@ const KebijakanPengembalianDana = lazy(() => import("./pages/KebijakanPengembali
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Learn = lazy(() => import("./pages/Learn"));
 const Reports = lazy(() => import("./pages/Reports"));
+const BaziReport = lazy(() => import("./pages/BaziReport"));
+const WhatsappAiGuidance = lazy(() => import("./pages/WhatsappAiGuidance"));
 const Shop = lazy(() => import("./pages/Shop"));
 const Account = lazy(() => import("./pages/Account"));
 const Methodology = lazy(() => import("./pages/Methodology"));
@@ -66,6 +68,8 @@ const App = () => (
               <Route path="/personal-report" element={<Reports />} />
               <Route path="/reports" element={<Reports />} /> {/* Legacy Redirect/Support */}
               <Route path="/report/full-personalized-report" element={<Reports />} />
+              <Route path="/bazi-report" element={<BaziReport />} />
+              <Route path="/whatsapp-ai-guidance" element={<WhatsappAiGuidance />} />
               <Route path="/shop" element={<Shop />} />
               <Route path="/payment-result" element={<PaymentResult />} />
 

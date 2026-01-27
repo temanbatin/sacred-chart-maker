@@ -143,6 +143,80 @@ serve(async (req) => {
                     }
                 } catch (e) { console.error('Affiliate error:', e); }
 
+                // Update Whatsapp Session Logic
+                try {
+                    const { data: orderData } = await supabase.from('orders').select('*').eq('reference_id', order_id).single();
+                    const phone = orderData?.customer_phone;
+
+                    if (phone) {
+                        let cleanPhone = phone.replace(/\D/g, '');
+                        if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.slice(1);
+                        if (!cleanPhone.startsWith('62')) cleanPhone = '62' + cleanPhone;
+
+                        const chartIds = orderData?.metadata?.chart_ids || [];
+                        let targetChartId = null;
+                        let targetChartData = null;
+
+                        // Priority 1: From saved_charts (if ID exists)
+                        if (Array.isArray(chartIds) && chartIds.length > 0) {
+                            targetChartId = chartIds[0];
+                            const { data: fetchedChart } = await supabase.from('saved_charts').select('chart_data').eq('id', targetChartId).single();
+                            targetChartData = fetchedChart?.chart_data;
+                        }
+                        // Priority 2: From metadata snapshot (Guest)
+                        else if (orderData?.metadata?.chart_snapshot) {
+                            targetChartData = orderData.metadata.chart_snapshot;
+                        }
+
+                        // NEW: Subscription Logic
+                        // Fetch existing session to check current expiration
+                        const { data: existingSession } = await supabase
+                            .from('whatsapp_sessions')
+                            .select('subscription_end_at, is_lifetime')
+                            .eq('whatsapp', cleanPhone)
+                            .maybeSingle();
+
+                        const now = new Date();
+                        let newEndAt = existingSession?.subscription_end_at ? new Date(existingSession.subscription_end_at) : now;
+                        // If expired (date in past), reset to now
+                        if (newEndAt < now) newEndAt = now;
+
+                        const productIdList = (orderData?.metadata?.products as string[]) || [];
+                        const productNameLower = (orderData?.product_name || '').toLowerCase();
+                        let daysToAdd = 0;
+                        let isLifetime = existingSession?.is_lifetime || false;
+
+                        // Logic:
+                        // 1. Full Report -> Bonus 30 Days
+                        // 2. Kira Subscription -> +30 Days
+                        if (productIdList.includes('full_report') || productNameLower.includes('full')) {
+                            daysToAdd = 30;
+                        } else if (productIdList.includes('whatsapp_kira_subscription') || productNameLower.includes('kira')) {
+                            daysToAdd = 30;
+                        }
+
+                        if (daysToAdd > 0) {
+                            newEndAt.setDate(newEndAt.getDate() + daysToAdd);
+                            console.log(`Adding ${daysToAdd} days to subscription for ${cleanPhone}. New End: ${newEndAt.toISOString()}`);
+                        }
+
+                        // Upsert into whatsapp_sessions
+                        const { error: sessionError } = await supabase.from('whatsapp_sessions')
+                            .upsert({
+                                whatsapp: cleanPhone,
+                                chart_id: targetChartId,
+                                json_chart: targetChartData,
+                                name: orderData?.customer_name,
+                                last_active: new Date().toISOString(),
+                                subscription_end_at: newEndAt.toISOString(), // Updated expiration
+                                is_lifetime: isLifetime
+                            }, { onConflict: 'whatsapp' });
+
+                        if (sessionError) console.error('Error updating whatsapp_session:', sessionError);
+                        else console.log('Updated whatsapp_session subscription for', cleanPhone);
+                    }
+                } catch (e) { console.error('Whatsapp Session Update Error:', e); }
+
                 // Trigger n8n
                 try {
                     const N8N_WEBHOOK_URL = getValidWebhookUrl();
@@ -162,13 +236,24 @@ serve(async (req) => {
                     }
 
                     let report_type = 'personal-comprehensive';
-                    const productName = (orderData?.product_name || '').toLowerCase();
-                    if (productName.includes('bazi') && productName.includes('human design')) {
-                        report_type = productName.includes('essential') ? 'bundle-essential-bazi' : 'bundle-full-bazi';
-                    } else if (productName.includes('essential')) {
+                    const productNameLower = (orderData?.product_name || '').toLowerCase();
+                    const productIds = (orderData?.metadata?.products as string[]) || [];
+
+                    // Logic Determination based on Product ID (More accurate) or Name
+                    if (productIds.includes('whatsapp_kira_subscription') || productNameLower.includes('subscription')) {
+                        report_type = 'kira-subscription';
+                    } else if (productIds.includes('full_report') || productNameLower.includes('full')) {
+                        // Full Report now implies Bundle (Bazi + Kira)
+                        report_type = 'bundle-full-bazi';
+                    } else if (productIds.includes('bazi_report') || productNameLower.includes('bazi')) {
+                        // Check if it's explicitly Bazi ONLY
+                        if (productIds.includes('bazi_only')) {
+                            report_type = 'bazi-only';
+                        } else {
+                            report_type = 'bundle-full-bazi'; // Legacy Bazi Report was a bundle
+                        }
+                    } else if (productNameLower.includes('essential')) {
                         report_type = 'personal-essential';
-                    } else if (productName.includes('bazi')) {
-                        report_type = 'bazi';
                     }
 
                     let n8n_debug: any = {};

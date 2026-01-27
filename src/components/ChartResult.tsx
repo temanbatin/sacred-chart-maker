@@ -24,6 +24,11 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 // Extracted components and constants
 import { PlanetColumn, type PlanetData } from "@/components/chart";
 import { PropertiesSidebar } from "@/components/chart";
+import { BodygraphSVG } from "@/components/chart";
+import { useBodygraphData } from "@/hooks/useBodygraphData";
+
+// Feature flag: set to true to use new React SVG component instead of image
+const USE_REACT_BODYGRAPH = true;
 import {
   reportSlides,
   planetSymbols,
@@ -546,6 +551,14 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
   const designPlanets: PlanetData[] = data?.gates?.des?.Planets || [];
   const personalityPlanets: PlanetData[] = data?.gates?.prs?.Planets || [];
 
+  // Generate bodygraph data for React SVG component
+  const bodygraphData = useBodygraphData({
+    definedCenters,
+    channels,
+    designPlanets,
+    personalityPlanets,
+  });
+
   // Safety check to prevent white screen if data is missing
   if (!data || !general) {
     return (
@@ -624,7 +637,14 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                     </>
                   )}
 
-                  {bodygraphLoading ? (
+                  {USE_REACT_BODYGRAPH ? (
+                    <BodygraphSVG
+                      data={bodygraphData}
+                      width={260}
+                      height={360}
+                      className="w-[220px] xl:w-[260px] h-auto relative z-10"
+                    />
+                  ) : bodygraphLoading ? (
                     <div className="w-[220px] xl:w-[260px] h-[300px] xl:h-[360px] rounded-xl bg-secondary/30 flex flex-col items-center justify-center border border-dashed border-muted animate-pulse">
                       <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
                       <p className="text-muted-foreground text-sm">Loading...</p>
@@ -685,14 +705,21 @@ export const ChartResult = ({ data, userName, userEmail, userPhone, birthData, c
                     </>
                   )}
 
-                  {bodygraphLoading ? (
-                    <div className="w-[170px] sm:w-[200px] aspect-[3/4] rounded-xl bg-secondary/30 flex flex-col items-center justify-center animate-pulse">
+                  {USE_REACT_BODYGRAPH ? (
+                    <BodygraphSVG
+                      data={bodygraphData}
+                      width={240}
+                      height={320}
+                      className="w-[200px] sm:w-[240px] h-auto relative z-10"
+                    />
+                  ) : bodygraphLoading ? (
+                    <div className="w-[200px] sm:w-[240px] aspect-[3/4] rounded-xl bg-secondary/30 flex flex-col items-center justify-center animate-pulse">
                       <Loader2 className="w-8 h-8 text-primary animate-spin" />
                     </div>
                   ) : bodygraphImage ? (
-                    <img src={bodygraphImage} alt="Bodygraph" className="w-[170px] sm:w-[200px] h-auto relative z-10" />
+                    <img src={bodygraphImage} alt="Bodygraph" className="w-[200px] sm:w-[240px] h-auto relative z-10" />
                   ) : (
-                    <div className="w-[170px] sm:w-[200px] aspect-[3/4] bg-secondary/20 rounded-xl flex items-center justify-center text-muted-foreground text-xs">Chart unavailable</div>
+                    <div className="w-[200px] sm:w-[240px] aspect-[3/4] bg-secondary/20 rounded-xl flex items-center justify-center text-muted-foreground text-xs">Chart unavailable</div>
                   )}
                 </div>
 

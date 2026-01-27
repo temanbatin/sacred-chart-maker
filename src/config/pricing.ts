@@ -13,17 +13,58 @@ export const PRODUCTS = {
         original_price: 500000,
         features: [
             'Analisis Mendalam (100+ Halaman)',
+            'Termasuk: Bazi Chart Analysis (Weather Report)',
+            'BONUS: 30 Hari Kira AI Mentor (Gratis)',
             'Tipe, Strategi & Otoritas',
             'Incarnation Cross (Misi Hidup)',
             'Analisis 9 Energy Center',
             'Panduan Karir & Relasi',
             'Peta Potensi Tersembunyi',
-            'Tips Kesehatan & Vitalitas',
-            'Variable (Digestion, Environment, Motivation)'
+            'Tips Kesehatan & Vitalitas'
+        ]
+    },
+    BAZI_REPORT: {
+        id: 'bazi_report',
+        name: 'Bazi + Human Design Full Report Bundle',
+        price: 299000,
+        original_price: 750000,
+        features: [
+            'Includes EVERYTHING in Full HD Report',
+            'Analisis Elemen Diri (Day Master)',
+            'Prakiraan Keberuntungan (Luck Pillars)',
+            'Analisis Karir & Kekayaan (Wealth Element)',
+            'Harmoni Hubungan (Compatibility)',
+            'Strategi Tahunan (Annual Forecast)',
+            'Kekuatan & Kelemahan Elemen'
+        ]
+    },
+    BAZI_ONLY: {
+        id: 'bazi_only',
+        name: 'Bazi Chart Analysis Only',
+        price: 149000,
+        original_price: 300000,
+        features: [
+            'Includes: 30 Hari Kira AI Mentor (Gratis)',
+            'Analisis Elemen Diri (Day Master)',
+            'Prakiraan Keberuntungan (Luck Pillars)',
+            'Analisis Karir & Kekayaan (Wealth Element)',
+            'Kekuatan & Kelemahan Elemen',
+            'Tanpa Human Design Report'
+        ]
+    },
+    WHATSAPP_KIRA_SUBSCRIPTION: {
+        id: 'whatsapp_kira_subscription',
+        name: 'Kira AI Mentor Subscription (Monthly)',
+        price: 49000,
+        original_price: 150000,
+        features: [
+            'Unlimited Chat 24/7',
+            'Personalisasi Human Design & Bazi',
+            'Daily Energy Updates',
+            'Privacy First (Ruang Aman)',
+            'Cancel Anytime'
         ]
     }
-    // NOTE: Add-ons (Bazi, Relationship, Parenting) akan ditambahkan ketika fiturnya siap
-    // Lihat UnifiedCheckoutModal.tsx untuk "Coming Soon" placeholders
 };
 
 export const formatPrice = (price: number) => {

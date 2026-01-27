@@ -1259,10 +1259,27 @@ const Reports = () => {
               console.warn("Lead submission failed, continuing...", leadError);
             }
 
-            // ⚡ SKIP: No calculate-chart call (N8N will do this)
-            // ⚡ SKIP: No saved_charts insert (no need for chart yet)
+            // ⚡ Calculate Chart to get Snapshot
+            let chartSnapshot = null;
+            try {
+              const { data: chartData, error: chartError } = await supabase.functions.invoke('calculate-chart', {
+                body: {
+                  year,
+                  month,
+                  day,
+                  hour,
+                  minute,
+                  place: data.birthCity,
+                  gender: data.gender,
+                },
+              });
+              if (!chartError && chartData) {
+                chartSnapshot = chartData;
+              }
+            } catch (err) {
+              console.warn("Failed to calculate chart snapshot:", err);
+            }
 
-            // 5. Create Order (lightweight, fast!)
             // 5. Create Order (lightweight, fast!)
             const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
             const productName = 'Human Design Full Personal Report';
@@ -1279,10 +1296,10 @@ const Reports = () => {
                 amount: PRODUCTS.FULL_REPORT.price,
                 status: 'PENDING',
                 metadata: {
-                  chart_ids: [],  // Empty - no chart yet, N8N will generate
+                  chart_ids: [],  // Empty - no chart yet, N8N will generate/save if needed
                   products: [PRODUCTS.FULL_REPORT.id],
-                  birth_data: birthDataForMetadata
-                  // NO chart_snapshot - N8N will generate chart
+                  birth_data: birthDataForMetadata,
+                  chart_snapshot: chartSnapshot // ✅ Added snapshot
                 }
               });
 
@@ -1320,15 +1337,6 @@ const Reports = () => {
 
               // Use redirect_url directly
               window.location.href = paymentData.redirect_url;
-
-              /* 
-              // Legacy Snap Popup - replaced with Direct Redirect for better compatibility
-              if ((window as any).snap) {
-                (window as any).snap.pay(paymentData.token, {
-                  onSuccess: function (result: any) { xmlns: ... }
-                });
-              } 
-              */
             }
 
           } catch (error: unknown) {

@@ -11,7 +11,7 @@ import {
 
 export const MainNavbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
+  const [mobileAboutOpen, setMobileAboutOpen] = useState<string | boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -70,13 +70,25 @@ export const MainNavbar = () => {
               Learn
             </Link>
 
-            <Link
-              to="/personal-report"
-              className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              Produk
-            </Link>
+            {/* Products Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1 outline-none">
+                <ShoppingBag className="w-4 h-4" />
+                Produk
+                <ChevronDown className="w-4 h-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-card border-border min-w-[200px]">
+                <DropdownMenuItem asChild>
+                  <Link to="/personal-report" className="cursor-pointer">Human Design Report</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/bazi-report" className="cursor-pointer">Bazi Report</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/whatsapp-ai-guidance" className="cursor-pointer">Whatsapp AI Guidance</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* About Dropdown */}
             <DropdownMenu>
@@ -135,24 +147,58 @@ export const MainNavbar = () => {
                 <BookOpen className="w-4 h-4" />
                 Learn
               </Link>
-              <Link
-                to="/personal-report"
-                className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-2 py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <ShoppingBag className="w-4 h-4" />
-                Produk
-              </Link>
+
+              {/* Mobile Products Menu */}
+              <div className="border-b border-border/10 pb-2">
+                <button
+                  onClick={() => setMobileAboutOpen('products')}
+                  className="w-full flex items-center justify-between text-sm text-muted-foreground hover:text-accent transition-colors py-2"
+                >
+                  <span className="flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4" />
+                    Produk
+                  </span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${mobileAboutOpen === 'products' ? 'rotate-180' : ''}`} />
+                </button>
+
+                {mobileAboutOpen === 'products' && (
+                  <div className="pl-4 flex flex-col gap-2 mt-1 animate-fade-in">
+                    <Link
+                      to="/personal-report"
+                      className="text-sm text-muted-foreground hover:text-accent transition-colors py-2 block"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Human Design Report
+                    </Link>
+                    <Link
+                      to="/bazi-report"
+                      className="text-sm text-muted-foreground hover:text-accent transition-colors py-2 block"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Bazi Report
+                    </Link>
+                    <Link
+                      to="/whatsapp-ai-guidance"
+                      className="text-sm text-muted-foreground hover:text-accent transition-colors py-2 block"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Whatsapp AI Guidance
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile About Menu */}
               <div className="border-b border-border/10 pb-2 mb-2">
                 <button
-                  onClick={() => setMobileAboutOpen(!mobileAboutOpen)}
+                  onClick={() => setMobileAboutOpen(mobileAboutOpen === 'about' ? false : 'about')}
                   className="w-full flex items-center justify-between text-sm text-muted-foreground hover:text-accent transition-colors py-2"
                 >
                   <span className="flex items-center gap-2">About</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${mobileAboutOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 transition-transform ${mobileAboutOpen === 'about' ? 'rotate-180' : ''}`} />
                 </button>
 
-                {mobileAboutOpen && (
+                {mobileAboutOpen === 'about' && (
                   <div className="pl-4 flex flex-col gap-2 mt-1 animate-fade-in">
                     <Link
                       to="/tentang-kami"
