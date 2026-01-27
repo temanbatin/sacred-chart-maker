@@ -31,6 +31,20 @@ interface City {
     };
 }
 
+// Interface for paid orders (for subscription chart selection)
+interface PaidOrder {
+    id: string;
+    reference_id: string;
+    product_name: string;
+    paid_at: string;
+    customer_name?: string;
+    metadata?: {
+        birthData?: {
+            name?: string;
+        };
+    };
+}
+
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -90,6 +104,10 @@ function getProductInfo(productId?: string) {
                 // Custom labels for Bazi - simplified
                 labels: {
                     name: 'Nama',
+                    namePlaceholder: 'Nama kamu',
+                    sectionTitle: 'Data Penerima Report',
+                    whatsappLabel: 'Nomor WhatsApp (Aktif)',
+                    emailLabel: 'Email (Untuk Pengiriman hasil reading)',
                     gender: 'Jenis Kelamin',
                     birthTimeHint: null // No hint for Bazi
                 }
@@ -104,6 +122,10 @@ function getProductInfo(productId?: string) {
                 bonusType: 'subscription' as const,
                 labels: {
                     name: 'Nama',
+                    namePlaceholder: 'Panggilanmu untuk Kira',
+                    sectionTitle: 'Data untuk chat dengan Kira',
+                    whatsappLabel: 'Nomor WhatsApp (yang didaftarkan ke Kira)',
+                    emailLabel: 'Email',
                     gender: 'Jenis Kelamin',
                     birthTimeHint: null
                 }
@@ -119,6 +141,10 @@ function getProductInfo(productId?: string) {
                 // Custom labels for Full Report Bundle - detailed
                 labels: {
                     name: 'Nama (untuk ditulis dalam reading)',
+                    namePlaceholder: 'Nama kamu',
+                    sectionTitle: 'Data Penerima Report',
+                    whatsappLabel: 'Nomor WhatsApp (Aktif)',
+                    emailLabel: 'Email (Untuk Pengiriman hasil reading)',
                     gender: 'Jenis Kelamin (untuk personalisasi cover)',
                     birthTimeHint: 'Agar reading akurat, pastikan jam lahir sesuai'
                 }
@@ -180,6 +206,11 @@ export function UnifiedCheckoutModal({
     const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [agreedToTnc, setAgreedToTnc] = useState(false);
 
+    // Subscription: Paid Orders State
+    const [paidOrders, setPaidOrders] = useState<PaidOrder[]>([]);
+    const [selectedPaidOrderId, setSelectedPaidOrderId] = useState<string>('');
+    const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
     // Pre-fill data logic
     useEffect(() => {
         if (open) {
@@ -212,6 +243,39 @@ export function UnifiedCheckoutModal({
             }
         }
     }, [user, open, prefillBirthData, name, whatsapp, email]);
+
+    // Fetch paid orders for subscription (only when subscription modal is opened)
+    useEffect(() => {
+        if (open && selectedProductId === PRODUCTS.WHATSAPP_KIRA_SUBSCRIPTION.id && user) {
+            const fetchPaidOrders = async () => {
+                setIsLoadingOrders(true);
+                try {
+                    const { data, error } = await supabase
+                        .from('orders')
+                        .select('id, reference_id, product_name, paid_at, customer_name, metadata')
+                        .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
+                        .eq('status', 'PAID')
+                        .order('paid_at', { ascending: false });
+
+                    if (error) {
+                        console.error('Error fetching paid orders:', error);
+                    } else {
+                        const ordersData = (data || []) as unknown as PaidOrder[];
+                        setPaidOrders(ordersData);
+                        // Pre-select the first order if available
+                        if (ordersData.length > 0) {
+                            setSelectedPaidOrderId(ordersData[0].id);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error:', err);
+                } finally {
+                    setIsLoadingOrders(false);
+                }
+            };
+            fetchPaidOrders();
+        }
+    }, [open, selectedProductId, user]);
 
     // Coupon State
     const [couponCode, setCouponCode] = useState('');
@@ -346,7 +410,10 @@ export function UnifiedCheckoutModal({
         const isPersonalValid = !!(name && email && whatsapp);
         const isBirthValid = skipBirthData || !!(birthDate && birthTime && selectedCity && gender); // Gender required
         const isAgreed = agreedToTerms && agreedToTnc;
-        return isPersonalValid && isBirthValid && isAgreed;
+        // For subscription, require a selected paid order
+        const isSubscriptionValid = selectedProductId !== PRODUCTS.WHATSAPP_KIRA_SUBSCRIPTION.id ||
+            (paidOrders.length > 0 && selectedPaidOrderId);
+        return isPersonalValid && isBirthValid && isAgreed && isSubscriptionValid;
     };
 
     const handleSubmit = async () => {
@@ -380,36 +447,14 @@ export function UnifiedCheckoutModal({
         }
 
         // ELIGIBILITY CHECK: Kira Subscription
-        // Only allow purchase if user has an existing record in whatsapp_sessions (meaning they are a past customer)
-        // using the cleaned phone number
-        if (open && selectedProductId === PRODUCTS.WHATSAPP_KIRA_SUBSCRIPTION.id) {
-            setIsLoading(true); // Re-use loading state if possible, or assume caller handles it?
-            // Actually, this handleSubmit calls 'onSubmit' which might be outside.
-            // We should do the check logic HERE before calling onSubmit.
-
-            try {
-                // Determine the clean phone (simplified version matching webhook logic)
-                let checkPhone = cleanPhone;
-                if (checkPhone.startsWith('0')) checkPhone = '62' + checkPhone.slice(1);
-
-                const { data: session } = await supabase
-                    .from('whatsapp_sessions')
-                    .select('id')
-                    .eq('whatsapp', checkPhone)
-                    .maybeSingle();
-
-                if (!session) {
-                    toast({
-                        title: "Maaf, khusus Alumni Teman Batin",
-                        description: "Langganan Kira hanya tersedia untuk yang pernah membeli Report Human Design / Bazi sebelumnya.",
-                        variant: "destructive"
-                    });
-                    // setIsLoading(false); // If we managed loading state
-                    return;
-                }
-            } catch (err) {
-                console.error("Eligibility check failed", err);
-                // Fallthrough or block? Block is safer.
+        // Only allow purchase if user has paid orders (already fetched into paidOrders state)
+        if (selectedProductId === PRODUCTS.WHATSAPP_KIRA_SUBSCRIPTION.id) {
+            if (paidOrders.length === 0 || !selectedPaidOrderId) {
+                toast({
+                    title: "Maaf, khusus Alumni Teman Batin",
+                    description: "Langganan Kira hanya tersedia untuk yang sudah pernah membeli Report Human Design / Bazi.",
+                    variant: "destructive"
+                });
                 return;
             }
         }
@@ -579,6 +624,9 @@ export function UnifiedCheckoutModal({
             // --- PAID FLOW: Create Order and Call Midtrans ---
             const referenceId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
+            // Get selected paid order info for subscription
+            const selectedSourceOrder = paidOrders.find(o => o.id === selectedPaidOrderId);
+
             // Create Order
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error: orderError } = await (supabase.from('orders') as any)
@@ -596,7 +644,16 @@ export function UnifiedCheckoutModal({
                         products: [selectedProduct.id],
                         report_type: reportType,
                         birth_data: birthDataForMetadata,
-                        chart_snapshot: chartSnapshot
+                        chart_snapshot: chartSnapshot,
+                        // For subscription: include source order info
+                        ...(selectedProductId === PRODUCTS.WHATSAPP_KIRA_SUBSCRIPTION.id && selectedSourceOrder ? {
+                            subscription_source_order: {
+                                id: selectedSourceOrder.id,
+                                reference_id: selectedSourceOrder.reference_id,
+                                product_name: selectedSourceOrder.product_name,
+                                customer_name: selectedSourceOrder.customer_name
+                            }
+                        } : {})
                     }
                 });
 
@@ -657,7 +714,7 @@ export function UnifiedCheckoutModal({
                     <section className="space-y-4">
                         <div className="flex items-center gap-2 mb-2">
                             <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">1</div>
-                            <h3 className="font-semibold text-foreground">Data Penerima Report</h3>
+                            <h3 className="font-semibold text-foreground">{productInfo.labels.sectionTitle}</h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -666,7 +723,7 @@ export function UnifiedCheckoutModal({
                                 <div className="relative">
                                     <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
-                                        placeholder="Nama kamu"
+                                        placeholder={productInfo.labels.namePlaceholder}
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         className="pl-9"
@@ -675,7 +732,7 @@ export function UnifiedCheckoutModal({
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Nomor WhatsApp (Aktif)</Label>
+                                <Label>{productInfo.labels.whatsappLabel}</Label>
                                 <div className="relative">
                                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
@@ -688,7 +745,7 @@ export function UnifiedCheckoutModal({
                             </div>
 
                             <div className="space-y-2 md:col-span-2">
-                                <Label>Email (Untuk Pengiriman hasil reading)</Label>
+                                <Label>{productInfo.labels.emailLabel}</Label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
@@ -903,7 +960,74 @@ export function UnifiedCheckoutModal({
 
                             {/* Subscription Features - Show for subscription */}
                             {productInfo.bonusType === 'subscription' && (
-                                <div className="pb-2">
+                                <div className="pb-2 space-y-4">
+                                    {/* Chart Selection for Subscription */}
+                                    <div>
+                                        <Label className="text-xs font-medium text-foreground mb-2 block">
+                                            Pilih Chart yang akan diintegrasikan dengan Kira AI
+                                        </Label>
+
+                                        {isLoadingOrders ? (
+                                            <div className="flex items-center gap-2 p-4 border border-border rounded-lg bg-muted/20">
+                                                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                                                <span className="text-sm text-muted-foreground">Mencari data chart kamu...</span>
+                                            </div>
+                                        ) : paidOrders.length === 0 ? (
+                                            <div className="p-4 border border-amber-500/30 rounded-lg bg-amber-500/10">
+                                                <p className="text-sm text-amber-500 font-medium mb-1">
+                                                    ⚠️ Belum ada chart yang ditemukan
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Kamu perlu membeli{' '}
+                                                    <a href="/personal-report" className="text-accent underline hover:text-accent/80">Report Human Design</a>
+                                                    {' '}atau{' '}
+                                                    <a href="/bazi" className="text-accent underline hover:text-accent/80">Bazi</a>
+                                                    {' '}terlebih dahulu sebelum bisa berlangganan Kira AI.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {paidOrders.map((order) => {
+                                                    const chartName = order.metadata?.birthData?.name || order.customer_name || 'Chart';
+                                                    const paidDate = new Date(order.paid_at).toLocaleDateString('id-ID', {
+                                                        day: 'numeric',
+                                                        month: 'short',
+                                                        year: 'numeric'
+                                                    });
+
+                                                    return (
+                                                        <div
+                                                            key={order.id}
+                                                            onClick={() => setSelectedPaidOrderId(order.id)}
+                                                            className={`p-3 border rounded-lg cursor-pointer transition-all ${selectedPaidOrderId === order.id
+                                                                ? 'border-accent bg-accent/10'
+                                                                : 'border-border hover:border-accent/50 bg-muted/10'
+                                                                }`}
+                                                        >
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedPaidOrderId === order.id
+                                                                        ? 'border-accent bg-accent'
+                                                                        : 'border-muted-foreground'
+                                                                        }`}>
+                                                                        {selectedPaidOrderId === order.id && (
+                                                                            <Check className="w-3 h-3 text-background" />
+                                                                        )}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-sm font-medium text-foreground">{chartName}</p>
+                                                                        <p className="text-xs text-muted-foreground">{order.product_name}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-xs text-muted-foreground">{paidDate}</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <h3 className="font-medium text-foreground text-xs mb-3">Yang Kamu Dapatkan</h3>
                                     <div className="grid grid-cols-1 gap-3">
                                         <div className="flex items-start gap-3 p-3 border border-indigo-500/20 rounded-lg bg-indigo-500/5">
