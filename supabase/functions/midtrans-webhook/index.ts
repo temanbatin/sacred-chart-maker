@@ -188,11 +188,19 @@ serve(async (req) => {
                         let isLifetime = existingSession?.is_lifetime || false;
 
                         // Logic:
-                        // 1. Full Report/Bundle -> Bonus 30 Days
+                        // 1. Full Report/Bundle -> Bonus 30 Days (product id: bundle-full-bazi, bazi-only)
                         // 2. Kira Subscription -> +30 Days
-                        if (productIdList.includes('full_report') || productNameLower.includes('full') || productNameLower.includes('bundle')) {
+                        if (productIdList.includes('bundle-full-bazi') ||
+                            productIdList.includes('bazi-only') ||
+                            reportType === 'bundle-full-bazi' ||
+                            reportType === 'bazi' ||
+                            productNameLower.includes('full') ||
+                            productNameLower.includes('bundle') ||
+                            productNameLower.includes('bazi')) {
                             daysToAdd = 30;
-                        } else if (productIdList.includes('whatsapp-kira-subscription') || reportType === 'kira-subscription' || productNameLower.includes('kira')) {
+                        } else if (productIdList.includes('whatsapp-kira-subscription') ||
+                            reportType === 'kira-subscription' ||
+                            productNameLower.includes('kira')) {
                             daysToAdd = 30;
                         }
 

@@ -163,11 +163,16 @@ serve(async (req) => {
                 if (newEndAt < now) newEndAt = now;
 
                 const productNameLower = (productName || '').toLowerCase();
+                const orderReportType = reportType || '';
                 let daysToAdd = 0;
                 const isLifetime = existingSession?.is_lifetime || false;
 
-                // Logic: Full Report/Bundle -> Bonus 30 Days
-                if (productNameLower.includes('full') || productNameLower.includes('bundle')) {
+                // Logic: Full Report/Bundle/Bazi -> Bonus 30 Days
+                if (productNameLower.includes('full') ||
+                    productNameLower.includes('bundle') ||
+                    productNameLower.includes('bazi') ||
+                    orderReportType === 'bundle-full-bazi' ||
+                    orderReportType === 'bazi') {
                     daysToAdd = 30;
                 }
 
