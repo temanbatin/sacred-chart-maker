@@ -63,17 +63,19 @@ const WhatsappAiGuidance = () => {
 
             {/* Hero Section */}
             <section className="pt-32 pb-16 px-4 relative overflow-hidden">
-                {/* Background Gradients */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[100px] -z-10" />
-                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[100px] -z-10" />
+                {/* Background Gradients - Brighter Glow */}
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-cyan-400/20 rounded-full blur-[120px] -z-10" />
+                <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-teal-400/20 rounded-full blur-[120px] -z-10" />
+                {/* Center Glow behind header */}
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-cyan-500/30 via-teal-400/40 to-emerald-500/30 rounded-full blur-[100px] -z-10" />
 
                 <div className="max-w-4xl mx-auto text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-500 text-sm font-medium mb-6 animate-fade-down">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 text-sm font-medium mb-6 animate-fade-down border border-cyan-500/30">
                         <Sparkles className="w-4 h-4" />
                         AI Mentor Spiritual Pertama di Indonesia
                     </div>
 
-                    <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-teal-600 mb-6 animate-fade-down animation-delay-100 leading-tight">
+                    <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 mb-6 animate-fade-down animation-delay-100 leading-tight drop-shadow-[0_0_30px_rgba(34,211,238,0.3)]">
                         Punya "Bestie" Spiritual yang Tahu Segala Potensimu
                     </h1>
 

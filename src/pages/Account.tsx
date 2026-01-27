@@ -614,104 +614,104 @@ const Account = () => {
                     </div>
                   ))}
                 </div>
-                </div>
               )}
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="orders" className="space-y-6">
-            {orders.length === 0 ? (
-              <div className="glass-card rounded-xl p-8 text-center animate-fade-up">
-                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  Kamu belum membeli laporan
-                </p>
-                <Button variant="outline" asChild>
-                  <Link to="/reports">
-                    Lihat Produk Kami
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="grid gap-4 animate-fade-up">
-                {orders.map((order) => (
-                  <div key={order.id} className="glass-card rounded-xl p-6 border border-border">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      {/* Left: Order Info */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-foreground text-lg">
-                            {order.product_name || 'Laporan Human Design'}
-                          </h3>
-                          {getStatusBadge(order.status, order.created_at)}
-                        </div>
-                        <p className="text-sm text-muted-foreground">Order Ref: {order.reference_id}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {order.paid_at
-                            ? `Dibayar pada: ${new Date(order.paid_at).toLocaleString()}`
-                            : `Dipesan pada: ${new Date(order.created_at).toLocaleString()}`}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        {/* PENDING & NOT EXPIRED: Show Pay Button */}
-                        {order.status === 'PENDING' && order.payment_url && (new Date().getTime() - new Date(order.created_at).getTime() <= 24 * 60 * 60 * 1000) && (
-                          <Button asChild className="fire-glow" size="sm">
-                            <a href={order.payment_url} target="_blank" rel="noopener noreferrer">
-                              <CreditCard className="w-4 h-4 mr-2" />
-                              Bayar Sekarang <ArrowRight className="w-4 h-4 ml-2" />
-                            </a>
-                          </Button>
-                        )}
-
-                        {/* PAID & REPORT READY: Check for both URLs */}
-                        {order.status === 'PAID' && (
-                          <div className="flex flex-col gap-2 min-w-[200px]">
-                            {order.report_url && (
-                              <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent/10 w-full justify-start">
-                                <a href={order.report_url} target="_blank" rel="noopener noreferrer">
-                                  <FileText className="w-4 h-4 mr-2" />
-                                  Download Human Design
-                                </a>
-                              </Button>
-                            )}
-
-                            {order.bazi_report_url && (
-                              <Button asChild variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10 w-full justify-start">
-                                <a href={order.bazi_report_url} target="_blank" rel="noopener noreferrer">
-                                  <Flame className="w-4 h-4 mr-2" />
-                                  Download Bazi Report
-                                </a>
-                              </Button>
-                            )}
-
-                            {/* Fallback processing state if NO URLs yet */}
-                            {!order.report_url && !order.bazi_report_url && (
-                              <div className="bg-accent/10 text-accent px-4 py-2 rounded-lg text-sm flex items-center gap-2">
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Report sedang disusun...
-                              </div>
-                            )}
+            <TabsContent value="orders" className="space-y-6">
+              {orders.length === 0 ? (
+                <div className="glass-card rounded-xl p-8 text-center animate-fade-up">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Kamu belum membeli laporan
+                  </p>
+                  <Button variant="outline" asChild>
+                    <Link to="/reports">
+                      Lihat Produk Kami
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4 animate-fade-up">
+                  {orders.map((order) => (
+                    <div key={order.id} className="glass-card rounded-xl p-6 border border-border">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        {/* Left: Order Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-foreground text-lg">
+                              {order.product_name || 'Laporan Human Design'}
+                            </h3>
+                            {getStatusBadge(order.status, order.created_at)}
                           </div>
-                        )}
+                          <p className="text-sm text-muted-foreground">Order Ref: {order.reference_id}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {order.paid_at
+                              ? `Dibayar pada: ${new Date(order.paid_at).toLocaleString()}`
+                              : `Dipesan pada: ${new Date(order.created_at).toLocaleString()}`}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          {/* PENDING & NOT EXPIRED: Show Pay Button */}
+                          {order.status === 'PENDING' && order.payment_url && (new Date().getTime() - new Date(order.created_at).getTime() <= 24 * 60 * 60 * 1000) && (
+                            <Button asChild className="fire-glow" size="sm">
+                              <a href={order.payment_url} target="_blank" rel="noopener noreferrer">
+                                <CreditCard className="w-4 h-4 mr-2" />
+                                Bayar Sekarang <ArrowRight className="w-4 h-4 ml-2" />
+                              </a>
+                            </Button>
+                          )}
+
+                          {/* PAID & REPORT READY: Check for both URLs */}
+                          {order.status === 'PAID' && (
+                            <div className="flex flex-col gap-2 min-w-[200px]">
+                              {order.report_url && (
+                                <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent/10 w-full justify-start">
+                                  <a href={order.report_url} target="_blank" rel="noopener noreferrer">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Download Human Design
+                                  </a>
+                                </Button>
+                              )}
+
+                              {order.bazi_report_url && (
+                                <Button asChild variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10 w-full justify-start">
+                                  <a href={order.bazi_report_url} target="_blank" rel="noopener noreferrer">
+                                    <Flame className="w-4 h-4 mr-2" />
+                                    Download Bazi Report
+                                  </a>
+                                </Button>
+                              )}
+
+                              {/* Fallback processing state if NO URLs yet */}
+                              {!order.report_url && !order.bazi_report_url && (
+                                <div className="bg-accent/10 text-accent px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  Report sedang disusun...
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
-          <TabsContent value="affiliate">
-            <AffiliateDashboard userId={user.id} email={user.email || ''} />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="affiliate">
+              <AffiliateDashboard userId={user.id} email={user.email || ''} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </main>
+
+      <Footer />
     </div>
-      </main >
-
-  <Footer />
-    </div >
   );
 };
 
 export default Account;
+
