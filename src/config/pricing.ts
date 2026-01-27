@@ -49,7 +49,7 @@ export const PRODUCTS = {
         name: 'Kira AI Mentor (Bulanan)',
         price: 49000,
         original_price: 150000,
-        report_type: null,
+        report_type: 'kira-subscription',
         features: [
             'Unlimited Chat 24/7',
             'Custom AI Sesuai Bazi dan Human Design-mu',
