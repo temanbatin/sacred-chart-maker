@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { MainNavbar } from '@/components/MainNavbar';
 import { Footer } from '@/components/Footer';
-import { CheckCircle2, XCircle, Clock, Home, Mail, UserPlus, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Home, Mail, UserPlus, Loader2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthSession } from '@/hooks/useAuthSession';
@@ -14,6 +14,8 @@ interface OrderData {
   customer_name?: string;
   status?: string;
   report_url?: string;
+  report_type?: string; // 'kira-subscription', 'bazi', 'bundle-full-bazi', etc.
+  product_name?: string; // Used as fallback to detect product type
 }
 
 const PaymentResult = () => {
@@ -113,22 +115,60 @@ const PaymentResult = () => {
 
     switch (status) {
       case 'success':
+        // Check if this is a Kira subscription (check report_type or product_name)
+        const isSubscription =
+          orderData?.report_type === 'kira-subscription' ||
+          orderData?.product_name?.toLowerCase().includes('kira');
+
         return (
           <div className="text-center animate-fade-up">
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 flex items-center justify-center">
               <CheckCircle2 className="w-10 h-10 text-green-500" />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Pembayaran Berhasil! 🎉
+              {isSubscription ? 'Langganan Kira AI Aktif! 🤖' : 'Pembayaran Berhasil! 🎉'}
             </h1>
             <p className="text-lg text-muted-foreground mb-2 max-w-md mx-auto">
               Terima kasih, <span className="text-foreground font-medium">{orderData?.customer_name || 'Kamu'}</span>!
             </p>
-            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Laporan akan dikirim ke <span className="text-accent font-medium">{orderData?.customer_email || 'email kamu'}</span> secara instan (hanya 10 menit).
-            </p>
 
-            {/* REMOVED PROGRESS TRACKER HERE */}
+            {isSubscription ? (
+              // Message for Kira AI Subscription
+              <>
+                <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                  Kira AI Mentor kamu sudah aktif dan siap digunakan via WhatsApp.
+                </p>
+                <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-4 mb-6 max-w-md mx-auto">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    💬 Chat Kira sekarang di WhatsApp untuk mulai konsultasi personal tentang Human Design & Bazi-mu.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Kira sudah mempelajari data chart kamu dan siap menjawab pertanyaan seputar kehidupan sehari-hari.
+                  </p>
+                </div>
+
+                {/* Chat Kira Button */}
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white mb-8 shadow-lg"
+                >
+                  <a
+                    href="https://wa.me/6285739444131?text=Halo%20Kira"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="w-5 h-5 mr-2" />
+                    Chat Kira Sekarang
+                  </a>
+                </Button>
+              </>
+            ) : (
+              // Message for Report purchases
+              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                Laporan akan dikirim ke <span className="text-accent font-medium">{orderData?.customer_email || 'email kamu'}</span> secara instan (hanya 10 menit).
+              </p>
+            )}
 
             {referenceId && (
               <div className="bg-secondary/20 rounded-lg p-3 mb-6 max-w-xs mx-auto">
@@ -138,7 +178,7 @@ const PaymentResult = () => {
             )}
 
             {/* CTA: Create Account - Check using session from useAuthSession */}
-            {!session && (
+            {!session && !isSubscription && (
               <div className="bg-primary/10 border border-primary/30 rounded-xl p-6 mb-8 max-w-md mx-auto">
                 <UserPlus className="w-8 h-8 text-primary mx-auto mb-3" />
                 <h3 className="font-semibold text-foreground mb-2">Buat Akun untuk Track Pesanan</h3>
