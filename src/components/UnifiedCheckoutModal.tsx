@@ -211,9 +211,13 @@ export function UnifiedCheckoutModal({
     const [selectedPaidOrderId, setSelectedPaidOrderId] = useState<string>('');
     const [isLoadingOrders, setIsLoadingOrders] = useState(false);
 
-    // Pre-fill data logic
+    // Track previous open state to only pre-fill on modal open (not on every state change)
+    const prevOpenRef = useRef(false);
+
+    // Pre-fill data logic - only runs when modal first opens
     useEffect(() => {
-        if (open) {
+        // Only pre-fill when modal transitions from closed to open
+        if (open && !prevOpenRef.current) {
             // Priority 1: User Logged In Data
             if (user) {
                 if (user.user_metadata?.name) setName(user.user_metadata.name);
@@ -221,7 +225,7 @@ export function UnifiedCheckoutModal({
                 if (user.user_metadata?.whatsapp) setWhatsapp(user.user_metadata.whatsapp);
             }
 
-            // Priority 2: Prefill Data (overrides user data if specific to chart, or fills empty)
+            // Priority 2: Prefill Data (overrides user data if specific to chart)
             if (prefillBirthData) {
                 setBirthDate(prefillBirthData.birthDate);
                 setBirthTime(prefillBirthData.birthTime);
@@ -237,12 +241,15 @@ export function UnifiedCheckoutModal({
                 }
 
                 if (prefillBirthData.gender) setGender(prefillBirthData.gender);
-                if (prefillBirthData.name && !name) setName(prefillBirthData.name);
-                if (prefillBirthData.whatsapp && !whatsapp) setWhatsapp(prefillBirthData.whatsapp);
-                if (prefillBirthData.email && !email) setEmail(prefillBirthData.email);
+                if (prefillBirthData.name) setName(prefillBirthData.name);
+                if (prefillBirthData.whatsapp) setWhatsapp(prefillBirthData.whatsapp);
+                if (prefillBirthData.email) setEmail(prefillBirthData.email);
             }
         }
-    }, [user, open, prefillBirthData, name, whatsapp, email]);
+
+        // Update previous open state
+        prevOpenRef.current = open;
+    }, [open, user, prefillBirthData]);
 
     // Fetch paid orders for subscription (only when subscription modal is opened)
     useEffect(() => {
@@ -883,41 +890,39 @@ export function UnifiedCheckoutModal({
                             </div>
                         </div>
 
-                        {/* Coupon Input Field - Hide for subscription */}
-                        {productInfo.bonusType !== 'subscription' && (
-                            <div className="pb-3 border-b border-border/50">
-                                <div className="relative">
-                                    <TicketPercent className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isCouponValid ? 'text-green-500' : 'text-muted-foreground'}`} />
-                                    <Input
-                                        placeholder="Punya kode kupon / referal?"
-                                        value={couponCode}
-                                        onChange={(e) => setCouponCode(e.target.value)}
-                                        className={`pl-9 border-dashed bg-background/50 ${isCouponValid
-                                            ? 'border-green-500/50 text-green-500 focus-visible:ring-green-500'
-                                            : couponCode.length > 3 && !isValidatingCoupon && !isCouponValid
-                                                ? 'border-red-500/50 text-red-500 focus-visible:ring-red-500'
-                                                : ''
-                                            }`}
-                                    />
-                                    {isValidatingCoupon && (
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                                        </div>
-                                    )}
-                                    {isCouponValid && !isValidatingCoupon && (
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full font-medium animate-in fade-in zoom-in">
-                                            Applied
-                                        </div>
-                                    )}
-                                </div>
-                                {/* Coupon Feedback Message */}
-                                {couponMessage && (
-                                    <p className={`text-[10px] mt-1.5 ml-1 ${isCouponValid ? 'text-green-600' : 'text-red-500'}`}>
-                                        {couponMessage}
-                                    </p>
+                        {/* Coupon Input Field */}
+                        <div className="pb-3 border-b border-border/50">
+                            <div className="relative">
+                                <TicketPercent className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isCouponValid ? 'text-green-500' : 'text-muted-foreground'}`} />
+                                <Input
+                                    placeholder="Punya kode kupon / referal?"
+                                    value={couponCode}
+                                    onChange={(e) => setCouponCode(e.target.value)}
+                                    className={`pl-9 border-dashed bg-background/50 ${isCouponValid
+                                        ? 'border-green-500/50 text-green-500 focus-visible:ring-green-500'
+                                        : couponCode.length > 3 && !isValidatingCoupon && !isCouponValid
+                                            ? 'border-red-500/50 text-red-500 focus-visible:ring-red-500'
+                                            : ''
+                                        }`}
+                                />
+                                {isValidatingCoupon && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                                    </div>
+                                )}
+                                {isCouponValid && !isValidatingCoupon && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full font-medium animate-in fade-in zoom-in">
+                                        Applied
+                                    </div>
                                 )}
                             </div>
-                        )}
+                            {/* Coupon Feedback Message */}
+                            {couponMessage && (
+                                <p className={`text-[10px] mt-1.5 ml-1 ${isCouponValid ? 'text-green-600' : 'text-red-500'}`}>
+                                    {couponMessage}
+                                </p>
+                            )}
+                        </div>
 
                         <div className="space-y-3 pt-2 border-t border-border/50">
                             {/* Bonus Section - Product Specific */}
