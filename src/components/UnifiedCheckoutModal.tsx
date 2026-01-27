@@ -42,6 +42,7 @@ interface PaidOrder {
         birthData?: {
             name?: string;
         };
+        report_type?: string;
     };
 }
 
@@ -267,7 +268,14 @@ export function UnifiedCheckoutModal({
                     if (error) {
                         console.error('Error fetching paid orders:', error);
                     } else {
-                        const ordersData = (data || []) as unknown as PaidOrder[];
+                        // Filter out Kira subscription orders - only show Report/Bundle/Bazi orders
+                        const ordersData = ((data || []) as unknown as PaidOrder[]).filter(order => {
+                            const productName = order.product_name?.toLowerCase() || '';
+                            const reportType = order.metadata?.report_type || '';
+                            // Exclude Kira subscription orders
+                            const isKiraSubscription = productName.includes('kira') || reportType === 'kira-subscription';
+                            return !isKiraSubscription;
+                        });
                         setPaidOrders(ordersData);
                         // Pre-select the first order if available
                         if (ordersData.length > 0) {

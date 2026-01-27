@@ -183,15 +183,16 @@ serve(async (req) => {
 
                         const productIdList = (orderData?.metadata?.products as string[]) || [];
                         const productNameLower = (orderData?.product_name || '').toLowerCase();
+                        const reportType = orderData?.metadata?.report_type || '';
                         let daysToAdd = 0;
                         let isLifetime = existingSession?.is_lifetime || false;
 
                         // Logic:
-                        // 1. Full Report -> Bonus 30 Days
+                        // 1. Full Report/Bundle -> Bonus 30 Days
                         // 2. Kira Subscription -> +30 Days
-                        if (productIdList.includes('full_report') || productNameLower.includes('full')) {
+                        if (productIdList.includes('full_report') || productNameLower.includes('full') || productNameLower.includes('bundle')) {
                             daysToAdd = 30;
-                        } else if (productIdList.includes('whatsapp_kira_subscription') || productNameLower.includes('kira')) {
+                        } else if (productIdList.includes('whatsapp-kira-subscription') || reportType === 'kira-subscription' || productNameLower.includes('kira')) {
                             daysToAdd = 30;
                         }
 
